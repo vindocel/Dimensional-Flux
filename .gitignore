@@ -1,0 +1,6 @@
+/.gradle/
+/.stonecutter/
+/.idea/
+**/build/
+**/run/
+*.iml

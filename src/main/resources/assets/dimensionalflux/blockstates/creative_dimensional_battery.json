@@ -1,0 +1,354 @@
+{
+ "multipart": [
+  {
+   "when": {
+    "facing": "north"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_base"
+   }
+  },
+  {
+   "when": {
+    "facing": "north"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_1"
+   }
+  },
+  {
+   "when": {
+    "facing": "north"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_2"
+   }
+  },
+  {
+   "when": {
+    "facing": "north"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_3"
+   }
+  },
+  {
+   "when": {
+    "facing": "north"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_4"
+   }
+  },
+  {
+   "when": {
+    "facing": "north"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_5"
+   }
+  },
+  {
+   "when": {
+    "facing": "north"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_6"
+   }
+  },
+  {
+   "when": {
+    "facing": "north"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_7"
+   }
+  },
+  {
+   "when": {
+    "facing": "north"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_8"
+   }
+  },
+  {
+   "when": {
+    "facing": "north"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_crystal"
+   }
+  },
+  {
+   "when": {
+    "facing": "east"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_base",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_1",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_2",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_3",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_4",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_5",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_6",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_7",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_8",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_crystal",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "south"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_base",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_1",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_2",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_3",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_4",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_5",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_6",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_7",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_8",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_crystal",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "west"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_base",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_1",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_2",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_3",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_4",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_5",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_6",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_7",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_8",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_crystal",
+    "y": 270
+   }
+  }
+ ]
+}

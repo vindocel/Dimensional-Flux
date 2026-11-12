@@ -1,0 +1,11 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": {
+      "sprite": "dimensionalflux:item/dimensional_flux_shard",
+      "neoforge_data": {
+        "light_emission": 9
+      }
+    }
+  }
+}

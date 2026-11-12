@@ -1,0 +1,34 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": [
+          "thirdperson_righthand",
+          "thirdperson_lefthand",
+          "firstperson_righthand",
+          "firstperson_lefthand"
+        ],
+        "model": {
+          "type": "minecraft:model",
+          "model": "dimensionalflux:item/dimensional_emitter_held",
+          "tints": [
+            {
+              "type": "dimensionalflux:device_color"
+            }
+          ]
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "dimensionalflux:item/dimensional_emitter",
+      "tints": [
+        {
+          "type": "dimensionalflux:device_color"
+        }
+      ]
+    }
+  }
+}

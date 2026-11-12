@@ -1,0 +1,8 @@
+{
+  "parent": "dimensionalflux:block/dimensional_controller_item",
+  "textures": {
+    "particle": "dimensionalflux:block/dimensional_controller",
+    "0": "dimensionalflux:block/dimensional_controller",
+    "1": "dimensionalflux:block/dimensional_controller_offline"
+  }
+}

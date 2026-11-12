@@ -1,0 +1,43 @@
+{
+  "textures": {
+    "particle": "dimensionalflux:block/dimensional_block",
+    "0": "dimensionalflux:block/dimensional_block",
+    "1": "dimensionalflux:block/dimensional_block_animated"
+  },
+  "elements": [
+    {
+      "name": "corner_011",
+      "from": [
+        0,
+        13,
+        13
+      ],
+      "to": [
+        3,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5.0,
+            6.75,
+            5.75,
+            7.5
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            5.75,
+            6.75,
+            6.5,
+            7.5
+          ],
+          "texture": "#0",
+          "cullface": "south"
+        }
+      }
+    }
+  ]
+}

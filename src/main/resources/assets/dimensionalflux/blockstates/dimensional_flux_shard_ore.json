@@ -1,0 +1,38 @@
+{
+  "variants": {
+    "lit=false": [
+      {
+        "model": "dimensionalflux:block/dimensional_flux_shard_ore"
+      },
+      {
+        "model": "dimensionalflux:block/dimensional_flux_shard_ore",
+        "y": 90
+      },
+      {
+        "model": "dimensionalflux:block/dimensional_flux_shard_ore",
+        "y": 180
+      },
+      {
+        "model": "dimensionalflux:block/dimensional_flux_shard_ore",
+        "y": 270
+      }
+    ],
+    "lit=true": [
+      {
+        "model": "dimensionalflux:block/dimensional_flux_shard_ore_lit"
+      },
+      {
+        "model": "dimensionalflux:block/dimensional_flux_shard_ore_lit",
+        "y": 90
+      },
+      {
+        "model": "dimensionalflux:block/dimensional_flux_shard_ore_lit",
+        "y": 180
+      },
+      {
+        "model": "dimensionalflux:block/dimensional_flux_shard_ore_lit",
+        "y": 270
+      }
+    ]
+  }
+}

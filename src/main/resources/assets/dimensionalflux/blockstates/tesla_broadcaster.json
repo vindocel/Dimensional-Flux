@@ -1,0 +1,58 @@
+{
+ "variants": {
+  "active=true,facing=north,half=lower": {
+   "model": "dimensionalflux:block/tesla_broadcaster_base"
+  },
+  "active=true,facing=north,half=upper": {
+   "model": "dimensionalflux:block/tesla_broadcaster_upper"
+  },
+  "active=false,facing=north,half=lower": {
+   "model": "dimensionalflux:block/tesla_broadcaster_base_idle"
+  },
+  "active=false,facing=north,half=upper": {
+   "model": "dimensionalflux:block/tesla_broadcaster_upper"
+  },
+  "active=true,facing=east,half=lower": {
+   "model": "dimensionalflux:block/tesla_broadcaster_base",
+   "y": 90
+  },
+  "active=true,facing=east,half=upper": {
+   "model": "dimensionalflux:block/tesla_broadcaster_upper"
+  },
+  "active=false,facing=east,half=lower": {
+   "model": "dimensionalflux:block/tesla_broadcaster_base_idle",
+   "y": 90
+  },
+  "active=false,facing=east,half=upper": {
+   "model": "dimensionalflux:block/tesla_broadcaster_upper"
+  },
+  "active=true,facing=south,half=lower": {
+   "model": "dimensionalflux:block/tesla_broadcaster_base",
+   "y": 180
+  },
+  "active=true,facing=south,half=upper": {
+   "model": "dimensionalflux:block/tesla_broadcaster_upper"
+  },
+  "active=false,facing=south,half=lower": {
+   "model": "dimensionalflux:block/tesla_broadcaster_base_idle",
+   "y": 180
+  },
+  "active=false,facing=south,half=upper": {
+   "model": "dimensionalflux:block/tesla_broadcaster_upper"
+  },
+  "active=true,facing=west,half=lower": {
+   "model": "dimensionalflux:block/tesla_broadcaster_base",
+   "y": 270
+  },
+  "active=true,facing=west,half=upper": {
+   "model": "dimensionalflux:block/tesla_broadcaster_upper"
+  },
+  "active=false,facing=west,half=lower": {
+   "model": "dimensionalflux:block/tesla_broadcaster_base_idle",
+   "y": 270
+  },
+  "active=false,facing=west,half=upper": {
+   "model": "dimensionalflux:block/tesla_broadcaster_upper"
+  }
+ }
+}

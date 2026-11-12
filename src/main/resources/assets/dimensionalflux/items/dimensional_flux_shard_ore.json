@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "dimensionalflux:block/dimensional_flux_shard_ore"
+  }
+}

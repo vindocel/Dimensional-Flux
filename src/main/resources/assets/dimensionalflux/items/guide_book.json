@@ -1,0 +1,22 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:display_context",
+    "cases": [
+      {
+        "when": "gui",
+        "model": {
+          "type": "minecraft:model",
+          "model": "dimensionalflux:item/guide_book_icon"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:special",
+      "base": "dimensionalflux:item/guide_book",
+      "model": {
+        "type": "dimensionalflux:guide_book"
+      }
+    }
+  }
+}

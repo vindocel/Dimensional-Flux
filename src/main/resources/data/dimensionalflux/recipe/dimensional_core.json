@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "dimensionalflux",
+  "pattern": [
+    "coc",
+    "efe",
+    "coc"
+  ],
+  "key": {
+    "c": "minecraft:copper_block",
+    "o": "minecraft:obsidian",
+    "e": "minecraft:ender_eye",
+    "f": "dimensionalflux:dimensional_flux_shard"
+  },
+  "result": {
+    "id": "dimensionalflux:dimensional_core",
+    "count": 4
+  }
+}

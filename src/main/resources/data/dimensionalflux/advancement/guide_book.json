@@ -1,0 +1,19 @@
+{
+  "criteria": {
+    "first_shard": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "dimensionalflux:dimensional_flux_shard"
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "loot": [
+      "dimensionalflux:rewards/guide_book"
+    ]
+  }
+}

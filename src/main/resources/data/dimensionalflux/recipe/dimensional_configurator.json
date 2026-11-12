@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "dimensionalflux",
+  "pattern": [
+    " fc",
+    " uf",
+    "u  "
+  ],
+  "key": {
+    "u": "minecraft:copper_block",
+    "f": "dimensionalflux:dimensional_flux_shard",
+    "c": "dimensionalflux:dimensional_core"
+  },
+  "result": {
+    "id": "dimensionalflux:dimensional_configurator",
+    "count": 1
+  }
+}

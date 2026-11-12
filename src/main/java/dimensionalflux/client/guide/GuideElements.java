@@ -1,0 +1,380 @@
+package dimensionalflux.client.guide;
+
+import dimensionalflux.client.gui.SteelframePaint;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Util;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.level.Level;
+
+/** The building blocks of the guide pages, printed in ink on the cream pages of the Dimensional Flux Guide. */
+final class GuideElements {
+    /** Ink colors on paper, taken from the book's own texture. */
+    static final int BODY = 0xFF333444;
+    static final int HEADING = 0xFF0B6F7D;
+    static final int MUTED = 0xFF706A81;
+    static final int TIP = 0xFF6B44B5;
+    static final int WARNING = 0xFFB0402A;
+    static final int RULE = 0x600B6F7D;
+    static final int TINT = 0x220B6F7D;
+    /** Dotted underline of an item reference. */
+    static final int REFERENCE = 0xA00B6F7D;
+    static final int LINE = 10;
+
+    private GuideElements() {
+    }
+
+    /** Section title with a thin rule under it. */
+    record Heading(Component text) implements GuideElement {
+        @Override
+        public int height(GuideScreen screen, int width) {
+            return 15;
+        }
+
+        @Override
+        public void render(GuideScreen screen, GuiGraphicsExtractor g, int x, int y, int width, int mouseX, int mouseY) {
+            screen.fittedText(g, text, x, y + 2, width, HEADING);
+            SteelframePaint.fill(g, x, y + 12, x + width, y + 13, RULE);
+        }
+    }
+
+    /** First block of a chapter: its icon and title. */
+    record ChapterTitle(Supplier<ItemStack> icon, Component title) implements GuideElement {
+        @Override
+        public int height(GuideScreen screen, int width) {
+            return 24;
+        }
+
+        @Override
+        public void render(GuideScreen screen, GuiGraphicsExtractor g, int x, int y, int width, int mouseX, int mouseY) {
+            g.item(icon.get(), x, y + 1);
+            screen.fittedText(g, title, x + 20, y + 5, width - 20, HEADING);
+            SteelframePaint.fill(g, x, y + 20, x + width, y + 21, RULE);
+            SteelframePaint.fill(g, x, y + 22, x + width, y + 23, RULE);
+        }
+    }
+
+    /**
+     * Wrapped paragraph; the pagination may split it into {@link Lines} across pages. It is inked (and its item
+     * references marked) when created, so the chapter's first mentions follow the reading order.
+     */
+    static final class Text implements GuideElement {
+        private final Component text;
+        private int cachedWidth = -1;
+        private Lines lines = new Lines(List.of());
+
+        Text(Component text) {
+            this.text = GuideReferences.ink(text);
+        }
+
+        List<FormattedCharSequence> lines(GuideScreen screen, int width) {
+            if (width != cachedWidth) {
+                cachedWidth = width;
+                lines = new Lines(screen.font().split(text, width));
+            }
+            return lines.lines();
+        }
+
+        @Override
+        public int height(GuideScreen screen, int width) {
+            return lines(screen, width).size() * LINE;
+        }
+
+        @Override
+        public void render(GuideScreen screen, GuiGraphicsExtractor g, int x, int y, int width, int mouseX, int mouseY) {
+            lines(screen, width);
+            lines.render(screen, g, x, y, width, mouseX, mouseY);
+        }
+    }
+
+    /**
+     * Some lines of a paragraph (a paragraph split between two pages). Item references are underlined with dots;
+     * hovering one tints it and shows the item.
+     */
+    static final class Lines implements GuideElement {
+        private final List<FormattedCharSequence> lines;
+        private List<List<GuideReferences.Span>> spans;
+
+        Lines(List<FormattedCharSequence> lines) {
+            this.lines = lines;
+        }
+
+        List<FormattedCharSequence> lines() {
+            return lines;
+        }
+
+        @Override
+        public int height(GuideScreen screen, int width) {
+            return lines.size() * LINE;
+        }
+
+        @Override
+        public void render(GuideScreen screen, GuiGraphicsExtractor g, int x, int y, int width, int mouseX, int mouseY) {
+            if (spans == null) {
+                spans = new ArrayList<>(lines.size());
+                for (FormattedCharSequence line : lines) {
+                    spans.add(GuideReferences.spans(screen.font(), line));
+                }
+            }
+            for (int i = 0; i < lines.size(); i++) {
+                int ly = y + i * LINE;
+                for (GuideReferences.Span span : spans.get(i)) {
+                    if (mouseX >= x + span.start() && mouseX < x + span.end() && mouseY >= ly - 1 && mouseY < ly + 10) {
+                        SteelframePaint.fill(g, x + span.start() - 1, ly - 1, x + span.end() + 1, ly + 10, TINT);
+                        screen.hoverReference(span.id());
+                    }
+                }
+                SteelframePaint.text(g, screen.font(), lines.get(i), x, ly, BODY, false);
+                for (GuideReferences.Span span : spans.get(i)) {
+                    for (int px = span.start(); px < span.end() - 1; px += 2) {
+                        SteelframePaint.fill(g, x + px, ly + 9, x + px + 1, ly + 10, REFERENCE);
+                    }
+                }
+            }
+        }
+    }
+
+    /** Boxed note with a colored bar and a title (tip or warning). */
+    static final class Note implements GuideElement {
+        private final Component title;
+        private final Text body;
+        private final int accent;
+        private final String url;
+
+        Note(Component title, Component body, int accent) {
+            this(title, body, accent, null);
+        }
+
+        Note(Component title, Component body, int accent, String url) {
+            this.title = title;
+            this.body = new Text(body);
+            this.accent = accent;
+            this.url = url;
+        }
+
+        @Override
+        public int height(GuideScreen screen, int width) {
+            return 15 + body.height(screen, width - 10) + 4;
+        }
+
+        @Override
+        public void render(GuideScreen screen, GuiGraphicsExtractor g, int x, int y, int width, int mouseX, int mouseY) {
+            int h = height(screen, width);
+            SteelframePaint.fill(g, x, y, x + width, y + h, 0x1E000000 | (accent & 0x00FFFFFF));
+            SteelframePaint.fill(g, x, y, x + 2, y + h, accent);
+            screen.fittedText(g, title, x + 6, y + 4, width - 12, accent);
+            if (url != null) {
+                int lineWidth = Math.min(width - 12, screen.font().width(title));
+                SteelframePaint.fill(g, x + 6, y + 13, x + 6 + lineWidth, y + 14, accent);
+                if (mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + 15) {
+                    SteelframePaint.fill(g, x + 4, y + 2, x + width - 4, y + 15, TINT);
+                    screen.hoverText(Component.translatable("guide.dimensionalflux.mod_link"));
+                }
+            }
+            body.render(screen, g, x + 6, y + 15, width - 10, mouseX, mouseY);
+        }
+
+        @Override
+        public boolean click(GuideScreen screen, double mx, double my, int x, int y, int width, int button) {
+            if (url == null || button != 0 || mx < x || mx >= x + width || my < y || my >= y + 15) return false;
+            screen.playClick();
+            net.minecraft.client.gui.screens.ConfirmLinkScreen.confirmLinkNow(screen, url);
+            return true;
+        }
+    }
+
+    /** An item with its name and a description beside it. */
+    static final class ItemNote implements GuideElement {
+        private final Supplier<ItemStack> stack;
+        private final Text description;
+
+        ItemNote(Supplier<ItemStack> stack, Component description) {
+            this.stack = stack;
+            this.description = new Text(description);
+        }
+
+        @Override
+        public int height(GuideScreen screen, int width) {
+            return Math.max(20, 11 + description.height(screen, width - 22)) + 2;
+        }
+
+        @Override
+        public void render(GuideScreen screen, GuiGraphicsExtractor g, int x, int y, int width, int mouseX, int mouseY) {
+            ItemStack item = stack.get();
+            screen.itemSlot(g, item, x, y, mouseX, mouseY);
+            screen.fittedText(g, item.getHoverName(), x + 22, y + 1, width - 22, HEADING);
+            description.render(screen, g, x + 22, y + 12, width - 22, mouseX, mouseY);
+        }
+    }
+
+    /** A row of items (wrapping), with their tooltips. */
+    static final class ItemRow implements GuideElement {
+        private final Supplier<List<ItemStack>> items;
+
+        ItemRow(Supplier<List<ItemStack>> items) {
+            this.items = items;
+        }
+
+        private int perRow(int width) {
+            return Math.max(1, (width + 2) / 20);
+        }
+
+        @Override
+        public int height(GuideScreen screen, int width) {
+            int count = items.get().size();
+            return ((count + perRow(width) - 1) / perRow(width)) * 20;
+        }
+
+        @Override
+        public void render(GuideScreen screen, GuiGraphicsExtractor g, int x, int y, int width, int mouseX, int mouseY) {
+            List<ItemStack> list = items.get();
+            int per = perRow(width);
+            for (int i = 0; i < list.size(); i++) {
+                screen.itemSlot(g, list.get(i), x + (i % per) * 20, y + (i / per) * 20, mouseX, mouseY);
+            }
+        }
+    }
+
+    /** A crafting table recipe (shaped or shapeless) read from the synced recipes, tag ingredients cycling. */
+    record Crafting(Identifier id) implements GuideElement {
+        @Override
+        public int height(GuideScreen screen, int width) {
+            return 67;
+        }
+
+        @Override
+        public void render(GuideScreen screen, GuiGraphicsExtractor g, int x, int y, int width, int mouseX, int mouseY) {
+            Level level = Minecraft.getInstance().level;
+            RecipeHolder<?> holder = level == null ? null
+                    : GuideRecipes.byKey(ResourceKey.create(Registries.RECIPE, id)).orElse(null);
+            if (holder == null) {
+                screen.fittedText(g, Component.translatable("guide.dimensionalflux.recipe_missing"), x, y + 4, width, MUTED);
+                return;
+            }
+            Recipe<?> recipe = holder.value();
+            ItemStack result = GuideRecipes.result(level.registryAccess(), recipe);
+            Component name = result.getCount() > 1
+                    ? Component.literal(result.getCount() + "× ").append(result.getHoverName()) : result.getHoverName();
+            screen.fittedText(g, name, x, y + 1, width, HEADING);
+            int gridY = y + 11;
+            List<Optional<Ingredient>> ingredients = GuideRecipes.grid(recipe);
+            int recipeW = recipe instanceof ShapedRecipe shaped ? shaped.getWidth() : 3;
+            for (int row = 0; row < 3; row++) {
+                for (int col = 0; col < 3; col++) {
+                    int index = row * recipeW + col;
+                    ItemStack shown = ItemStack.EMPTY;
+                    if (col < recipeW && index < ingredients.size()) {
+                        shown = ingredients.get(index).map(Crafting::cycle).orElse(ItemStack.EMPTY);
+                    }
+                    screen.itemSlot(g, shown, x + col * 18, gridY + row * 18, mouseX, mouseY);
+                }
+            }
+            int arrowX = x + 3 * 18 + 6;
+            SteelframePaint.text(g, screen.font(), "→", arrowX + 2, gridY + 23, HEADING, false);
+            screen.itemSlot(g, result, arrowX + 16, gridY + 18, mouseX, mouseY);
+            Component kind = Component.translatable(recipe instanceof ShapedRecipe
+                    ? "guide.dimensionalflux.recipe_shaped" : "guide.dimensionalflux.recipe_shapeless");
+            int kindX = arrowX + 38;
+            if (x + width - kindX > 16) {
+                screen.fittedText(g, kind, kindX, gridY + 23, x + width - kindX, MUTED);
+            }
+        }
+
+        private static ItemStack cycle(Ingredient ingredient) {
+            ItemStack[] options = GuideRecipes.stacks(ingredient);
+            if (options.length == 0) {
+                return ItemStack.EMPTY;
+            }
+            return options[(int) ((Util.getMillis() / 1000) % options.length)];
+        }
+    }
+
+    /** Table with a header row; a table longer than the page continues on the next pages, the header repeated. */
+    static final class Table implements GuideElement {
+        static final int ROW = 11;
+        private final List<Component> headers;
+        private final Supplier<List<List<String>>> rows;
+        private final float[] columns;
+
+        /** {@code columns}: relative width of each column. */
+        Table(List<Component> headers, float[] columns, Supplier<List<List<String>>> rows) {
+            this.headers = headers;
+            this.columns = columns;
+            this.rows = rows;
+        }
+
+        int rowCount() {
+            return rows.get().size();
+        }
+
+        /** Rows {@code from} (inclusive) to {@code to} (exclusive) under the same header. */
+        Table slice(int from, int to) {
+            return new Table(headers, columns, () -> {
+                List<List<String>> all = rows.get();
+                return all.subList(Math.min(from, all.size()), Math.min(to, all.size()));
+            });
+        }
+
+        @Override
+        public int height(GuideScreen screen, int width) {
+            return (rows.get().size() + 1) * ROW + 3;
+        }
+
+        @Override
+        public void render(GuideScreen screen, GuiGraphicsExtractor g, int x, int y, int width, int mouseX, int mouseY) {
+            int[] starts = new int[columns.length + 1];
+            float total = 0;
+            for (float c : columns) {
+                total += c;
+            }
+            float acc = 0;
+            for (int i = 0; i < columns.length; i++) {
+                starts[i] = x + Math.round(acc / total * width);
+                acc += columns[i];
+            }
+            starts[columns.length] = x + width;
+            SteelframePaint.fill(g, x, y, x + width, y + ROW, 0x330B6F7D);
+            for (int c = 0; c < headers.size(); c++) {
+                screen.fittedText(g, headers.get(c), starts[c] + 2, y + 2, starts[c + 1] - starts[c] - 3, HEADING);
+            }
+            List<List<String>> list = rows.get();
+            for (int r = 0; r < list.size(); r++) {
+                int ry = y + (r + 1) * ROW;
+                if (r % 2 == 1) {
+                    SteelframePaint.fill(g, x, ry, x + width, ry + ROW, TINT);
+                }
+                List<String> cells = list.get(r);
+                for (int c = 0; c < cells.size() && c < columns.length; c++) {
+                    screen.fittedText(g, Component.literal(cells.get(c)), starts[c] + 2, ry + 2, starts[c + 1] - starts[c] - 3,
+                            c == 0 ? HEADING : BODY);
+                }
+            }
+            SteelframePaint.fill(g, x, y + (list.size() + 1) * ROW, x + width, y + (list.size() + 1) * ROW + 1, RULE);
+        }
+    }
+
+    /** Empty space. */
+    record Spacer(int size) implements GuideElement {
+        @Override
+        public int height(GuideScreen screen, int width) {
+            return size;
+        }
+
+        @Override
+        public void render(GuideScreen screen, GuiGraphicsExtractor g, int x, int y, int width, int mouseX, int mouseY) {
+        }
+    }
+}

@@ -1,0 +1,873 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/frame"
+      }
+    },
+    {
+      "when": {
+        "down": "false",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_000_0_joined_0"
+      }
+    },
+    {
+      "when": {
+        "down": "true",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_000_0_joined_1"
+      }
+    },
+    {
+      "when": {
+        "down": "false",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_000_0_joined_2"
+      }
+    },
+    {
+      "when": {
+        "down": "true",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_000_0_joined_3"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_000_1_joined_0"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_000_1_joined_1"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_000_1_joined_2"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_000_1_joined_3"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "down": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_000_2_joined_0"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "down": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_000_2_joined_1"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "down": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_000_2_joined_2"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "down": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_000_2_joined_3"
+      }
+    },
+    {
+      "when": {
+        "down": "false",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_001_0_joined_0"
+      }
+    },
+    {
+      "when": {
+        "down": "true",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_001_0_joined_1"
+      }
+    },
+    {
+      "when": {
+        "down": "false",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_001_0_joined_2"
+      }
+    },
+    {
+      "when": {
+        "down": "true",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_001_0_joined_3"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_001_1_joined_0"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_001_1_joined_1"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_001_1_joined_2"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_001_1_joined_3"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "down": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_001_2_joined_0"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "down": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_001_2_joined_1"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "down": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_001_2_joined_2"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "down": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_001_2_joined_3"
+      }
+    },
+    {
+      "when": {
+        "up": "false",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_010_0_joined_0"
+      }
+    },
+    {
+      "when": {
+        "up": "true",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_010_0_joined_1"
+      }
+    },
+    {
+      "when": {
+        "up": "false",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_010_0_joined_2"
+      }
+    },
+    {
+      "when": {
+        "up": "true",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_010_0_joined_3"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_010_1_joined_0"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_010_1_joined_1"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_010_1_joined_2"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_010_1_joined_3"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "up": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_010_2_joined_0"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "up": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_010_2_joined_1"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "up": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_010_2_joined_2"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "up": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_010_2_joined_3"
+      }
+    },
+    {
+      "when": {
+        "up": "false",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_011_0_joined_0"
+      }
+    },
+    {
+      "when": {
+        "up": "true",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_011_0_joined_1"
+      }
+    },
+    {
+      "when": {
+        "up": "false",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_011_0_joined_2"
+      }
+    },
+    {
+      "when": {
+        "up": "true",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_011_0_joined_3"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_011_1_joined_0"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_011_1_joined_1"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_011_1_joined_2"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_011_1_joined_3"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "up": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_011_2_joined_0"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "up": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_011_2_joined_1"
+      }
+    },
+    {
+      "when": {
+        "west": "false",
+        "up": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_011_2_joined_2"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "up": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_011_2_joined_3"
+      }
+    },
+    {
+      "when": {
+        "down": "false",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_100_0_joined_0"
+      }
+    },
+    {
+      "when": {
+        "down": "true",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_100_0_joined_1"
+      }
+    },
+    {
+      "when": {
+        "down": "false",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_100_0_joined_2"
+      }
+    },
+    {
+      "when": {
+        "down": "true",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_100_0_joined_3"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_100_1_joined_0"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_100_1_joined_1"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_100_1_joined_2"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_100_1_joined_3"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "down": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_100_2_joined_0"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "down": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_100_2_joined_1"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "down": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_100_2_joined_2"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "down": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_100_2_joined_3"
+      }
+    },
+    {
+      "when": {
+        "down": "false",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_101_0_joined_0"
+      }
+    },
+    {
+      "when": {
+        "down": "true",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_101_0_joined_1"
+      }
+    },
+    {
+      "when": {
+        "down": "false",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_101_0_joined_2"
+      }
+    },
+    {
+      "when": {
+        "down": "true",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_101_0_joined_3"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_101_1_joined_0"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_101_1_joined_1"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_101_1_joined_2"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_101_1_joined_3"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "down": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_101_2_joined_0"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "down": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_101_2_joined_1"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "down": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_101_2_joined_2"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "down": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_101_2_joined_3"
+      }
+    },
+    {
+      "when": {
+        "up": "false",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_110_0_joined_0"
+      }
+    },
+    {
+      "when": {
+        "up": "true",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_110_0_joined_1"
+      }
+    },
+    {
+      "when": {
+        "up": "false",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_110_0_joined_2"
+      }
+    },
+    {
+      "when": {
+        "up": "true",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_110_0_joined_3"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_110_1_joined_0"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "north": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_110_1_joined_1"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_110_1_joined_2"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "north": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_110_1_joined_3"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "up": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_110_2_joined_0"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "up": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_110_2_joined_1"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "up": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_110_2_joined_2"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "up": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_110_2_joined_3"
+      }
+    },
+    {
+      "when": {
+        "up": "false",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_111_0_joined_0"
+      }
+    },
+    {
+      "when": {
+        "up": "true",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_111_0_joined_1"
+      }
+    },
+    {
+      "when": {
+        "up": "false",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_111_0_joined_2"
+      }
+    },
+    {
+      "when": {
+        "up": "true",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_111_0_joined_3"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_111_1_joined_0"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "south": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_111_1_joined_1"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_111_1_joined_2"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "south": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_111_1_joined_3"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "up": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_111_2_joined_0"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "up": "false"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_111_2_joined_1"
+      }
+    },
+    {
+      "when": {
+        "east": "false",
+        "up": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_111_2_joined_2"
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "up": "true"
+      },
+      "apply": {
+        "model": "dimensionalflux:block/dimensional_block/corner_111_2_joined_3"
+      }
+    }
+  ]
+}

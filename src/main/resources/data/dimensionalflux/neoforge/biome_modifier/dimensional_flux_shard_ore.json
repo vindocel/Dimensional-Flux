@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": [
+    "dimensionalflux:dimensional_flux_shard_shallow",
+    "dimensionalflux:dimensional_flux_shard_deep",
+    "dimensionalflux:dimensional_flux_shard_deep_peak"
+  ],
+  "step": "underground_ores"
+}

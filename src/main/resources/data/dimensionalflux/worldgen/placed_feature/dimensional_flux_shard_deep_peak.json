@@ -1,0 +1,27 @@
+{
+  "feature": "dimensionalflux:dimensional_flux_shard_vein",
+  "placement": [
+    {
+      "type": "minecraft:count",
+      "count": 2
+    },
+    {
+      "type": "minecraft:in_square"
+    },
+    {
+      "type": "minecraft:height_range",
+      "height": {
+        "type": "minecraft:uniform",
+        "min_inclusive": {
+          "absolute": -58
+        },
+        "max_inclusive": {
+          "absolute": -50
+        }
+      }
+    },
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "dimensionalflux",
+  "pattern": [
+    "uuu",
+    "ixo",
+    "bbb"
+  ],
+  "key": {
+    "u": "minecraft:copper_block",
+    "i": "dimensionalflux:dimensional_receiver",
+    "x": "minecraft:redstone_block",
+    "o": "dimensionalflux:dimensional_emitter",
+    "b": "dimensionalflux:dimensional_block"
+  },
+  "result": {
+    "id": "dimensionalflux:tesla_broadcaster",
+    "count": 1
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "dimensionalflux:block/dimensional_battery_item",
+  "textures": {
+    "particle": "dimensionalflux:block/dimensional_battery",
+    "0": "dimensionalflux:block/dimensional_battery",
+    "1": "dimensionalflux:block/dimensional_battery_offline"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+    "category": "misc",
+  "group": "dimensionalflux",
+  "pattern": [
+    "fcf",
+    "cfc",
+    "fcf"
+  ],
+  "key": {
+    "c": "dimensionalflux:dimensional_core",
+    "f": "dimensionalflux:dimensional_flux_shard"
+  },
+  "result": {
+    "id": "dimensionalflux:dimensional_block",
+    "count": 1
+  }
+}

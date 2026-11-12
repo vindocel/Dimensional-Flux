@@ -1,0 +1,394 @@
+{
+ "multipart": [
+  {
+   "when": {
+    "facing": "north",
+    "connected": "true"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_base"
+   }
+  },
+  {
+   "when": {
+    "facing": "north",
+    "connected": "false"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_base_offline"
+   }
+  },
+  {
+   "when": {
+    "facing": "north",
+    "charge": "1|2|3|4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_1"
+   }
+  },
+  {
+   "when": {
+    "facing": "north",
+    "charge": "2|3|4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_2"
+   }
+  },
+  {
+   "when": {
+    "facing": "north",
+    "charge": "3|4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_3"
+   }
+  },
+  {
+   "when": {
+    "facing": "north",
+    "charge": "4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_4"
+   }
+  },
+  {
+   "when": {
+    "facing": "north",
+    "charge": "5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_5"
+   }
+  },
+  {
+   "when": {
+    "facing": "north",
+    "charge": "6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_6"
+   }
+  },
+  {
+   "when": {
+    "facing": "north",
+    "charge": "7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_7"
+   }
+  },
+  {
+   "when": {
+    "facing": "north",
+    "charge": "8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_8"
+   }
+  },
+  {
+   "when": {
+    "facing": "east",
+    "connected": "true"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_base",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east",
+    "connected": "false"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_base_offline",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east",
+    "charge": "1|2|3|4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_1",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east",
+    "charge": "2|3|4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_2",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east",
+    "charge": "3|4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_3",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east",
+    "charge": "4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_4",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east",
+    "charge": "5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_5",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east",
+    "charge": "6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_6",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east",
+    "charge": "7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_7",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "east",
+    "charge": "8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_8",
+    "y": 90
+   }
+  },
+  {
+   "when": {
+    "facing": "south",
+    "connected": "true"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_base",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south",
+    "connected": "false"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_base_offline",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south",
+    "charge": "1|2|3|4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_1",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south",
+    "charge": "2|3|4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_2",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south",
+    "charge": "3|4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_3",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south",
+    "charge": "4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_4",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south",
+    "charge": "5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_5",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south",
+    "charge": "6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_6",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south",
+    "charge": "7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_7",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "south",
+    "charge": "8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_8",
+    "y": 180
+   }
+  },
+  {
+   "when": {
+    "facing": "west",
+    "connected": "true"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_base",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west",
+    "connected": "false"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_base_offline",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west",
+    "charge": "1|2|3|4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_1",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west",
+    "charge": "2|3|4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_2",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west",
+    "charge": "3|4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_3",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west",
+    "charge": "4|5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_4",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west",
+    "charge": "5|6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_5",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west",
+    "charge": "6|7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_6",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west",
+    "charge": "7|8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_7",
+    "y": 270
+   }
+  },
+  {
+   "when": {
+    "facing": "west",
+    "charge": "8"
+   },
+   "apply": {
+    "model": "dimensionalflux:block/dimensional_battery_charge_8",
+    "y": 270
+   }
+  }
+ ]
+}

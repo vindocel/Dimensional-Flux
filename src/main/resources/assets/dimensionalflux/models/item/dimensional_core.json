@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "dimensionalflux:item/dimensional_core",
+    "layer1": "dimensionalflux:item/dimensional_core_animated"
+  }
+}

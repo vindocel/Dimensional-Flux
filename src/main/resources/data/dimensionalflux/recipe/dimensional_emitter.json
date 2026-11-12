@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+    "category": "misc",
+  "group": "dimensionalflux",
+  "pattern": [
+    " c ",
+    "cbc",
+    " c "
+  ],
+  "key": {
+    "c": "dimensionalflux:dimensional_core",
+    "b": "dimensionalflux:dimensional_block"
+  },
+  "result": {
+    "id": "dimensionalflux:dimensional_emitter",
+    "count": 1
+  }
+}

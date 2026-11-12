@@ -1,0 +1,27 @@
+{
+  "parent": "dimensionalflux:block/dimensional_receiver_item",
+  "textures": {
+    "0": "dimensionalflux:block/dimensional_receiver",
+    "particle": "dimensionalflux:block/dimensional_receiver",
+    "1": "dimensionalflux:block/dimensional_receiver_animated_idle"
+  },
+  "display": {
+    "ground": {
+      "rotation": [
+        90,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ],
+      "scale": [
+        0.35,
+        0.35,
+        0.35
+      ]
+    }
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "variants": {
+    "active=true,facing=north": {
+      "model": "dimensionalflux:block/dimensional_emitter"
+    },
+    "active=false,facing=north": {
+      "model": "dimensionalflux:block/dimensional_emitter_idle"
+    },
+    "active=true,facing=east": {
+      "model": "dimensionalflux:block/dimensional_emitter",
+      "y": 90
+    },
+    "active=false,facing=east": {
+      "model": "dimensionalflux:block/dimensional_emitter_idle",
+      "y": 90
+    },
+    "active=true,facing=south": {
+      "model": "dimensionalflux:block/dimensional_emitter",
+      "y": 180
+    },
+    "active=false,facing=south": {
+      "model": "dimensionalflux:block/dimensional_emitter_idle",
+      "y": 180
+    },
+    "active=true,facing=west": {
+      "model": "dimensionalflux:block/dimensional_emitter",
+      "y": 270
+    },
+    "active=false,facing=west": {
+      "model": "dimensionalflux:block/dimensional_emitter_idle",
+      "y": 270
+    },
+    "active=true,facing=up,rotation=0": {
+      "model": "dimensionalflux:block/dimensional_emitter",
+      "x": 270
+    },
+    "active=true,facing=up,rotation=1": {
+      "model": "dimensionalflux:block/dimensional_emitter",
+      "x": 270,
+      "y": 90
+    },
+    "active=true,facing=up,rotation=2": {
+      "model": "dimensionalflux:block/dimensional_emitter",
+      "x": 270,
+      "y": 180
+    },
+    "active=true,facing=up,rotation=3": {
+      "model": "dimensionalflux:block/dimensional_emitter",
+      "x": 270,
+      "y": 270
+    },
+    "active=false,facing=up,rotation=0": {
+      "model": "dimensionalflux:block/dimensional_emitter_idle",
+      "x": 270
+    },
+    "active=false,facing=up,rotation=1": {
+      "model": "dimensionalflux:block/dimensional_emitter_idle",
+      "x": 270,
+      "y": 90
+    },
+    "active=false,facing=up,rotation=2": {
+      "model": "dimensionalflux:block/dimensional_emitter_idle",
+      "x": 270,
+      "y": 180
+    },
+    "active=false,facing=up,rotation=3": {
+      "model": "dimensionalflux:block/dimensional_emitter_idle",
+      "x": 270,
+      "y": 270
+    },
+    "active=true,facing=down,rotation=0": {
+      "model": "dimensionalflux:block/dimensional_emitter",
+      "x": 90
+    },
+    "active=true,facing=down,rotation=1": {
+      "model": "dimensionalflux:block/dimensional_emitter",
+      "x": 90,
+      "y": 90
+    },
+    "active=true,facing=down,rotation=2": {
+      "model": "dimensionalflux:block/dimensional_emitter",
+      "x": 90,
+      "y": 180
+    },
+    "active=true,facing=down,rotation=3": {
+      "model": "dimensionalflux:block/dimensional_emitter",
+      "x": 90,
+      "y": 270
+    },
+    "active=false,facing=down,rotation=0": {
+      "model": "dimensionalflux:block/dimensional_emitter_idle",
+      "x": 90
+    },
+    "active=false,facing=down,rotation=1": {
+      "model": "dimensionalflux:block/dimensional_emitter_idle",
+      "x": 90,
+      "y": 90
+    },
+    "active=false,facing=down,rotation=2": {
+      "model": "dimensionalflux:block/dimensional_emitter_idle",
+      "x": 90,
+      "y": 180
+    },
+    "active=false,facing=down,rotation=3": {
+      "model": "dimensionalflux:block/dimensional_emitter_idle",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

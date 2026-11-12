@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "dimensionalflux",
+  "pattern": [
+    "bbb",
+    "ucu",
+    "bbb"
+  ],
+  "key": {
+    "b": "dimensionalflux:dimensional_block",
+    "u": "minecraft:copper_block",
+    "c": "dimensionalflux:dimensional_core"
+  },
+  "result": {
+    "id": "dimensionalflux:dimensional_battery",
+    "count": 1
+  }
+}

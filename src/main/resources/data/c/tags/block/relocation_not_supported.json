@@ -1,0 +1,8 @@
+{
+  "values": [
+    "dimensionalflux:dimensional_emitter",
+    "dimensionalflux:dimensional_receiver",
+    "dimensionalflux:dimensional_controller",
+    "dimensionalflux:dimensional_battery"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "type": "dimensionalflux:config_wipe_recipe",
+  "category": "misc",
+  "group": "dimensionalflux",
+  "ingredients": [
+    "dimensionalflux:dimensional_controller"
+  ],
+  "result": {
+    "id": "dimensionalflux:dimensional_controller",
+    "count": 1
+  }
+}

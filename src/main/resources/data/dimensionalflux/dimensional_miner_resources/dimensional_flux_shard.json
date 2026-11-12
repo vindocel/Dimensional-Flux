@@ -1,0 +1,24 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "dimensionalfluxminer"
+    }
+  ],
+  "entries": [
+    {
+      "resource": "dimensionalflux:dimensional_flux_shard_ore",
+      "dimension": "minecraft:overworld",
+      "family": "c:dimensional_flux_shard",
+      "weight": 0.03,
+      "crusher_output": "dimensionalflux:dimensional_flux_shard"
+    },
+    {
+      "resource": "dimensionalflux:deepslate_dimensional_flux_shard_ore",
+      "dimension": "minecraft:overworld",
+      "family": "c:dimensional_flux_shard",
+      "weight": 0.03,
+      "crusher_output": "dimensionalflux:dimensional_flux_shard"
+    }
+  ]
+}

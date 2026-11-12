@@ -1,0 +1,9 @@
+{
+	"dimensional_block": "#6B46C1",
+	"dimensional_emitter": "dynamic",
+	"dimensional_receiver": "dynamic",
+	"dimensional_controller": "dynamic",
+	"dimensional_battery": "dynamic",
+	"tesla_broadcaster": "dynamic",
+	"creative_dimensional_battery": "#8F8F97"
+}

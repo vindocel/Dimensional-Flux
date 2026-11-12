@@ -1,0 +1,12 @@
+{
+  "values": [
+    "dimensionalflux:dimensional_block",
+    "dimensionalflux:dimensional_emitter",
+    "dimensionalflux:dimensional_receiver",
+    "dimensionalflux:dimensional_controller",
+    "dimensionalflux:dimensional_battery",
+    "dimensionalflux:dimensional_flux_shard_ore",
+    "dimensionalflux:deepslate_dimensional_flux_shard_ore",
+    "dimensionalflux:tesla_broadcaster"
+  ]
+}
