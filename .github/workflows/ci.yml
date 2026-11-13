@@ -1,0 +1,71 @@
+name: CI
+
+# Builds every Minecraft version Stonecutter is configured for. No publishing secrets are available to CI or pull
+# requests.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  versions:
+    name: Minecraft versions
+    runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.list.outputs.versions }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: List the Stonecutter versions
+        id: list
+        shell: bash
+        run: bash scripts/validate-release.sh versions
+
+  build:
+    name: Build and GameTests ${{ matrix.minecraft }}
+    needs: versions
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        minecraft: ${{ fromJSON(needs.versions.outputs.versions) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build
+        env:
+          MINECRAFT: ${{ matrix.minecraft }}
+        run: ./gradlew ":$MINECRAFT:build" --console=plain
+
+      - name: GameTests
+        shell: bash
+        env:
+          MINECRAFT: ${{ matrix.minecraft }}
+        run: |
+          set -euo pipefail
+          ./gradlew ":$MINECRAFT:runGameTestServer" --console=plain | tee gametest.log
+          grep -q "required tests passed" gametest.log

@@ -349,7 +349,7 @@ public final class DfStyle {
         HOME("home", 16), SELECTION("selection", 16), WIRELESS("wireless", 16), CONNECTIONS("connections", 16),
         STATISTICS("statistics", 16), MEMBERS("members", 16), SETTINGS("settings", 16), CREATE("create", 16),
         AREA("area", 16), CLOSE("close", 6), EDIT("edit", 8), SELECT_OFF("select_off", 8), SELECT_ON("select_on", 8),
-        DISCONNECT("disconnect", 8), LOCK("lock", 8), LOCK_OPEN("lock_open", 8), NETWORK_SETTINGS("network_settings", 16), HIGHLIGHT("highlight", 8),
+        DISCONNECT("disconnect", 8), LOCK("lock", 8), LOCK_OPEN("lock_open", 8), TRASH("trash", 8), NETWORK_SETTINGS("network_settings", 16), HIGHLIGHT("highlight", 8),
         MACHINES("machines", 16), USER("user", 8), INFINITY("infinity", 8),
         REDSTONE_IGNORE("redstone_ignore", 16), REDSTONE_WITH_SIGNAL("redstone_with_signal", 16),
         REDSTONE_WITHOUT_SIGNAL("redstone_without_signal", 16);

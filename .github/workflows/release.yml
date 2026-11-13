@@ -1,0 +1,110 @@
+name: Publish Mod
+
+# Publication only occurs when a GitHub Release is published. Every Minecraft version lives on the same branch:
+# the +<minecraft> suffix of the tag (v0.1.2-beta.1+26.1.2) chooses the Stonecutter version that is built and
+# published.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    name: Build, validate and publish
+    runs-on: ubuntu-latest
+    environment: management
+
+    steps:
+      - name: Checkout exact release tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          # All branches, to check that the tag belongs to the release target branch.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve tag, release channel and Minecraft version
+        id: release
+        shell: bash
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+          TARGET: ${{ github.event.release.target_commitish }}
+        run: bash scripts/validate-release.sh tag
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Clean build of the tagged Minecraft version
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          MINECRAFT: ${{ steps.release.outputs.minecraft_version }}
+        run: ./gradlew ":$MINECRAFT:clean" ":$MINECRAFT:build" "-Prelease_version=$RELEASE_VERSION" --console=plain
+
+      - name: GameTests
+        shell: bash
+        env:
+          MINECRAFT: ${{ steps.release.outputs.minecraft_version }}
+        run: |
+          set -euo pipefail
+          ./gradlew ":$MINECRAFT:runGameTestServer" --console=plain | tee gametest.log
+          grep -q "required tests passed" gametest.log
+
+      - name: Validate artifact
+        id: artifact
+        shell: bash
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          MINECRAFT: ${{ steps.release.outputs.minecraft_version }}
+        run: bash scripts/validate-release.sh artifact
+
+      - name: Verify publishing configuration
+        shell: bash
+        env:
+          CURSEFORGE_ID: ${{ vars.ID_DO_CURSEFORGE }}
+          MODRINTH_ID: ${{ vars.ID_DO_MODRINTH }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          for name in CURSEFORGE_ID MODRINTH_ID CURSEFORGE_TOKEN MODRINTH_TOKEN; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing publishing configuration: $name"
+              exit 1
+            fi
+          done
+
+      - name: Publish to CurseForge and Modrinth
+        uses: Kira-NT/mc-publish@v3.3.1
+        with:
+          curseforge-id: ${{ vars.ID_DO_CURSEFORGE }}
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          modrinth-id: ${{ vars.ID_DO_MODRINTH }}
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          files: ${{ steps.artifact.outputs.jar }}
+          name: ${{ github.event.release.name }}
+          version: ${{ github.event.release.tag_name }}
+          version-type: ${{ steps.release.outputs.release_type }}
+          changelog: ${{ github.event.release.body }}
+          loaders: neoforge
+          game-versions: ${{ steps.release.outputs.minecraft_version }}
+          game-version-filter: none
+          java: 25
+          fail-mode: fail

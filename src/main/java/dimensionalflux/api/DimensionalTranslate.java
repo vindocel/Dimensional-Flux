@@ -174,7 +174,6 @@ public final class DimensionalTranslate {
     public static final DimensionalTranslate CANCEL = gui("button.cancel");
     public static final DimensionalTranslate CREATE = gui("button.create");
     public static final DimensionalTranslate CONNECT = gui("button.connect");
-    public static final DimensionalTranslate DELETE = gui("button.delete");
 
     // Wireless charging slots.
     public static final DimensionalTranslate INVENTORY = gui("slot.main");

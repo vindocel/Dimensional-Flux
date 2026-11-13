@@ -134,7 +134,6 @@
   "gui.dimensionalflux.button.cancel": "Cancel",
   "gui.dimensionalflux.button.create": "Create",
   "gui.dimensionalflux.button.connect": "Connect",
-  "gui.dimensionalflux.button.delete": "Delete",
   "gui.dimensionalflux.slot.main": "Inventory (not charged)",
   "gui.dimensionalflux.slot.hotbar": "Hotbar",
   "gui.dimensionalflux.slot.mainhand": "Main Hand",

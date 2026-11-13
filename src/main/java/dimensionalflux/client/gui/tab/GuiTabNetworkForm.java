@@ -61,7 +61,8 @@ public class GuiTabNetworkForm extends GuiTabCore {
     /** Create or Apply. */
     public SimpleButton mSubmit;
     /** Settings only. */
-    public SimpleButton mDelete;
+    /** Delete: a square button with a trash icon, armed by pressing Shift twice; its tooltip says what it does. */
+    public GuiButtonCore mDelete;
     /** Settings only: Priority or Share, switched with a left or right click. */
     public GuiButtonCore mDistribution;
     private boolean mShareByDemand;
@@ -113,7 +114,8 @@ public class GuiTabNetworkForm extends GuiTabCore {
     @Override
     public void init() {
         super.init();
-        mSubmit = mDelete = null;
+        mSubmit = null;
+        mDelete = null;
         mDistribution = null;
         if (!hasForm()) {
             return;
@@ -156,11 +158,20 @@ public class GuiTabNetworkForm extends GuiTabCore {
         if (mPurpose == Purpose.CREATE) {
             mSubmit = new SimpleButton(this, right() - 76, topPos + ACTION_Y, 76, ACTION_H, DimensionalTranslate.CREATE.get());
         } else {
-            mDelete = new SimpleButton(this, x, topPos + ACTION_Y, 64, ACTION_H, DimensionalTranslate.DELETE.get(), 0xFFFF5555);
+            mDelete = new GuiButtonCore(this, x, topPos + ACTION_Y, ACTION_H, ACTION_H) {
+                @Override
+                protected void drawButton(GuiGraphicsExtractor gr, int mouseX, int mouseY, float deltaTicks) {
+                    boolean hovered = isMouseHovered(mouseX, mouseY);
+                    DfStyle.button(gr, x, y, width, height, hovered && mClickable, false, !mClickable);
+                    // red while armed, grey while it waits for the double Shift
+                    DfStyle.icon(gr, DfStyle.Icon.TRASH, x + (width - 8) / 2, y + (height - 8) / 2, 8,
+                            mClickable ? 0xFFFF5555 : 0xFF8A9499);
+                }
+            };
             mDelete.setClickable(false);
             mButtons.add(mDelete);
             mSubmit = new SimpleButton(this, right() - 76, topPos + ACTION_Y, 76, ACTION_H, DimensionalTranslate.APPLY.get());
-            int from = x + 64 + 4, to = right() - 76 - 4;
+            int from = x + ACTION_H + 4, to = right() - 76 - 4;
             mDistribution = new GuiButtonCore(this, from, topPos + ACTION_Y, to - from, ACTION_H) {
                 @Override
                 protected void drawButton(GuiGraphicsExtractor gr, int mouseX, int mouseY, float deltaTicks) {
@@ -235,8 +246,13 @@ public class GuiTabNetworkForm extends GuiTabCore {
             if (!hasForm() || mDelete == null) {
                 renderNavigationPrompt(gr, DimensionalTranslate.ERROR_NO_SELECTED, EnumNavigationTab.TAB_SELECTION);
             } else if (mDelete.isMouseHovered(mouseX, mouseY)) {
-                gr.setTooltipForNextFrame(font, (mDelete.isClickable() ? DimensionalTranslate.DELETE_NETWORK
-                        : DimensionalTranslate.DOUBLE_SHIFT).makeComponent(), mouseX, mouseY);
+                // what the button does, and while it is not armed, how to arm it
+                var lines = new java.util.ArrayList<net.minecraft.network.chat.Component>();
+                lines.add(DimensionalTranslate.DELETE_NETWORK.makeComponent().withStyle(net.minecraft.ChatFormatting.RED));
+                if (!mDelete.isClickable()) {
+                    lines.add(DimensionalTranslate.DOUBLE_SHIFT.makeComponent().withStyle(net.minecraft.ChatFormatting.GRAY));
+                }
+                gr.setComponentTooltipForNextFrame(font, lines, mouseX, mouseY, net.minecraft.world.item.ItemStack.EMPTY);
             }
         }
     }
