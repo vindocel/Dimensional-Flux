@@ -256,6 +256,7 @@ On Windows use `gradlew.bat`. The Gradle wrapper provisions Gradle itself; a JDK
 - 🌿 **Branches**: day-to-day work goes to `production`; `main` only receives stable versions.
 - 🏷️ **Tags** look like `v0.1.0-beta.1+26.1.2`: `gradle.properties` keeps the base version, the channel (alpha, beta, release) comes from the tag, and the `+<minecraft>` suffix picks the Stonecutter version to publish.
 - ✅ Alpha and beta releases are marked **Pre-release** on GitHub; stable releases are not.
+- 📘 Full release and multi-version workflow: [docs/RELEASING.md](docs/RELEASING.md).
 
 ---
 
