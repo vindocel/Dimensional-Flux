@@ -28,6 +28,7 @@ import net.minecraft.world.entity.player.Player;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Comparator;
 import java.util.UUID;
 
@@ -48,6 +49,13 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
     private SwitchButton mTeamSharing;
     /** Sharing with the owner's scoreboard team (`/team`). */
     private SwitchButton mScoreboardSharing;
+    /**
+     * When both FTB Teams and a scoreboard team are offered: one card whose selector picks /team (left), no sharing
+     * (middle, the default) or FTB Teams (right).
+     */
+    private GuiButtonCore mTeamSelector;
+    private static final int CELL_SCOREBOARD = 0, CELL_NONE = 1, CELL_FTB = 2;
+    private static final boolean[] CELL_ACCENT = {true, false, true};
     private SimpleButton mSortButton;
     private int memberRefreshTicks;
 
@@ -82,16 +90,29 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
         mPageBar = new PageBar(this, mGrid.x(), topPos + HEIGHT - 12, CONTENT_WIDTH, getNetwork().getNetworkColor());
         mTeamSharing = null;
         mScoreboardSharing = null;
+        mTeamSelector = null;
         mSortButton = null;
         if (getNetwork().isValid()) {
             updateSortButton();
             boolean owner = getNetwork().getOwnerUUID().equals(mPlayer.getUUID());
             int switchX = mGrid.x() + CONTENT_WIDTH - DfStyle.SWITCH_WIDTH - 8;
-            if (showTeamSharing() && owner) {
+            if (combinedTeams()) {
+                int width = DfStyle.cellsWidth(3);
+                mTeamSelector = new GuiButtonCore(this, mGrid.x() + CONTENT_WIDTH - width - 8,
+                        topPos + TEAM_Y + (TEAM_HEIGHT - DfStyle.SWITCH_HEIGHT) / 2, width, DfStyle.SWITCH_HEIGHT) {
+                    @Override
+                    protected void drawButton(GuiGraphicsExtractor gr, int mouseX, int mouseY, float deltaTicks) {
+                        DfStyle.selectorCells(gr, x, y, teamCell(), CELL_ACCENT, mClickable && isMouseHovered(mouseX, mouseY),
+                                !mClickable);
+                    }
+                };
+                mTeamSelector.setClickable(owner);
+                mButtons.add(mTeamSelector);
+            } else if (showTeamSharing() && owner) {
                 mTeamSharing = new SwitchButton(this, switchX, topPos + TEAM_Y + (TEAM_HEIGHT - DfStyle.SWITCH_HEIGHT) / 2, isSharing());
                 mButtons.add(mTeamSharing);
             }
-            if (showScoreboardSharing() && owner) {
+            if (!combinedTeams() && showScoreboardSharing() && owner) {
                 mScoreboardSharing = new SwitchButton(this, switchX,
                         topPos + scoreboardY() + (TEAM_HEIGHT - DfStyle.SWITCH_HEIGHT) / 2, isScoreboardSharing());
                 mScoreboardSharing.setClickable(isScoreboardSharing() || mPlayer.getTeam() != null);
@@ -148,7 +169,42 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
     private static final int TEAM_STEP = TEAM_HEIGHT + 5;
 
     private int teamRows() {
-        return (showTeamSharing() ? 1 : 0) + (showScoreboardSharing() ? 1 : 0);
+        return combinedTeams() ? 1 : (showTeamSharing() ? 1 : 0) + (showScoreboardSharing() ? 1 : 0);
+    }
+
+    /** Both FTB Teams and a scoreboard team are offered: they share one card and one selector. */
+    private boolean combinedTeams() {
+        return showTeamSharing() && showScoreboardSharing();
+    }
+
+    /** The selector cell of the current sharing: FTB Teams wins if an older network has both. */
+    private int teamCell() {
+        return isSharing() ? CELL_FTB : isScoreboardSharing() ? CELL_SCOREBOARD : CELL_NONE;
+    }
+
+    /** The cell under the mouse, or -1. */
+    private int cellAt(double mouseX) {
+        int cell = (int) ((mouseX - mTeamSelector.x - 2) / 14);
+        return cell < 0 || cell > 2 ? -1 : cell;
+    }
+
+    /** Switches the sharing to the chosen cell: the other kind of team is turned off first. */
+    private void chooseTeam(int cell) {
+        if (cell < 0 || cell == teamCell()) {
+            return;
+        }
+        if (isSharing() && cell != CELL_FTB) {
+            ClientMessages.setTeamSharing(getToken(), getNetwork(), false);
+        }
+        if (isScoreboardSharing() && cell != CELL_SCOREBOARD) {
+            ClientMessages.setScoreboardSharing(getToken(), getNetwork(), false);
+        }
+        if (cell == CELL_FTB) {
+            ClientMessages.setTeamSharing(getToken(), getNetwork(), true);
+        } else if (cell == CELL_SCOREBOARD) {
+            ClientMessages.setScoreboardSharing(getToken(), getNetwork(), true);
+        }
+        mTeamSelector.setClickable(false);
     }
 
     private int scoreboardY() {
@@ -169,10 +225,16 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
     }
 
     @Override
+    @Nullable
+    protected EnumNavigationTab emptyStateTab() {
+        return getNetwork().isValid() ? null : EnumNavigationTab.TAB_SELECTION;
+    }
+
+    @Override
     protected void drawBackgroundLayer(GuiGraphicsExtractor gr, int mouseX, int mouseY, float deltaTicks) {
         super.drawBackgroundLayer(gr, mouseX, mouseY, deltaTicks);
         if (!getNetwork().isValid()) {
-            renderNavigationPrompt(gr, DimensionalTranslate.ERROR_NO_SELECTED, EnumNavigationTab.TAB_SELECTION);
+            renderNavigationPrompt(gr, DimensionalTranslate.ERROR_NO_SELECTED, EnumNavigationTab.TAB_SELECTION, mouseX, mouseY);
             return;
         }
         int x = mGrid.x();
@@ -182,7 +244,30 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
         DfStyle.scrollingText(gr, font, getNetwork().getNetworkName(), x + 12, y + 7,
                 CONTENT_WIDTH - 19, DfStyle.screenTextColor());
 
-        if (showTeamSharing()) {
+        if (combinedTeams()) {
+            // one card: its title and status follow the chosen kind of team
+            y = topPos + TEAM_Y;
+            DfStyle.glass(gr, x, y, CONTENT_WIDTH, TEAM_HEIGHT);
+            DfStyle.icon(gr, DfStyle.Icon.MEMBERS, x + 8, y + 9, 16, 0xFFFFFFFF);
+            int textWidth = CONTENT_WIDTH - 38 - DfStyle.cellsWidth(3) - 8;
+            String title, status;
+            switch (teamCell()) {
+                case CELL_FTB -> {
+                    title = "FTB Teams";
+                    status = sharingStatus();
+                }
+                case CELL_SCOREBOARD -> {
+                    title = DimensionalTranslate.SCOREBOARD_TEAM.get();
+                    status = scoreboardStatus();
+                }
+                default -> {
+                    title = DimensionalTranslate.TEAM_CHOOSE.get();
+                    status = DimensionalTranslate.TEAM_CHOOSE_HINT.get();
+                }
+            }
+            DfStyle.scrollingText(gr, font, title, x + 30, y + 6, textWidth, DfStyle.screenTextColor());
+            DfStyle.scrollingText(gr, font, status, x + 30, y + 19, textWidth, DfStyle.screenLabelColor());
+        } else if (showTeamSharing()) {
             y = topPos + TEAM_Y;
             DfStyle.glass(gr, x, y, CONTENT_WIDTH, TEAM_HEIGHT);
             DfStyle.icon(gr, DfStyle.Icon.MEMBERS, x + 8, y + 9, 16, 0xFFFFFFFF);
@@ -190,7 +275,7 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
             DfStyle.scrollingText(gr, font, "FTB Teams", x + 30, y + 6, textWidth, DfStyle.screenTextColor());
             DfStyle.scrollingText(gr, font, sharingStatus(), x + 30, y + 19, textWidth, DfStyle.screenLabelColor());
         }
-        if (showScoreboardSharing()) {
+        if (!combinedTeams() && showScoreboardSharing()) {
             y = topPos + scoreboardY();
             DfStyle.glass(gr, x, y, CONTENT_WIDTH, TEAM_HEIGHT);
             DfStyle.icon(gr, DfStyle.Icon.MEMBERS, x + 8, y + 9, 16, 0xFFFFFFFF);
@@ -216,6 +301,16 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
         mHoveredMember = rowAt(mouseX, mouseY);
         super.drawForegroundLayer(gr, mouseX, mouseY, deltaTicks);
         if (getCurrentPopup() != null) return;
+        if (mTeamSelector != null && mTeamSelector.isMouseHovered(mouseX, mouseY)) {
+            int cell = cellAt(mouseX);
+            if (cell >= 0) {
+                gr.setTooltipForNextFrame(font, (cell == CELL_SCOREBOARD ? DimensionalTranslate.TEAM_CHOOSE_SCOREBOARD
+                        : cell == CELL_FTB ? DimensionalTranslate.TEAM_CHOOSE_FTB : DimensionalTranslate.TEAM_CHOOSE_NONE)
+                        .makeComponent(), mouseX, mouseY);
+            }
+            return;
+        }
+        if (combinedTeams()) return;
         if (mScoreboardSharing != null && mScoreboardSharing.isMouseHovered(mouseX, mouseY)) {
             gr.setTooltipForNextFrame(font, (isScoreboardSharing() ? DimensionalTranslate.SCOREBOARD_TEAM_STOP
                     : DimensionalTranslate.SCOREBOARD_TEAM_SHARE).makeComponent(), mouseX, mouseY);
@@ -244,7 +339,9 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
             return;
         }
         if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT) return;
-        if (button == mTeamSharing && getNetwork().isValid()) {
+        if (button == mTeamSelector && getNetwork().isValid()) {
+            chooseTeam(cellAt(mouseX));
+        } else if (button == mTeamSharing && getNetwork().isValid()) {
             ClientMessages.setTeamSharing(getToken(), getNetwork(), !isSharing());
             mTeamSharing.setClickable(false);
         } else if (button == mScoreboardSharing && getNetwork().isValid()) {
@@ -356,6 +453,7 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
         } else if (key == DimensionalConstants.REQUEST_TEAM_SHARING) {
             if (mTeamSharing != null) mTeamSharing.setClickable(true);
             if (mScoreboardSharing != null) mScoreboardSharing.setClickable(true);
+            if (mTeamSelector != null) mTeamSelector.setClickable(true);
         }
     }
 

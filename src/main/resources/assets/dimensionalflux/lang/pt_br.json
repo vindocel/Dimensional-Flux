@@ -124,7 +124,6 @@
   "gui.dimensionalflux.label.playername": "Jogador",
   "gui.dimensionalflux.label.playeraccess": "Papel",
   "gui.dimensionalflux.label.cancelmembership": "Remover acesso direto",
-  "gui.dimensionalflux.label.clickabove": "Use %s acima",
   "gui.dimensionalflux.label.playersnetwork": "Rede de %s",
   "gui.dimensionalflux.label.sort.smart": "Automática",
   "gui.dimensionalflux.label.sort.id": "ID",
@@ -271,7 +270,7 @@
   "guide.dimensionalflux.materials.h.mining": "Mineração",
   "guide.dimensionalflux.materials.mining": "O minério fica escuro e acende com faíscas roxas e azuis quando é tocado, usado ou pisado. Uma §epicareta de ferro§r ou melhor solta um fragmento; Fortuna aumenta a quantidade, Toque Suave mantém o bloco de minério.",
   "guide.dimensionalflux.materials.h.core": "Núcleo Dimensional",
-  "guide.dimensionalflux.materials.core": "O coração de todo dispositivo. Cobre, Obsidiana, dois Olhos do Fim e um fragmento rendem quatro núcleos.",
+  "guide.dimensionalflux.materials.core": "O coração de todo dispositivo. Cobre, Obsidiana, dois Olhos do Fim e um fragmento rendem um núcleo.",
   "guide.dimensionalflux.materials.h.block": "Bloco Dimensional",
   "guide.dimensionalflux.materials.block": "Fragmentos e Núcleos Dimensionais num bloco sólido: a estrutura dos dispositivos maiores e um belo piso roxo para os corajosos.",
   "guide.dimensionalflux.materials.miner": "Com o Dimensional Flux Miner instalado, você pode usar a mineradora para produzir Minério de Fluxo Dimensional continuamente no Overworld. Processe o minério para obter Fragmentos de Fluxo Dimensional.",
@@ -378,5 +377,12 @@
   "guide.dimensionalflux.trouble.denied": "Redes privadas só aceitam membros, trancadas pedem senha, e um jogador bloqueado não usa a rede de jeito nenhum. Peça ao dono em Membros.",
   "guide.dimensionalflux.emitter.reactors": "Um reator do Bigger Reactors Rework pode abastecer esta rede. Conecte um Emissor à saída de energia dele e use Receptores ou um Tesla para alimentar suas máquinas.",
   "guide.dimensionalflux.mod_link": "Abrir a página do mod no CurseForge",
-  "guide.dimensionalflux.battery.comparator": "Um comparador em qualquer lado lê a carga armazenada de 0 (vazia) a 15 (cheia). Use esse sinal para ligar geradores de emergência quando a carga baixar ou interromper a geração quando a bateria encher."
+  "guide.dimensionalflux.battery.comparator": "Um comparador em qualquer lado lê a carga armazenada de 0 (vazia) a 15 (cheia). Use esse sinal para ligar geradores de emergência quando a carga baixar ou interromper a geração quando a bateria encher.",
+  "gui.dimensionalflux.prompt.create.hint": "Crie uma para conectar este dispositivo.",
+  "gui.dimensionalflux.prompt.select.hint": "Escolha uma rede para vê-la aqui.",
+  "gui.dimensionalflux.team.choose": "Compartilhe com sua equipe",
+  "gui.dimensionalflux.team.choose.hint": "Não compartilhada: escolha /team ou FTB Teams",
+  "gui.dimensionalflux.team.choose.scoreboard": "Compartilhar com sua equipe do placar (/team)",
+  "gui.dimensionalflux.team.choose.none": "Não compartilhar com uma equipe",
+  "gui.dimensionalflux.team.choose.ftb": "Compartilhar com seu grupo do FTB Teams"
 }

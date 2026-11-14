@@ -233,6 +233,19 @@ public final class DfStyle {
         return sScreenAccent;
     }
 
+    /**
+     * Ink in the network color for text drawn over a gauge on the panel: a deep shade of the color in the light look and
+     * a bright one in the dark look, so it stands out from both the filled and the empty segments. Grey, black and white
+     * networks keep the panel text color.
+     */
+    public static int networkInk(int rgb) {
+        float[] c = hsl(rgb);
+        if (c[1] < 0.15f) {
+            return chrome(TEXT);
+        }
+        return 0xFF000000 | withLightness(rgb, sDark ? 0.82f : 0.18f);
+    }
+
     /** {@code rgb} with its hue and saturation, at the given HSL lightness. */
     private static int withLightness(int rgb, float lightness) {
         float r = (rgb >> 16 & 0xFF) / 255f, g = (rgb >> 8 & 0xFF) / 255f, b = (rgb & 0xFF) / 255f;
@@ -516,6 +529,67 @@ public final class DfStyle {
             cfill(g, x + 12, y + 10, x + 20, y + 11, sAccentBottom);
         }
         knob(g, x + (on ? 20 : 3), y + 3, disabled);
+    }
+
+    /** Width of a selector of {@code cells} cells, as wide as the switches for two. */
+    public static int cellsWidth(int cells) {
+        return 6 + 14 * cells - 2;
+    }
+
+    // cells of a selector, drawn as in the Bigger Reactors Rework selectors
+    private static final int CELL_FRAME = 0xFF111B22;
+    private static final int CELL_TOP = 0xFF465259;
+    private static final int CELL_LEFT = 0xFF404C54;
+    private static final int CELL_FILL = 0xFF36434B;
+    private static final int CELL_LIT_TOP_DISABLED = 0xFF889298;
+    private static final int CELL_LIT_LEFT_DISABLED = 0xFF7D888F;
+    private static final int CELL_LIT_FILL_DISABLED = 0xFF627078;
+    /** The neutral lit cell (a default choice): the silver of Bigger Reactors Rework. */
+    private static final int CELL_NEUTRAL_TOP = 0xFFB5C1C7, CELL_NEUTRAL_LEFT = 0xFFAEBBC2, CELL_NEUTRAL_FILL = 0xFF9EADB5;
+
+    /**
+     * A selector of square cells in the switch frame, as in Bigger Reactors Rework: unlit cells are dark wells; the
+     * chosen cell is lit in the network accent when {@code accent} marks it, otherwise in the neutral silver of a
+     * default choice.
+     */
+    public static void selectorCells(GuiGraphicsExtractor g, int x, int y, int selected, boolean[] accent, boolean hovered,
+                                     boolean disabled) {
+        int width = cellsWidth(accent.length);
+        cfill(g, x, y, x + width, y + SWITCH_HEIGHT, hovered && !disabled ? sAccentHover : TOGGLE_OUTLINE);
+        cfill(g, x + 1, y + 1, x + width - 1, y + SWITCH_HEIGHT - 1, disabled ? TOGGLE_BORDER_DISABLED : TOGGLE_BORDER);
+        cfill(g, x + 2, y + 2, x + width - 2, y + SWITCH_HEIGHT - 2, TOGGLE_INSET);
+        cfill(g, x + 3, y + 3, x + width - 3, y + SWITCH_HEIGHT - 3, TOGGLE_TRACK);
+        for (int i = 0; i < accent.length; i++) {
+            int cx = x + 3 + 14 * i;
+            cfill(g, cx, y + 3, cx + 12, y + 11, CELL_FRAME);
+            int top, left, fill;
+            if (i != selected) {
+                top = chrome(CELL_TOP);
+                left = chrome(CELL_LEFT);
+                fill = chrome(CELL_FILL);
+            } else if (disabled) {
+                top = chrome(CELL_LIT_TOP_DISABLED);
+                left = chrome(CELL_LIT_LEFT_DISABLED);
+                fill = chrome(CELL_LIT_FILL_DISABLED);
+            } else if (accent[i]) {
+                top = sAccentTop;
+                fill = sAccentFill;
+                left = mixColors(sAccentTop, sAccentFill);
+            } else {
+                top = CELL_NEUTRAL_TOP;
+                left = CELL_NEUTRAL_LEFT;
+                fill = CELL_NEUTRAL_FILL;
+            }
+            SteelframePaint.fill(g, cx + 1, y + 4, cx + 11, y + 10, fill);
+            SteelframePaint.fill(g, cx + 1, y + 4, cx + 11, y + 5, top);
+            SteelframePaint.fill(g, cx + 1, y + 5, cx + 2, y + 9, left);
+        }
+    }
+
+    /** The color halfway between two opaque colors. */
+    private static int mixColors(int a, int b) {
+        int r = ((a >> 16 & 0xFF) + (b >> 16 & 0xFF)) / 2, gr = ((a >> 8 & 0xFF) + (b >> 8 & 0xFF)) / 2, bl = ((a & 0xFF) + (b & 0xFF)) / 2;
+        return 0xFF000000 | r << 16 | gr << 8 | bl;
     }
 
     private static void knob(GuiGraphicsExtractor g, int x, int y, boolean disabled) {

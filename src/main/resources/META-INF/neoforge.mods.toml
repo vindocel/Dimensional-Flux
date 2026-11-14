@@ -7,6 +7,7 @@ modId="${mod_id}"
 version="${mod_version}"
 displayName="Dimensional Flux"
 logoFile="logo.png"
+displayURL="https://vindocel.github.io/Showcase-DFM/dimensional-flux.html"
 description='''Transfer and manage wireless energy across dimensions.'''
 
 # Icon in the mod list of the Catalogue mod.

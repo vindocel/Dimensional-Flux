@@ -74,10 +74,16 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
     }
 
     @Override
+    @Nullable
+    protected EnumNavigationTab emptyStateTab() {
+        return dimensionalflux.client.ClientCache.getAllNetworks().isEmpty() ? EnumNavigationTab.TAB_CREATE : null;
+    }
+
+    @Override
     protected void drawBackgroundLayer(GuiGraphicsExtractor gr, int mouseX, int mouseY, float deltaTicks) {
         super.drawBackgroundLayer(gr, mouseX, mouseY, deltaTicks);
         if (mRows.isEmpty()) {
-            renderNavigationPrompt(gr, DimensionalTranslate.ERROR_NO_NETWORK, EnumNavigationTab.TAB_CREATE);
+            renderNavigationPrompt(gr, DimensionalTranslate.ERROR_NO_NETWORK, EnumNavigationTab.TAB_CREATE, mouseX, mouseY);
             return;
         }
         String total = DimensionalTranslate.TOTAL.get() + ": " + mRows.size();

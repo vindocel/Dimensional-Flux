@@ -19,6 +19,7 @@ import net.minecraft.world.entity.player.Player;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class GuiTabWireless extends GuiTabCore {
     public SimpleButton mApply;
@@ -47,6 +48,12 @@ public class GuiTabWireless extends GuiTabCore {
     public int panelHeight() { return DfStyle.PANEL_H; }
 
     @Override
+    @Nullable
+    protected EnumNavigationTab emptyStateTab() {
+        return getNetwork().isValid() ? null : EnumNavigationTab.TAB_SELECTION;
+    }
+
+    @Override
     protected void drawForegroundLayer(GuiGraphicsExtractor gr, int mouseX, int mouseY, float deltaTicks) {
         if (getNetwork().isValid()) {
             renderNetwork(gr, getNetwork().getNetworkName(), getNetwork().getNetworkColor(),
@@ -58,7 +65,7 @@ public class GuiTabWireless extends GuiTabCore {
                     leftPos + 12, topPos + 113, 148);
             if (unlimited) mLimit.drawPlaceholder(gr, DimensionalTranslate.UNLIMITED.get(), DfStyle.screenLabelColor());
         } else {
-            renderNavigationPrompt(gr, DimensionalTranslate.ERROR_NO_SELECTED, EnumNavigationTab.TAB_SELECTION);
+            renderNavigationPrompt(gr, DimensionalTranslate.ERROR_NO_SELECTED, EnumNavigationTab.TAB_SELECTION, mouseX, mouseY);
         }
         super.drawForegroundLayer(gr, mouseX, mouseY, deltaTicks);
     }

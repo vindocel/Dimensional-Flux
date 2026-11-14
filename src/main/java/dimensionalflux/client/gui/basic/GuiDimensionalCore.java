@@ -132,7 +132,7 @@ public abstract class GuiDimensionalCore extends GuiPopupHost {
         DfStyle.setDark(DeviceSettings.dark(menu.mProvider instanceof TileDimensionalDevice device ? device.getBlockPos() : null));
         if (!isEmbedded()) {
             // a screen shown in a window has the window as its panel
-            int height = this instanceof GuiTabCore tab ? tab.panelHeight() : DfStyle.PANEL_H;
+            int height = this instanceof GuiTabCore tab ? tab.shownPanelHeight() : DfStyle.PANEL_H;
             DfStyle.panel(gr, leftPos + DfStyle.PANEL_X, topPos + DfStyle.PANEL_Y, DfStyle.PANEL_W, height);
         }
     }

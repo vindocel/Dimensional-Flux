@@ -124,7 +124,6 @@
   "gui.dimensionalflux.label.playername": "Player",
   "gui.dimensionalflux.label.playeraccess": "Role",
   "gui.dimensionalflux.label.cancelmembership": "Remove direct access",
-  "gui.dimensionalflux.label.clickabove": "Use %s above",
   "gui.dimensionalflux.label.playersnetwork": "Network of %s",
   "gui.dimensionalflux.label.sort.smart": "Automatic",
   "gui.dimensionalflux.label.sort.id": "ID",
@@ -271,7 +270,7 @@
   "guide.dimensionalflux.materials.h.mining": "Mining",
   "guide.dimensionalflux.materials.mining": "The ore rests dark and lights up with purple and blue sparks when touched, used or walked on. An §eiron pickaxe§r or better drops one shard; Fortune adds more, Silk Touch keeps the ore block.",
   "guide.dimensionalflux.materials.h.core": "Dimensional Core",
-  "guide.dimensionalflux.materials.core": "The heart of every device. Copper, Obsidian, two Eyes of Ender and one shard make four cores.",
+  "guide.dimensionalflux.materials.core": "The heart of every device. Copper, Obsidian, two Eyes of Ender and one shard make one core.",
   "guide.dimensionalflux.materials.h.block": "Dimensional Block",
   "guide.dimensionalflux.materials.block": "Shards and Dimensional Cores packed into one solid block: the frame of the bigger devices, and a fine purple floor for the brave.",
   "guide.dimensionalflux.materials.miner": "With Dimensional Flux Miner installed, you can use its Miner to produce Dimensional Flux Ore continuously in the Overworld. Process the ore to obtain Dimensional Flux Shards.",
@@ -378,5 +377,12 @@
   "guide.dimensionalflux.trouble.denied": "Private networks only accept members, locked ones ask for the password, and a blocked player cannot use the network at all. Ask the owner in Members.",
   "guide.dimensionalflux.emitter.reactors": "A reactor from Bigger Reactors Rework can supply this network. Attach an Emitter to its energy output and use Receivers or a Tesla Broadcaster to power your machines.",
   "guide.dimensionalflux.mod_link": "Open the mod page on CurseForge",
-  "guide.dimensionalflux.battery.comparator": "A comparator on any side reads the stored charge from 0 (empty) to 15 (full). Use this signal to switch backup generators on as the charge falls or stop generation when storage fills."
+  "guide.dimensionalflux.battery.comparator": "A comparator on any side reads the stored charge from 0 (empty) to 15 (full). Use this signal to switch backup generators on as the charge falls or stop generation when storage fills.",
+  "gui.dimensionalflux.prompt.create.hint": "Create one to link this device.",
+  "gui.dimensionalflux.prompt.select.hint": "Choose a network to see it here.",
+  "gui.dimensionalflux.team.choose": "Share with your team",
+  "gui.dimensionalflux.team.choose.hint": "Not shared: pick /team or FTB Teams",
+  "gui.dimensionalflux.team.choose.scoreboard": "Share with your scoreboard team (/team)",
+  "gui.dimensionalflux.team.choose.none": "Do not share with a team",
+  "gui.dimensionalflux.team.choose.ftb": "Share with your FTB Teams party"
 }

@@ -94,10 +94,16 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
     }
 
     @Override
+    @Nullable
+    protected EnumNavigationTab emptyStateTab() {
+        return getNetwork().isValid() ? null : EnumNavigationTab.TAB_SELECTION;
+    }
+
+    @Override
     protected void drawBackgroundLayer(GuiGraphicsExtractor gr, int mouseX, int mouseY, float deltaTicks) {
         super.drawBackgroundLayer(gr, mouseX, mouseY, deltaTicks);
         if (!getNetwork().isValid()) {
-            renderNavigationPrompt(gr, DimensionalTranslate.ERROR_NO_SELECTED, EnumNavigationTab.TAB_SELECTION);
+            renderNavigationPrompt(gr, DimensionalTranslate.ERROR_NO_SELECTED, EnumNavigationTab.TAB_SELECTION, mouseX, mouseY);
             return;
         }
         int x = leftPos + 12, y = topPos + 10;

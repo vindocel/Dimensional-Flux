@@ -22,6 +22,8 @@ public class GuiTabPopup extends GuiPopupCore<GuiTabCore> {
     private final GuiTabCore mInner;
     // the inner screen was laid out with the window at this position; while the window is dragged, it is drawn shifted
     private int mLaidLeft;
+    /** Size of the tab's panel when it was laid out. */
+    private int mLaidWidth, mLaidHeight;
     private int mLaidTop;
 
     GuiTabPopup(GuiTabCore home, EnumNavigationTab tab, GuiTabCore inner) {
@@ -43,12 +45,12 @@ public class GuiTabPopup extends GuiPopupCore<GuiTabCore> {
     /** A wider tab window stays centered over Home. */
     @Override
     protected int windowX() {
-        return DfStyle.PANEL_X - (mInner.panelWidth() - DfStyle.PANEL_W) / 2;
+        return DfStyle.PANEL_X - (mInner.shownPanelWidth() - DfStyle.PANEL_W) / 2;
     }
 
     @Override
     protected int windowWidth() {
-        return mInner.panelWidth();
+        return mInner.shownPanelWidth();
     }
 
     @Override
@@ -58,7 +60,7 @@ public class GuiTabPopup extends GuiPopupCore<GuiTabCore> {
 
     @Override
     protected int windowHeight() {
-        return mInner.panelHeight() + BAR - 2;
+        return mInner.shownPanelHeight() + BAR - 2;
     }
 
     @Override
@@ -74,6 +76,8 @@ public class GuiTabPopup extends GuiPopupCore<GuiTabCore> {
 
     /** Lays the tab screen out with its panel under the top bar of the window. */
     private void layoutInner() {
+        mLaidWidth = mInner.shownPanelWidth();
+        mLaidHeight = mInner.shownPanelHeight();
         mLaidLeft = winLeft();
         mLaidTop = winTop();
         mInner.embedAt(winLeft() - DfStyle.PANEL_X, winTop() + BAR - 2 - DfStyle.PANEL_Y);
@@ -92,6 +96,10 @@ public class GuiTabPopup extends GuiPopupCore<GuiTabCore> {
 
     @Override
     public void drawForegroundLayer(@Nonnull GuiGraphicsExtractor gr, int mouseX, int mouseY, float deltaTicks) {
+        // the tab changed size (it left or entered its empty state): lay it out again for the new window
+        if (mInner.shownPanelWidth() != mLaidWidth || mInner.shownPanelHeight() != mLaidHeight) {
+            layoutInner();
+        }
         int dx = winLeft() - mLaidLeft, dy = winTop() - mLaidTop;
         gr.pose().pushMatrix();
         gr.pose().translate(dx, dy);

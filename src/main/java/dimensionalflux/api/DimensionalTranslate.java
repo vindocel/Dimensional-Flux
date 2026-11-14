@@ -66,6 +66,13 @@ public final class DimensionalTranslate {
     // Device settings and readings.
     public static final DimensionalTranslate ERROR_NO_SELECTED = gui("error.noselected");
     public static final DimensionalTranslate ERROR_NO_NETWORK = gui("error.nonetwork");
+    public static final DimensionalTranslate PROMPT_CREATE_HINT = gui("prompt.create.hint");
+    public static final DimensionalTranslate TEAM_CHOOSE = gui("team.choose");
+    public static final DimensionalTranslate TEAM_CHOOSE_HINT = gui("team.choose.hint");
+    public static final DimensionalTranslate TEAM_CHOOSE_SCOREBOARD = gui("team.choose.scoreboard");
+    public static final DimensionalTranslate TEAM_CHOOSE_NONE = gui("team.choose.none");
+    public static final DimensionalTranslate TEAM_CHOOSE_FTB = gui("team.choose.ftb");
+    public static final DimensionalTranslate PROMPT_SELECT_HINT = gui("prompt.select.hint");
     public static final DimensionalTranslate NAME = gui("device.name");
     public static final DimensionalTranslate PRIORITY = gui("device.priority");
     public static final DimensionalTranslate TRANSFER_LIMIT = gui("device.transferlimit");
@@ -225,7 +232,6 @@ public final class DimensionalTranslate {
     public static final DimensionalTranslate CANCEL_MEMBERSHIP = gui("label.cancelmembership");
     public static final DimensionalTranslate CONFIGURATOR_HELP = gui("label.configurator_help");
     public static final DimensionalTranslate CONFIGURATOR_EMPTY = gui("label.configurator_empty");
-    public static final DimensionalTranslate CLICK_ABOVE = gui("label.clickabove");
     public static final DimensionalTranslate PLAYERS_NETWORK = gui("label.playersnetwork");
 
     /** Messages the server sends when a player may not use a device. */

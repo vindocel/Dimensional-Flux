@@ -16,6 +16,7 @@ import dimensionalflux.common.connection.*;
 import dimensionalflux.register.ClientMessages;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class GuiTabStatistics extends GuiTabCore {
 
@@ -142,15 +143,15 @@ public class GuiTabStatistics extends GuiTabCore {
         dimensionalflux.client.gui.DfStyle.slot(gr, x, y, w, h);
         if (capacity > 0) {
             dimensionalflux.client.gui.DfStyle.segmentedGauge(gr, x + 1, y + 1, w - 2, h - 2, stats.totalEnergy / (double) capacity,
-                    (dimensionalflux.client.gui.DfStyle.statAccent() & 0x00FFFFFF) | 0xA0000000, 0x18000000);
+                    (dimensionalflux.client.gui.DfStyle.statAccent() & 0x00FFFFFF) | 0x70000000, 0x18000000);
         }
         String text = (stats.batteryCount > 0
                 ? DimensionalTranslate.HUD_BATTERIES.get() + " " + dimensionalflux.common.util.EnergyFormat.stored(stats.totalEnergy) + " / " + dimensionalflux.common.util.EnergyFormat.stored(capacity)
                 : DimensionalTranslate.STAT_NO_BATTERIES.get())
                 + " · " + DimensionalTranslate.BUFFER.get() + " " + dimensionalflux.common.util.EnergyFormat.stored(stats.totalBuffer)
                 + " / " + dimensionalflux.common.util.EnergyFormat.stored(stats.bufferCapacity);
-        dimensionalflux.client.gui.DfStyle.scrollingCentered(gr, font, text, x + 4, y + 2, w - 8,
-                dimensionalflux.client.gui.DfStyle.TEXT);
+        // the figures in the network color, deep in the light look and bright in the dark one, so they stay readable
+        centered(gr, text, x + 4, y + 2, w - 8, dimensionalflux.client.gui.DfStyle.networkInk(getNetwork().getNetworkColor()));
     }
 
     /** Text centered in a cell of {@code width} from {@code left}, scrolling when it is wider, in its own color. */
@@ -256,7 +257,7 @@ public class GuiTabStatistics extends GuiTabCore {
             drawRankingButtons(gr, mouseX, mouseY);
 
         } else {
-            renderNavigationPrompt(gr, DimensionalTranslate.ERROR_NO_SELECTED, EnumNavigationTab.TAB_SELECTION);
+            renderNavigationPrompt(gr, DimensionalTranslate.ERROR_NO_SELECTED, EnumNavigationTab.TAB_SELECTION, mouseX, mouseY);
         }
     }
 
@@ -271,6 +272,13 @@ public class GuiTabStatistics extends GuiTabCore {
         }
         if (device() != null) return net.minecraft.util.Mth.clamp(available() - CHART_Y - 4, CHART_MIN, CHART_H);
         return net.minecraft.util.Mth.clamp(available() - CHART_Y_NETWORK - SWITCH_H - 8, CHART_MIN, CHART_H_NETWORK);
+    }
+
+    @Override
+    @Nullable
+    protected EnumNavigationTab emptyStateTab() {
+        // a device shows its own figures with or without a network; only the network view needs one
+        return device() != null || getNetwork().isValid() ? null : EnumNavigationTab.TAB_SELECTION;
     }
 
     @Override

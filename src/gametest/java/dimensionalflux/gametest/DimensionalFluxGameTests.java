@@ -972,6 +972,10 @@ final class DimensionalFluxGameTests {
                 null, "dimensional_flux_shard", "dimensional_core",
                 null, "minecraft:copper_block", "dimensional_flux_shard",
                 "minecraft:copper_block", null, null});
+        var core = recipes.byKey(ResourceKey.create(Registries.RECIPE, DimensionalFlux.location("dimensional_core")));
+        helper.assertTrue(core.isPresent() && core.get().value() instanceof net.minecraft.world.item.crafting.ShapedRecipe shaped
+                && shaped.assemble(net.minecraft.world.item.crafting.CraftingInput.EMPTY).getCount() <= 1,
+                "The Dimensional Core recipe makes more than one core");
         expectGrid(helper, recipes, "tesla_broadcaster", new String[]{
                 "minecraft:copper_block", "minecraft:copper_block", "minecraft:copper_block",
                 "dimensional_receiver", "minecraft:redstone_block", "dimensional_emitter",

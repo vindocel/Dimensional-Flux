@@ -1,6 +1,5 @@
 package dimensionalflux.client.gui.basic;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.entity.player.Player;
 import org.lwjgl.glfw.GLFW;
@@ -207,25 +206,112 @@ public abstract class GuiTabCore extends GuiDimensionalCore {
         }
     }
 
-    protected void renderNavigationPrompt(GuiGraphicsExtractor gr, @Nonnull DimensionalTranslate error,
-                                          @Nonnull EnumNavigationTab tab) {
-        int centerX = leftPos + imageWidth / 2;
-        dimensionalflux.client.gui.DfStyle.centered(gr, font, error.get(), centerX, topPos + 16, 0xff808080);
-        gr.pose().pushMatrix();
-        gr.pose().scale(0.75f, 0.75f);
-        dimensionalflux.client.gui.DfStyle.centered(gr, font,
-                DimensionalTranslate.CLICK_ABOVE.format(ChatFormatting.AQUA + tab.getTranslatedName() + ChatFormatting.RESET),
-                (int) (centerX / 0.75f), (int) ((topPos + 28f) / 0.75f), dimensionalflux.client.gui.TextColors.opaque(0x808080));
-        gr.pose().popMatrix();
+    // ---- empty state: no network yet, or none linked ----
+
+    private static final int PROMPT_X = 12, PROMPT_Y = 22, PROMPT_W = 148, PROMPT_TEXT_W = PROMPT_W - 10;
+    private static final int PROMPT_BUTTON_H = 20, PROMPT_GAP = 4;
+
+    /**
+     * The tab that solves the empty state: Choose Network when there are networks to choose from, New Network when the
+     * player sees none at all.
+     */
+    private static EnumNavigationTab promptTab(EnumNavigationTab wanted) {
+        return wanted == EnumNavigationTab.TAB_SELECTION && dimensionalflux.client.ClientCache.getAllNetworks().isEmpty()
+                ? EnumNavigationTab.TAB_CREATE : wanted;
     }
 
+    /**
+     * The tab whose button solves this tab's empty state (no network yet, or none linked), or null while the tab has
+     * content to show. A tab in its empty state takes the standard panel width and only the height its card needs,
+     * whatever size it has with content.
+     */
+    @Nullable
+    protected EnumNavigationTab emptyStateTab() {
+        return null;
+    }
+
+    /** Width of the panel as shown now: the standard width in the empty state. */
+    public final int shownPanelWidth() {
+        return emptyStateTab() != null ? dimensionalflux.client.gui.DfStyle.PANEL_W : panelWidth();
+    }
+
+    /** Height of the panel as shown now: just the card and its button in the empty state. */
+    public final int shownPanelHeight() {
+        EnumNavigationTab wanted = emptyStateTab();
+        if (wanted == null) {
+            return panelHeight();
+        }
+        return PROMPT_Y + promptCardHeight(promptTab(wanted)) + PROMPT_GAP + PROMPT_BUTTON_H + 10;
+    }
+
+    /** The hint under the message, wrapped to the card. */
+    private java.util.List<net.minecraft.util.FormattedCharSequence> promptHint(EnumNavigationTab tab) {
+        DimensionalTranslate hint = tab == EnumNavigationTab.TAB_CREATE ? DimensionalTranslate.PROMPT_CREATE_HINT
+                : DimensionalTranslate.PROMPT_SELECT_HINT;
+        // before the screen is laid out there is no font yet: count on two lines
+        if (font == null) {
+            return java.util.List.of(net.minecraft.util.FormattedCharSequence.EMPTY, net.minecraft.util.FormattedCharSequence.EMPTY);
+        }
+        var lines = font.split(hint.makeComponent(), PROMPT_TEXT_W);
+        return lines.size() > 2 ? lines.subList(0, 2) : lines;
+    }
+
+    /** Height of the card: icon, message and the hint lines. */
+    private int promptCardHeight(EnumNavigationTab tab) {
+        return 38 + promptHint(tab).size() * 10;
+    }
+
+    private int promptButtonY(EnumNavigationTab tab) {
+        return topPos + PROMPT_Y + promptCardHeight(tab) + PROMPT_GAP;
+    }
+
+    private boolean overPromptButton(EnumNavigationTab tab, double mouseX, double mouseY) {
+        int x = leftPos + PROMPT_X, y = promptButtonY(tab);
+        return mouseX >= x && mouseX < x + PROMPT_W && mouseY >= y && mouseY < y + PROMPT_BUTTON_H;
+    }
+
+    /**
+     * What a tab shows when it has no network to work on: a glass card with the icon of the tab that solves it, what is
+     * missing and what to do, and right under it, as wide as the card, a button that opens that tab. With no network
+     * at all the way out is always New Network.
+     */
+    protected void renderNavigationPrompt(GuiGraphicsExtractor gr, @Nonnull DimensionalTranslate error,
+                                          @Nonnull EnumNavigationTab wanted, int mouseX, int mouseY) {
+        EnumNavigationTab tab = promptTab(wanted);
+        DimensionalTranslate message = tab != wanted ? DimensionalTranslate.ERROR_NO_NETWORK : error;
+        int x = leftPos + PROMPT_X, y = topPos + PROMPT_Y, h = promptCardHeight(tab), centerX = x + PROMPT_W / 2;
+        dimensionalflux.client.gui.DfStyle.glass(gr, x, y, PROMPT_W, h);
+        dimensionalflux.client.gui.DfStyle.Icon icon = dimensionalflux.client.gui.DfStyle.Icon.values()[tab.ordinal()];
+        int text = dimensionalflux.client.gui.DfStyle.screenTextColor();
+        int label = dimensionalflux.client.gui.DfStyle.screenLabelColor();
+        dimensionalflux.client.gui.DfStyle.icon(gr, icon, centerX - 8, y + 6, 16, text);
+        String title = message.get();
+        int titleWidth = Math.min(font.width(title), PROMPT_TEXT_W);
+        dimensionalflux.client.gui.DfStyle.scrollingText(gr, font, title, centerX - titleWidth / 2, y + 26, titleWidth, text);
+        int lineY = y + 38;
+        for (var line : promptHint(tab)) {
+            dimensionalflux.client.gui.SteelframePaint.text(gr, font, line, centerX - font.width(line) / 2, lineY, label, false);
+            lineY += 10;
+        }
+
+        // the button that opens the tab, flush with the card, with the tab's icon and name
+        int by = promptButtonY(tab);
+        dimensionalflux.client.gui.DfStyle.button(gr, x, by, PROMPT_W, PROMPT_BUTTON_H, overPromptButton(tab, mouseX, mouseY), false, false);
+        String name = tab.getTranslatedName();
+        int nameWidth = Math.min(font.width(name), PROMPT_W - 30);
+        int contentX = x + (PROMPT_W - 16 - 4 - nameWidth) / 2;
+        dimensionalflux.client.gui.DfStyle.icon(gr, icon, contentX, by + 2, 16, 0xFFFFFFFF);
+        dimensionalflux.client.gui.DfStyle.scrollingText(gr, font, name, contentX + 20, by + 6, nameWidth, 0xFFFFFFFF);
+    }
+
+    /** A click on the button of the empty state opens its tab. */
     protected boolean redirectNavigationPrompt(double mouseX, double mouseY, int mouseButton,
-                                               @Nonnull EnumNavigationTab tab) {
-        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-            if (mouseX >= leftPos + 20 && mouseX < leftPos + 155 && mouseY >= topPos + 16 && mouseY < topPos + 36) {
-                switchTab(tab, false);
-                return true;
-            }
+                                               @Nonnull EnumNavigationTab wanted) {
+        EnumNavigationTab tab = promptTab(wanted);
+        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && overPromptButton(tab, mouseX, mouseY)) {
+            dimensionalflux.client.gui.DfStyle.playClick();
+            switchTab(tab, false);
+            return true;
         }
         return false;
     }

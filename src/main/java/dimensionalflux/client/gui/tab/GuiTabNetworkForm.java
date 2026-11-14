@@ -22,6 +22,7 @@ import dimensionalflux.common.util.NetworkNames;
 import dimensionalflux.register.ClientMessages;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.EnumMap;
 import java.util.Locale;
 
@@ -237,6 +238,12 @@ public class GuiTabNetworkForm extends GuiTabCore {
     // drawing
 
     @Override
+    @Nullable
+    protected EnumNavigationTab emptyStateTab() {
+        return hasForm() ? null : EnumNavigationTab.TAB_SELECTION;
+    }
+
+    @Override
     protected void drawForegroundLayer(GuiGraphicsExtractor gr, int mouseX, int mouseY, float deltaTicks) {
         if (hasForm() && mNetworkName != null) {
             drawLabels(gr);
@@ -244,7 +251,7 @@ public class GuiTabNetworkForm extends GuiTabCore {
         super.drawForegroundLayer(gr, mouseX, mouseY, deltaTicks);
         if (mPurpose == Purpose.EDIT) {
             if (!hasForm() || mDelete == null) {
-                renderNavigationPrompt(gr, DimensionalTranslate.ERROR_NO_SELECTED, EnumNavigationTab.TAB_SELECTION);
+                renderNavigationPrompt(gr, DimensionalTranslate.ERROR_NO_SELECTED, EnumNavigationTab.TAB_SELECTION, mouseX, mouseY);
             } else if (mDelete.isMouseHovered(mouseX, mouseY)) {
                 // what the button does, and while it is not armed, how to arm it
                 var lines = new java.util.ArrayList<net.minecraft.network.chat.Component>();
