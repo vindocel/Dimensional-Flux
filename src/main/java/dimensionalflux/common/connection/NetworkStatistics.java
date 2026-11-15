@@ -59,6 +59,13 @@ public class NetworkStatistics {
     }
     private int mSecondsSinceAlert = ALERT_COOLDOWN_SECONDS;
 
+    /** Seconds over which the reserve estimate averages how fast the stored energy falls. */
+    public static final int DRAIN_WINDOW_SECONDS = 20;
+    /** The stored energy at each of the last seconds of the current deficit, oldest first in ring order. */
+    private final long[] mStoredSamples = new long[DRAIN_WINDOW_SECONDS + 1];
+    private int mStoredCount;
+    private int mStoredNext;
+
     /** How many machines each ranking keeps. */
     public static final int RANKING_SIZE = 10;
     public static final String INVENTORY_CONSUMPTION = "gui.dimensionalflux.stats.inventory_consumption";
@@ -206,8 +213,9 @@ public class NetworkStatistics {
         long unmet = unmetHistory.averageInput();
         long consumption = SaturatingMath.add(minuteOutput, unmet);
         deficit = consumption > 0 && consumption > minuteInput;
-        reserveSeconds = deficit ? estimateReserveSeconds(SaturatingMath.add(totalBuffer, totalEnergy),
-                consumption - minuteInput) : 0;
+        long stored = SaturatingMath.add(totalBuffer, totalEnergy);
+        reserveSeconds = deficit ? reserveSeconds(stored, consumption - minuteInput) : 0;
+        if (!deficit) mStoredCount = 0;
         // alerts are a controller feature: they warn only while the network has a Dimensional Controller
         boolean over = network.isAlertsEnabled() && controllerCount > 0 && deficit;
         mOverSeconds = over ? Math.min(mOverSeconds + 1, ALERT_DELAY_SECONDS) : 0;
@@ -216,6 +224,37 @@ public class NetworkStatistics {
             mSecondsSinceAlert = 0;
             alertMembers(consumption);
         }
+    }
+
+    /**
+     * How long the stored energy lasts. While the deficit lasts, the estimate follows how fast the stored energy
+     * actually fell over the last {@link #DRAIN_WINDOW_SECONDS} seconds, so per-tick swings in input and output
+     * average out and a steady drain counts down one second per second; until a few seconds of deficit are
+     * recorded, or while the stored energy is not falling, it uses the shortfall of the last minute instead.
+     */
+    private long reserveSeconds(long stored, long shortfallPerTick) {
+        if (mStoredCount == 0) mStoredNext = 0;
+        mStoredSamples[mStoredNext] = stored;
+        mStoredNext = (mStoredNext + 1) % mStoredSamples.length;
+        if (mStoredCount < mStoredSamples.length) mStoredCount++;
+        if (mStoredCount >= 3) {
+            int oldest = (mStoredNext - mStoredCount + mStoredSamples.length) % mStoredSamples.length;
+            long drop = mStoredSamples[oldest] - stored;
+            if (drop > 0) {
+                return measuredReserveSeconds(stored, drop, mStoredCount - 1);
+            }
+        }
+        return estimateReserveSeconds(stored, shortfallPerTick);
+    }
+
+    /** Seconds until {@code stored} runs out when it fell by {@code drop} over the last {@code seconds}, rounded up. */
+    static long measuredReserveSeconds(long stored, long drop, int seconds) {
+        if (stored <= 0) return 0;
+        if (Math.multiplyHigh(stored, seconds) == 0 && stored * seconds >= 0) {
+            long scaled = stored * seconds;
+            return scaled / drop + (scaled % drop != 0 ? 1 : 0);
+        }
+        return (long) Math.ceil(stored * ((double) seconds / drop));
     }
 
     static long estimateReserveSeconds(long stored, long deficitPerTick) {

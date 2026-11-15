@@ -2,6 +2,10 @@ package dimensionalflux.common.device;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import dimensionalflux.api.DimensionalConstants;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
@@ -17,7 +21,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @ParametersAreNonnullByDefault
 public class TileDimensionalReceiver extends TileDimensionalConnector {
 
-    private final DimensionalReceiverHandler mHandler = new DimensionalReceiverHandler();
+    private final DimensionalReceiverHandler mHandler = new DimensionalReceiverHandler(this::markEnergyChanged);
 
     @Nullable
     private EnergyStorage mEnergyCap;
@@ -225,10 +229,88 @@ public class TileDimensionalReceiver extends TileDimensionalConnector {
         super.invalidateCapabilities();
     }
 
+    //// BRIDGE TO ANOTHER NETWORK \\
+
+    /** No bridge, or a bridge that carries energy. */
+    public static final int BRIDGE_OPEN = 0;
+    /** Mounted base to base on an Emitter of the same network: energy would only go round, so nothing moves. */
+    public static final int BRIDGE_SAME_NETWORK = 1;
+    /** The bridge closes a loop of networks: it pauses until the loop is broken. */
+    public static final int BRIDGE_LOOP = 2;
+    private static final String BRIDGE = "bridge";
+
+    /** One of the bridge states above; synced to clients for Home. */
+    private int mBridgeState = BRIDGE_OPEN;
+    private boolean mLoop;
+
+    public int getBridgeState() {
+        return mBridgeState;
+    }
+
+    @Override
+    protected void onServerTick() {
+        super.onServerTick();
+        updateBridge();
+    }
+
+    /** Records the bridge this Receiver forms with an Emitter, and pauses it on the same network or in a loop. */
+    private void updateBridge() {
+        GlobalPos pos = getGlobalPos();
+        int from = DimensionalConstants.INVALID_NETWORK_ID;
+        int to = DimensionalConstants.INVALID_NETWORK_ID;
+        boolean bridge = mHandler.isBridge() && mHandler.boundMachine() instanceof TileDimensionalEmitter;
+        if (bridge && mHandler.boundMachine() instanceof TileDimensionalEmitter emitter
+                && getNetwork().isValid() && emitter.getNetwork().isValid()) {
+            from = getNetworkID();
+            to = emitter.getNetworkID();
+        }
+        NetworkBridges.update(pos, from, to);
+        //noinspection ConstantConditions
+        if (Math.floorMod(level.getGameTime() + worldPosition.hashCode(), 20) == 0) {
+            mLoop = NetworkBridges.inLoop(pos);
+        }
+        int state = !bridge ? BRIDGE_OPEN
+                : from != DimensionalConstants.INVALID_NETWORK_ID && from == to ? BRIDGE_SAME_NETWORK
+                : mLoop && from != DimensionalConstants.INVALID_NETWORK_ID ? BRIDGE_LOOP : BRIDGE_OPEN;
+        mHandler.setBridgeBlocked(state != BRIDGE_OPEN);
+        if (state != mBridgeState) {
+            mBridgeState = state;
+            mSettingsChanged = true;
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && !level.isClientSide()) {
+            NetworkBridges.remove(getGlobalPos());
+        }
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        super.onChunkUnloaded();
+        if (level != null && !level.isClientSide()) {
+            NetworkBridges.remove(getGlobalPos());
+        }
+    }
+
+    @Override
+    protected void writeDeviceClientState(ValueOutput output) {
+        output.putInt(BRIDGE, mBridgeState);
+    }
+
+    @Override
+    protected void readDeviceClientState(ValueInput input) {
+        mBridgeState = input.getIntOr(BRIDGE, BRIDGE_OPEN);
+    }
+
+    //// ENERGY \\
+
     @Nullable
     @Override
     public EnergyHandler getEnergyHandler(@Nullable Direction side) {
-        if (isRemoved() || side == null || side != getMountingSide()) {
+        if (!exposesEnergy(side)) {
             return null;
         }
         if (mEnergyCap == null) {
@@ -238,8 +320,8 @@ public class TileDimensionalReceiver extends TileDimensionalConnector {
     }
 
     /**
-     * A read-only view of the receiver buffer. The receiver pushes energy into the machine itself, so the handler
-     * neither accepts nor gives energy to callers.
+     * The receiver buffer as seen from outside: it accepts nothing, and gives what the buffer holds to whoever pulls.
+     * A pull also tells the Receiver to ask the network for that much in the next cycle.
      */
     private class EnergyStorage implements EnergyHandler {
 
@@ -250,7 +332,7 @@ public class TileDimensionalReceiver extends TileDimensionalConnector {
 
         @Override
         public int extract(int amount, TransactionContext transaction) {
-            return 0;
+            return getNetwork().isValid() ? mHandler.extract(amount, transaction) : 0;
         }
 
         @Override

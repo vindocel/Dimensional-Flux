@@ -236,6 +236,16 @@ public class GuiDimensionalDeviceHome extends GuiTabCore {
         if (getDevice().isOnBackup()) {
             network += " · " + DimensionalTranslate.BACKUP_ACTIVE.get();
         }
+        if (getDevice() instanceof dimensionalflux.common.device.TileDimensionalReceiver receiver) {
+            switch (receiver.getBridgeState()) {
+                case dimensionalflux.common.device.TileDimensionalReceiver.BRIDGE_LOOP ->
+                        network += " · " + DimensionalTranslate.BRIDGE_LOOP.get();
+                case dimensionalflux.common.device.TileDimensionalReceiver.BRIDGE_SAME_NETWORK ->
+                        network += " · " + DimensionalTranslate.BRIDGE_SAME_NETWORK.get();
+                default -> {
+                }
+            }
+        }
         renderNetwork(gr, network, color, topPos + 8);
         renderTransfer(gr, getDevice(), leftPos + 30, topPos + 90);
         if (mCustomName.getValue().isEmpty()) {

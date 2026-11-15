@@ -38,9 +38,9 @@ public class RegistryBlockEntityTypes {
     }
 
     static void registerEnergyCapabilities(RegisterCapabilitiesEvent event, BlockEntityType<? extends TileDimensionalConnector> blockEntityType) {
-        // energy is exposed only on the mounting face (and to side-less queries such as probes)
+        // each connector decides its faces: the mounting face, or every face while a Logistics Network node encloses it
         event.registerBlockEntity(Capabilities.Energy.BLOCK, blockEntityType, (blockEntity, side) ->
-                side != null && side == blockEntity.getMountingSide() ? blockEntity.getEnergyHandler(side) : null);
+                blockEntity.getEnergyHandler(side));
     }
 
     private RegistryBlockEntityTypes() {}

@@ -45,6 +45,52 @@ public abstract class TileDimensionalConnector extends TileDimensionalDevice {
         //noinspection ConstantConditions
         if (!level.isClientSide()) {
             refreshMountingSide();
+            refreshWrapped();
+        }
+    }
+
+    @Override
+    protected void onServerTick() {
+        super.onServerTick();
+        //noinspection ConstantConditions
+        if (Math.floorMod(level.getGameTime() + worldPosition.hashCode(), 20) == 10) {
+            refreshWrapped();
+        }
+    }
+
+    //// ENERGY FACES \\
+
+    /** The entity of a Logistics Network node, which encloses the whole block it is attached to. */
+    private static final net.minecraft.resources.Identifier LOGISTICS_NODE =
+            net.minecraft.resources.Identifier.fromNamespaceAndPath("logisticsnetworks", "logistics_node");
+
+    /** Whether a Logistics Network node is attached to this connector. Server only. */
+    private boolean mWrapped;
+
+    /**
+     * Whether energy is exchanged on a side. Blocks in the world touch the connector only at its base, so only the
+     * mounting face takes part; a Logistics Network node encloses the whole connector, so with one attached every
+     * face does. A query without a side gets nothing.
+     */
+    protected final boolean exposesEnergy(@Nullable Direction side) {
+        return side != null && !isRemoved() && (side == getMountingSide() || mWrapped);
+    }
+
+    /** Whether a Logistics Network node is attached, so every face exchanges energy. Server only. */
+    public boolean isWrappedByNode() {
+        return mWrapped;
+    }
+
+    /** Looks for an attached Logistics Network node, and tells capability caches when that changes. */
+    private void refreshWrapped() {
+        //noinspection ConstantConditions
+        boolean wrapped = !level.getEntities((net.minecraft.world.entity.Entity) null,
+                new net.minecraft.world.phys.AABB(worldPosition),
+                e -> worldPosition.equals(e.blockPosition())
+                        && LOGISTICS_NODE.equals(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()))).isEmpty();
+        if (wrapped != mWrapped) {
+            mWrapped = wrapped;
+            invalidateCapabilities();
         }
     }
 

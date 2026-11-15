@@ -80,6 +80,8 @@ public final class DimensionalTranslate {
     public static final DimensionalTranslate CHUNK_LOADING = gui("device.chunkloading");
     public static final DimensionalTranslate BACKUP = gui("network.backup");
     public static final DimensionalTranslate BACKUP_ACTIVE = gui("network.backup.active");
+    public static final DimensionalTranslate BRIDGE_LOOP = gui("network.bridge.loop");
+    public static final DimensionalTranslate BRIDGE_SAME_NETWORK = gui("network.bridge.same");
     public static final DimensionalTranslate BACKUP_SET = gui("network.backup.set");
     public static final DimensionalTranslate BACKUP_CLEAR = gui("network.backup.clear");
     public static final DimensionalTranslate REDSTONE = gui("device.redstone");

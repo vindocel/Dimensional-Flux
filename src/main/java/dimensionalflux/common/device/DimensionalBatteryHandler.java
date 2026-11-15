@@ -5,7 +5,8 @@ import dimensionalflux.common.connection.TransferHandler;
 
 /**
  * The transfer part of a Dimensional Battery: it stores network energy up to its capacity, and takes and gives at
- * most its transfer limit per cycle. Batteries are served after every other device.
+ * most its transfer limit per cycle. Batteries are served after every other device, and batteries of one priority
+ * work as one pool (see the network transfer cycle).
  */
 public class DimensionalBatteryHandler extends TransferHandler {
 
@@ -39,6 +40,11 @@ public class DimensionalBatteryHandler extends TransferHandler {
         mBuffer -= moved;
         mRemoved += moved;
         return moved;
+    }
+
+    /** What the battery can still give in this cycle: its charge, within what is left of its transfer limit. */
+    public long getAvailable() {
+        return Math.max(0, Math.min(mBuffer, getLimit() - mRemoved));
     }
 
     @Override

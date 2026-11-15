@@ -49,7 +49,7 @@ public class TileDimensionalEmitter extends TileDimensionalConnector {
     @Nullable
     @Override
     public EnergyHandler getEnergyHandler(@Nullable Direction side) {
-        return isRemoved() || side == null || side != getMountingSide() ? null : mEnergy;
+        return exposesEnergy(side) ? mEnergy : null;
     }
 
     /** Accepts energy the machine pushes into the Emitter buffer; never gives energy back. */

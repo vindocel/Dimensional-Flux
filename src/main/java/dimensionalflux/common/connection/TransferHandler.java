@@ -77,6 +77,14 @@ public abstract class TransferHandler {
         return 0;
     }
 
+    /**
+     * Buffered energy the device holds for demand it expects in the next ticks, such as a neighbor that pulls: it is
+     * not a reserve, so it is not moved into batteries.
+     */
+    public long getHeldForDemand() {
+        return 0;
+    }
+
     /** The energy this device expects to deliver to the outside in the current cycle. */
     public long getCycleDemand() {
         return 0;

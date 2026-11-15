@@ -269,9 +269,9 @@ public class ServerDimensionalNetwork extends DimensionalNetwork {
         NetworkTransferCycle.Result result = mCycle.run(mAll, mEmitters, mReceivers, mBatteries, isShareByDemand());
         mStatistics.recordUnmet(result.unmet());
         mBufferBudget.record(result.consumed());
-        mCycle.moveExcessToBatteries(mAll, mBatteries, bufferedEnergy() - getBufferCapacity());
+        mCycle.moveExcessToBatteries(mAll, mBatteries, bufferedEnergy() - heldForDemand() - getBufferCapacity());
         // buffers never hold more than the ceiling between cycles: what neither the machines nor the batteries took is lost
-        mCycle.discardAbove(mAll, bufferedEnergy() - BufferBudget.MAXIMUM);
+        mCycle.discardAbove(mAll, bufferedEnergy() - heldForDemand() - BufferBudget.MAXIMUM);
         for (var battery : mBatteries) {
             battery.getTransferHandler().onCycleEnd();
             if (battery.getTransferChange() != 0) battery.markEnergyChanged();
@@ -327,6 +327,17 @@ public class ServerDimensionalNetwork extends DimensionalNetwork {
     }
 
     /** Energy held by every device except batteries. */
+    /** Buffered energy devices hold for the demand of the next ticks, which stays out of the reserve budget. */
+    private long heldForDemand() {
+        long held = 0;
+        for (var device : mAll) {
+            if (!device.getDeviceType().isStorage()) {
+                held = SaturatingMath.add(held, device.getTransferHandler().getHeldForDemand());
+            }
+        }
+        return held;
+    }
+
     private long bufferedEnergy() {
         long stored = 0;
         for (var device : mAll) {

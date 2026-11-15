@@ -80,7 +80,8 @@ final class GuideContent {
         Builder b = new Builder("receiver");
         b.item(RegistryItems.DIMENSIONAL_RECEIVER.get(), "about").crafting("dimensional_receiver");
         b.heading("mounting").text("mounting");
-        b.heading("delivery").text("delivery");
+        b.heading("delivery").text("delivery").text("pull");
+        b.heading("chain").text("chain");
         b.tip("antenna");
         return b.chapter(RegistryItems.DIMENSIONAL_RECEIVER.get());
     }

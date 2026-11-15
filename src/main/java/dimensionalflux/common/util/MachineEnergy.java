@@ -79,6 +79,22 @@ public final class MachineEnergy {
     }
 
     /**
+     * The energy handler a connector exchanges with on its mounting face: a machine as in
+     * {@link #machine(BlockEntity, Direction)}, or a Dimensional connector of the other kind mounted base to base,
+     * which {@code peer} accepts.
+     */
+    @Nullable
+    public static EnergyHandler linked(@Nullable BlockEntity target, Direction face,
+                                       java.util.function.Predicate<BlockEntity> peer) {
+        if (target != null && !target.isRemoved() && target instanceof IDimensionalDevice && peer.test(target)) {
+            Level level = target.getLevel();
+            return level == null ? null
+                    : level.getCapability(Capabilities.Energy.BLOCK, target.getBlockPos(), target.getBlockState(), target, face);
+        }
+        return machine(target, face);
+    }
+
+    /**
      * Puts energy into a handler.
      *
      * @return the energy accepted; a single call moves at most {@link Integer#MAX_VALUE}

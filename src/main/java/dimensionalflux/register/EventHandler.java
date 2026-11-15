@@ -38,6 +38,7 @@ public final class EventHandler {
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         DimensionalNetworkData.release();
+        dimensionalflux.common.device.NetworkBridges.clear();
     }
 
     /** A joining player gets the list of networks and their super admin status. */

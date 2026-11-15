@@ -17,6 +17,15 @@ import javax.annotation.Nullable;
  */
 final class MachineLink {
 
+    /** Which Dimensional connectors this link may bind to, mounted base to base. */
+    private final java.util.function.Predicate<BlockEntity> mPeer;
+    /** Whether the bound block is a Dimensional connector: it is only pushed into, never pulled from. */
+    private boolean mIsPeer;
+
+    MachineLink(java.util.function.Predicate<BlockEntity> peer) {
+        mPeer = peer;
+    }
+
     @Nullable
     private BlockEntity mMachine;
     /** The face of the machine that touches the connector. */
@@ -32,7 +41,8 @@ final class MachineLink {
         }
         mMachine = machine;
         mFace = face;
-        mHandler = machine != null && machine.getLevel() instanceof ServerLevel level && MachineEnergy.machine(machine, face) != null
+        mIsPeer = machine instanceof dimensionalflux.api.device.IDimensionalDevice;
+        mHandler = machine != null && machine.getLevel() instanceof ServerLevel level && MachineEnergy.linked(machine, face, mPeer) != null
                 ? BlockCapabilityCache.create(Capabilities.Energy.BLOCK, level, machine.getBlockPos(), face)
                 : null;
     }
@@ -44,13 +54,18 @@ final class MachineLink {
             return mHandler.getCapability();
         }
         // a client-side link or a machine that had no handler when bound
-        return MachineEnergy.machine(mMachine, mFace);
+        return MachineEnergy.linked(mMachine, mFace, mPeer);
     }
 
     /** The machine, or null when none is attached. */
     @Nullable
     BlockEntity machine() {
         return isBound() ? mMachine : null;
+    }
+
+    /** Whether the bound block is a Dimensional connector instead of a machine. */
+    boolean isPeer() {
+        return isBound() && mIsPeer;
     }
 
     boolean isBound() {
@@ -83,12 +98,12 @@ final class MachineLink {
 
     /** Whether the machine could give energy now. */
     boolean canGive() {
-        return isBound() && MachineEnergy.extract(handler(), 1, true) > 0;
+        return isBound() && !mIsPeer && MachineEnergy.extract(handler(), 1, true) > 0;
     }
 
     /** Takes energy from the machine. */
     long pull(long amount) {
-        if (amount <= 0 || !isBound()) {
+        if (amount <= 0 || !isBound() || mIsPeer) {
             return 0;
         }
         long received = MachineEnergy.extract(handler(), amount, false);

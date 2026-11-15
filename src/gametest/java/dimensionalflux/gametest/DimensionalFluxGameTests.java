@@ -8,6 +8,7 @@ import dimensionalflux.api.network.SecurityLevel;
 import dimensionalflux.common.connection.DimensionalNetworkData;
 import dimensionalflux.common.device.TileDimensionalEmitter;
 import dimensionalflux.common.device.TileDimensionalReceiver;
+import dimensionalflux.common.util.MachineEnergy;
 import dimensionalflux.common.device.TileDimensionalBattery;
 import dimensionalflux.register.RegistryBlocks;
 import net.minecraft.core.BlockPos;
@@ -82,6 +83,14 @@ final class DimensionalFluxGameTests {
     private static final Identifier SCOREBOARD_TEAM = DimensionalFlux.location("port_scoreboard_team");
     private static final Identifier FAILOVER = DimensionalFlux.location("port_failover");
     private static final Identifier CURIOS_CHARGING = DimensionalFlux.location("port_curios_charging");
+    private static final Identifier RECEIVER_PULL = DimensionalFlux.location("port_receiver_pull");
+    private static final Identifier NETWORK_BRIDGE = DimensionalFlux.location("port_network_bridge");
+    private static final Identifier BRIDGE_LOOP = DimensionalFlux.location("port_bridge_loop");
+    private static final Identifier LOGISTICS_NODE = DimensionalFlux.location("port_logistics_node");
+    private static final Identifier STEADY_PULL = DimensionalFlux.location("port_steady_pull");
+    private static final Identifier GREEDY_PULL = DimensionalFlux.location("port_greedy_pull");
+    private static final Identifier BATTERY_POOL = DimensionalFlux.location("port_battery_pool");
+    private static final Identifier RESERVE_ESTIMATE = DimensionalFlux.location("port_reserve_estimate");
     /** The energy store of the stick used as a charged curio. */
     private static final SimpleEnergyHandler CURIO_BATTERY = new SimpleEnergyHandler(1_000_000);
     private static final Map<BlockPos, SimpleEnergyHandler> EMITTERS = new HashMap<>();
@@ -135,6 +144,14 @@ final class DimensionalFluxGameTests {
             registry.register(SCOREBOARD_TEAM, DimensionalFluxGameTests::scoreboardTeam);
             registry.register(FAILOVER, DimensionalFluxGameTests::failover);
             registry.register(CURIOS_CHARGING, DimensionalFluxGameTests::curiosCharging);
+            registry.register(RECEIVER_PULL, DimensionalFluxGameTests::receiverPull);
+            registry.register(NETWORK_BRIDGE, DimensionalFluxGameTests::networkBridge);
+            registry.register(BRIDGE_LOOP, DimensionalFluxGameTests::bridgeLoop);
+            registry.register(LOGISTICS_NODE, DimensionalFluxGameTests::logisticsNode);
+            registry.register(STEADY_PULL, DimensionalFluxGameTests::steadyPull);
+            registry.register(GREEDY_PULL, DimensionalFluxGameTests::greedyPull);
+            registry.register(BATTERY_POOL, DimensionalFluxGameTests::batteryPool);
+            registry.register(RESERVE_ESTIMATE, DimensionalFluxGameTests::reserveEstimate);
         });
     }
 
@@ -142,13 +159,17 @@ final class DimensionalFluxGameTests {
     static void tests(RegisterGameTestsEvent event) {
         var environment = event.registerEnvironment(STRUCTURE, new TestEnvironmentDefinition.AllOf(List.of()));
         var data = new TestData<>(environment, STRUCTURE, 200, 0, true, Rotation.NONE);
-        for (Identifier id : List.of(TELEMETRY, TRANSFER, STORAGE, SECURITY, CELL, MATERIALS, PLUG_PRIORITY, POINT_PRIORITY, PLACEMENT_ACCESS, CONFIGURATOR_PASTE, CONFIGURATOR_WAND, DEVICE_RECIPES, MONITORING, ORE_GENERATION, MAP_COLORS, SATURATION, SHARD_RECIPES, MOUNTING_FACE, CONNECTOR_ORIENTATION, ACTIVE_STATE, TESLA_AREA, TESLA_OFFSET, TESLA_PREVIEW, HIDE_BLOCK, TESLA_TARGETS, TESLA_INPUTS, MACHINE_EDIT, STAGING_CEILING, REDSTONE_MODE, SHARE_BY_DEMAND, SCOREBOARD_TEAM)) {
+        for (Identifier id : List.of(TELEMETRY, TRANSFER, STORAGE, SECURITY, CELL, MATERIALS, PLUG_PRIORITY, POINT_PRIORITY, PLACEMENT_ACCESS, CONFIGURATOR_PASTE, CONFIGURATOR_WAND, DEVICE_RECIPES, MONITORING, ORE_GENERATION, MAP_COLORS, SATURATION, SHARD_RECIPES, MOUNTING_FACE, CONNECTOR_ORIENTATION, ACTIVE_STATE, TESLA_AREA, TESLA_OFFSET, TESLA_PREVIEW, HIDE_BLOCK, TESLA_TARGETS, TESLA_INPUTS, MACHINE_EDIT, STAGING_CEILING, REDSTONE_MODE, SHARE_BY_DEMAND, SCOREBOARD_TEAM, RECEIVER_PULL, NETWORK_BRIDGE, BRIDGE_LOOP, STEADY_PULL, GREEDY_PULL, BATTERY_POOL)) {
             event.registerTest(id, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, id), data));
         }
         // the deficit alert waits 30 seconds, so its test runs longer
         var slow = new TestData<>(environment, STRUCTURE, 900, 0, true, Rotation.NONE);
         event.registerTest(DEFICIT_ALERT, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, DEFICIT_ALERT), slow));
         event.registerTest(FAILOVER, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, FAILOVER), slow));
+        event.registerTest(RESERVE_ESTIMATE, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, RESERVE_ESTIMATE), slow));
+        if (net.neoforged.fml.ModList.get().isLoaded("logisticsnetworks")) {
+            event.registerTest(LOGISTICS_NODE, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, LOGISTICS_NODE), data));
+        }
         if (net.neoforged.fml.ModList.get().isLoaded("curios")) {
             event.registerTest(CURIOS_CHARGING, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, CURIOS_CHARGING), data));
         }
@@ -501,6 +522,340 @@ final class DimensionalFluxGameTests {
         });
         helper.runAfterDelay(420, () -> {
             helper.assertTrue(receiver.getNetwork() == own && !receiver.isOnBackup(), "The Receiver did not return to its own network");
+            releaseMachines(helper);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A neighbor pulls from a Receiver through its base only: the first pull starts the demand, later pulls get
+     * what they ask for every tick, other faces and queries without a side get nothing, and once the pulls stop the
+     * Receiver keeps at most one tick of energy.
+     */
+    private static void receiverPull(GameTestHelper helper) {
+        var player = tester(helper, "PortPull");
+        var network = DimensionalNetworkData.getInstance().createNetwork(player, "Pull", 0x33AA88, SecurityLevel.PUBLIC, "");
+        machine(helper, new BlockPos(1, 2, 2), 10_000_000, 0, 100_000);
+        connector(helper, new BlockPos(2, 2, 2), RegistryBlocks.DIMENSIONAL_EMITTER.get(), Direction.WEST, TileDimensionalEmitter.class, player, network);
+        helper.setBlock(new BlockPos(6, 2, 2), Blocks.STONE);
+        var receiver = connector(helper, new BlockPos(5, 2, 2), RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST,
+                TileDimensionalReceiver.class, player, network);
+        var level = helper.getLevel();
+        BlockPos at = helper.absolutePos(new BlockPos(5, 2, 2));
+        long[] pulled = new long[2];
+        for (int tick = 5; tick <= 40; tick++) {
+            int t = tick;
+            helper.runAfterDelay(tick, () -> {
+                var base = level.getCapability(Capabilities.Energy.BLOCK, at, Direction.EAST);
+                helper.assertTrue(base != null, "The Receiver base exposes no energy");
+                helper.assertTrue(level.getCapability(Capabilities.Energy.BLOCK, at, Direction.WEST) == null,
+                        "A face other than the base exposes energy");
+                helper.assertTrue(level.getCapability(Capabilities.Energy.BLOCK, at, Direction.UP) == null,
+                        "The top exposes energy");
+                helper.assertTrue(level.getCapability(Capabilities.Energy.BLOCK, at, null) == null,
+                        "A query without a side got energy");
+                helper.assertTrue(MachineEnergy.insert(base, 1000, false) == 0, "The Receiver accepted energy");
+                long got = MachineEnergy.extract(base, 500, false);
+                if (t >= 20) {
+                    helper.assertTrue(got == 500, "A steady pull got " + got + " instead of 500 FE");
+                    pulled[1] += got;
+                }
+                pulled[0] += got;
+            });
+        }
+        helper.runAfterDelay(80, () -> {
+            helper.assertTrue(pulled[1] == 500L * 21, "Steady pulls got " + pulled[1] + " FE");
+            helper.assertTrue(receiver.getTransferBuffer() <= 500,
+                    "The Receiver kept " + receiver.getTransferBuffer() + " FE after the pulls stopped");
+            releaseMachines(helper);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A puller that asks for everything it could ever move (as Logistics Network nodes do) but whose destination
+     * takes 3,000,000 FE a tick, on a Receiver that ignores its limit: the Receiver settles above the 1,000,000 FE
+     * ceiling at what is really taken, and the source gives only that, so no energy is pulled out and thrown away.
+     */
+    private static void greedyPull(GameTestHelper helper) {
+        var player = tester(helper, "PortGreedy");
+        var network = DimensionalNetworkData.getInstance().createNetwork(player, "Greedy", 0xAA33AA, SecurityLevel.PUBLIC, "");
+        var source = machine(helper, new BlockPos(1, 2, 2), Integer.MAX_VALUE, 0, Integer.MAX_VALUE);
+        var emitter = connector(helper, new BlockPos(2, 2, 2), RegistryBlocks.DIMENSIONAL_EMITTER.get(), Direction.WEST,
+                TileDimensionalEmitter.class, player, network);
+        emitter.applySettings(setting(DimensionalConstants.DISABLE_LIMIT, true));
+        helper.setBlock(new BlockPos(6, 2, 2), Blocks.STONE);
+        var receiver = connector(helper, new BlockPos(5, 2, 2), RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST,
+                TileDimensionalReceiver.class, player, network);
+        receiver.applySettings(setting(DimensionalConstants.DISABLE_LIMIT, true));
+        var level = helper.getLevel();
+        BlockPos at = helper.absolutePos(new BlockPos(5, 2, 2));
+        long[] pulled = new long[1];
+        for (int tick = 4; tick <= 100; tick++) {
+            int t = tick;
+            helper.runAfterDelay(tick, () -> {
+                var base = level.getCapability(Capabilities.Energy.BLOCK, at, Direction.EAST);
+                MachineEnergy.extract(base, Integer.MAX_VALUE, true);
+                long moved = MachineEnergy.extract(base, 3_000_000, false);
+                pulled[0] += moved;
+                if (t >= 60) {
+                    helper.assertTrue(moved == 3_000_000, "A steady greedy pull got " + moved + " FE on tick " + t);
+                    helper.assertTrue(emitter.getTransferBuffer() <= 1_000_000,
+                            "The Emitter holds " + emitter.getTransferBuffer() + " FE");
+                }
+            });
+        }
+        helper.runAfterDelay(101, () -> {
+            long given = Integer.MAX_VALUE - source.getAmountAsLong();
+            long inFlight = given - pulled[0];
+            helper.assertTrue(inFlight <= 12_000_000, "The source gave " + inFlight + " FE more than was pulled");
+            releaseMachines(helper);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A puller that comes only every other tick, on a network with a battery, still finds its full amount each time:
+     * the energy a Receiver holds for its pullers is not moved into the battery as an idle reserve.
+     */
+    private static void steadyPull(GameTestHelper helper) {
+        var player = tester(helper, "PortSteady");
+        var network = DimensionalNetworkData.getInstance().createNetwork(player, "Steady", 0x33AAAA, SecurityLevel.PUBLIC, "");
+        machine(helper, new BlockPos(1, 2, 2), 100_000_000, 0, 1_000_000);
+        connector(helper, new BlockPos(2, 2, 2), RegistryBlocks.DIMENSIONAL_EMITTER.get(), Direction.WEST, TileDimensionalEmitter.class, player, network);
+        helper.setBlock(new BlockPos(1, 2, 4), RegistryBlocks.DIMENSIONAL_BATTERY.get());
+        var battery = helper.getBlockEntity(new BlockPos(1, 2, 4), TileDimensionalBattery.class);
+        battery.setOwnerUUID(player.getUUID());
+        helper.assertTrue(battery.connect(network), "The battery did not link");
+        helper.setBlock(new BlockPos(6, 2, 2), Blocks.STONE);
+        connector(helper, new BlockPos(5, 2, 2), RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST, TileDimensionalReceiver.class, player, network);
+        var level = helper.getLevel();
+        BlockPos at = helper.absolutePos(new BlockPos(5, 2, 2));
+        long[] got = new long[2];
+        for (int tick = 4; tick <= 80; tick += 2) {
+            int t = tick;
+            helper.runAfterDelay(tick, () -> {
+                long moved = MachineEnergy.extract(level.getCapability(Capabilities.Energy.BLOCK, at, Direction.EAST), 400_000, false);
+                if (t >= 30) {
+                    got[0] += moved;
+                    got[1]++;
+                    helper.assertTrue(moved == 400_000, "A pull every other tick got " + moved + " FE on tick " + t);
+                }
+            });
+        }
+        helper.runAfterDelay(82, () -> {
+            releaseMachines(helper);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Batteries of one priority work as one battery: three empty ones charged with 30,000 FE/t take 10,000 FE/t
+     * each, and three full ones limited to 70,000 FE/t feed a 210,000 FE/t machine together, 70,000 FE/t each.
+     */
+    private static void batteryPool(GameTestHelper helper) {
+        var player = tester(helper, "PortPool");
+        var data = DimensionalNetworkData.getInstance();
+        var draining = data.createNetwork(player, "PoolOut", 0x33AA33, SecurityLevel.PUBLIC, "");
+        var charging = data.createNetwork(player, "PoolIn", 0xAA33AA, SecurityLevel.PUBLIC, "");
+        var full = new TileDimensionalBattery[3];
+        var empty = new TileDimensionalBattery[3];
+        for (int i = 0; i < 3; i++) {
+            full[i] = pooledBattery(helper, new BlockPos(1 + i, 2, 1), player, draining);
+            full[i].fillUp();
+            full[i].applySettings(setting(DimensionalConstants.LIMIT, 70_000L));
+            empty[i] = pooledBattery(helper, new BlockPos(4 + i, 2, 4), player, charging);
+        }
+        var sink = machine(helper, new BlockPos(6, 2, 1), 0, 210_000, 0);
+        var receiver = connector(helper, new BlockPos(5, 2, 1), RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST,
+                TileDimensionalReceiver.class, player, draining);
+        receiver.applySettings(setting(DimensionalConstants.DISABLE_LIMIT, true));
+        machine(helper, new BlockPos(1, 2, 4), 100_000_000, 0, 30_000);
+        connector(helper, new BlockPos(2, 2, 4), RegistryBlocks.DIMENSIONAL_EMITTER.get(), Direction.WEST, TileDimensionalEmitter.class, player, charging);
+        long[] start = new long[1];
+        helper.runAfterDelay(30, () -> start[0] = sink.getAmountAsLong());
+        helper.runAfterDelay(40, () -> {
+            for (int i = 0; i < 3; i++) {
+                helper.assertTrue(full[i].getTransferChange() == -70_000,
+                        "Pooled battery " + i + " gave " + -full[i].getTransferChange() + " FE/t instead of 70,000");
+                helper.assertTrue(empty[i].getTransferChange() == 10_000,
+                        "Pooled battery " + i + " took " + empty[i].getTransferChange() + " FE/t instead of 10,000");
+                helper.assertTrue(full[i].getTransferBuffer() == full[0].getTransferBuffer()
+                        && empty[i].getTransferBuffer() == empty[0].getTransferBuffer(), "Pooled battery levels drifted apart");
+            }
+            long fed = sink.getAmountAsLong() - start[0];
+            helper.assertTrue(fed == 2_100_000, "The pool fed " + fed + " FE in 10 ticks instead of 2,100,000");
+            releaseMachines(helper);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A battery draining at a steady 500 FE/t: the time left matches the stored energy over that drain and counts
+     * down one second per second.
+     */
+    private static void reserveEstimate(GameTestHelper helper) {
+        var player = tester(helper, "PortReserve");
+        var network = DimensionalNetworkData.getInstance().createNetwork(player, "Reserve", 0xAA7733, SecurityLevel.PUBLIC, "");
+        var battery = pooledBattery(helper, new BlockPos(1, 2, 1), player, network);
+        battery.fillUp();
+        machine(helper, new BlockPos(6, 2, 1), 0, 500, 0);
+        connector(helper, new BlockPos(5, 2, 1), RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST,
+                TileDimensionalReceiver.class, player, network);
+        var stats = network.getStatistics();
+        long[] first = new long[1];
+        helper.runAfterDelay(30 * 20 + 10, () -> {
+            helper.assertTrue(stats.deficit, "A battery-only network shows no deficit");
+            long stored = stats.totalEnergy + stats.totalBuffer;
+            long expected = (stored + 9_999) / 10_000;
+            helper.assertTrue(Math.abs(stats.reserveSeconds - expected) <= 2,
+                    "Reserve shows " + stats.reserveSeconds + " s, expected about " + expected + " s");
+            first[0] = stats.reserveSeconds;
+        });
+        helper.runAfterDelay(40 * 20 + 10, () -> {
+            long fell = first[0] - stats.reserveSeconds;
+            helper.assertTrue(fell >= 9 && fell <= 11, "In 10 s the reserve time fell by " + fell + " s");
+            releaseMachines(helper);
+            helper.succeed();
+        });
+    }
+
+    private static TileDimensionalBattery pooledBattery(GameTestHelper helper, BlockPos pos,
+            net.minecraft.world.entity.player.Player owner, dimensionalflux.common.connection.DimensionalNetwork network) {
+        helper.setBlock(pos, RegistryBlocks.DIMENSIONAL_BATTERY.get());
+        var battery = helper.getBlockEntity(pos, TileDimensionalBattery.class);
+        battery.setOwnerUUID(owner.getUUID());
+        helper.assertTrue(battery.connect(network), "A battery did not link");
+        return battery;
+    }
+
+    /**
+     * A Receiver of network A mounted base to base on an Emitter of network B carries A's energy into B, where a
+     * Receiver delivers it; on the same network the pair moves nothing.
+     */
+    private static void networkBridge(GameTestHelper helper) {
+        var player = tester(helper, "PortBridge");
+        var data = DimensionalNetworkData.getInstance();
+        var a = data.createNetwork(player, "BridgeA", 0xAA3333, SecurityLevel.PUBLIC, "");
+        var b = data.createNetwork(player, "BridgeB", 0x3333AA, SecurityLevel.PUBLIC, "");
+        machine(helper, new BlockPos(1, 2, 1), 10_000_000, 0, 1000);
+        connector(helper, new BlockPos(2, 2, 1), RegistryBlocks.DIMENSIONAL_EMITTER.get(), Direction.WEST, TileDimensionalEmitter.class, player, a);
+        var bridgeIn = connector(helper, new BlockPos(4, 2, 1), RegistryBlocks.DIMENSIONAL_EMITTER.get(), Direction.WEST,
+                TileDimensionalEmitter.class, player, b);
+        var bridgeOut = connector(helper, new BlockPos(3, 2, 1), RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST,
+                TileDimensionalReceiver.class, player, a);
+        var sink = machine(helper, new BlockPos(6, 2, 1), 0, Integer.MAX_VALUE, 0);
+        connector(helper, new BlockPos(5, 2, 1), RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST, TileDimensionalReceiver.class, player, b);
+        helper.runAfterDelay(40, () -> {
+            helper.assertTrue(bridgeOut.getBridgeState() == TileDimensionalReceiver.BRIDGE_OPEN, "The bridge is paused");
+            helper.assertTrue(sink.getAmountAsLong() > 0, "Energy from network A did not reach network B");
+            helper.assertTrue(bridgeIn.getTransferBuffer() <= 1_000_000, "The bridge Emitter stores energy");
+            helper.assertTrue(bridgeIn.connect(a), "The bridge Emitter did not relink");
+        });
+        helper.runAfterDelay(60, () -> {
+            helper.assertTrue(bridgeOut.getBridgeState() == TileDimensionalReceiver.BRIDGE_SAME_NETWORK,
+                    "A pair on one network is not paused");
+        });
+        helper.runAfterDelay(80, () -> {
+            helper.assertTrue(bridgeOut.getTransferChange() == 0, "A pair on one network still moves energy");
+            releaseMachines(helper);
+            helper.succeed();
+        });
+    }
+
+    /** Bridges from A to B and from B to A form a loop and both pause; breaking one lets the other carry energy. */
+    private static void bridgeLoop(GameTestHelper helper) {
+        var player = tester(helper, "PortLoop");
+        var data = DimensionalNetworkData.getInstance();
+        var a = data.createNetwork(player, "LoopA", 0xAA3333, SecurityLevel.PUBLIC, "");
+        var b = data.createNetwork(player, "LoopB", 0x3333AA, SecurityLevel.PUBLIC, "");
+        machine(helper, new BlockPos(1, 2, 1), 10_000_000, 0, 1000);
+        connector(helper, new BlockPos(2, 2, 1), RegistryBlocks.DIMENSIONAL_EMITTER.get(), Direction.WEST, TileDimensionalEmitter.class, player, a);
+        connector(helper, new BlockPos(4, 2, 1), RegistryBlocks.DIMENSIONAL_EMITTER.get(), Direction.WEST, TileDimensionalEmitter.class, player, b);
+        var forward = connector(helper, new BlockPos(3, 2, 1), RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST,
+                TileDimensionalReceiver.class, player, a);
+        connector(helper, new BlockPos(4, 2, 3), RegistryBlocks.DIMENSIONAL_EMITTER.get(), Direction.WEST, TileDimensionalEmitter.class, player, a);
+        var back = connector(helper, new BlockPos(3, 2, 3), RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST,
+                TileDimensionalReceiver.class, player, b);
+        helper.runAfterDelay(50, () -> {
+            helper.assertTrue(forward.getBridgeState() == TileDimensionalReceiver.BRIDGE_LOOP
+                    && back.getBridgeState() == TileDimensionalReceiver.BRIDGE_LOOP, "A loop of bridges is not paused");
+            helper.assertTrue(forward.getTransferChange() == 0 && back.getTransferChange() == 0, "A paused bridge moves energy");
+            helper.setBlock(new BlockPos(3, 2, 3), Blocks.AIR);
+        });
+        helper.runAfterDelay(100, () -> {
+            helper.assertTrue(forward.getBridgeState() == TileDimensionalReceiver.BRIDGE_OPEN, "The bridge stayed paused after the loop broke");
+            releaseMachines(helper);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A Logistics Network node attached to a Receiver encloses it: while the node is there every face can be pulled
+     * from, and an Emitter with a node takes energy in on every face; without it only the base works. Needs the
+     * Logistics Networks mod on the test server.
+     */
+    private static void logisticsNode(GameTestHelper helper) {
+        var player = tester(helper, "PortNode");
+        var network = DimensionalNetworkData.getInstance().createNetwork(player, "Node", 0x88AA33, SecurityLevel.PUBLIC, "");
+        machine(helper, new BlockPos(1, 2, 2), 10_000_000, 0, 100_000);
+        connector(helper, new BlockPos(2, 2, 2), RegistryBlocks.DIMENSIONAL_EMITTER.get(), Direction.WEST, TileDimensionalEmitter.class, player, network);
+        helper.setBlock(new BlockPos(6, 2, 2), Blocks.STONE);
+        connector(helper, new BlockPos(5, 2, 2), RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST, TileDimensionalReceiver.class, player, network);
+        helper.setBlock(new BlockPos(3, 2, 4), Blocks.STONE);
+        connector(helper, new BlockPos(4, 2, 4), RegistryBlocks.DIMENSIONAL_EMITTER.get(), Direction.WEST, TileDimensionalEmitter.class, player, network);
+        var level = helper.getLevel();
+        BlockPos receiverAt = helper.absolutePos(new BlockPos(5, 2, 2));
+        BlockPos emitterAt = helper.absolutePos(new BlockPos(4, 2, 4));
+        helper.assertTrue(level.getCapability(Capabilities.Energy.BLOCK, receiverAt, Direction.UP) == null,
+                "A Receiver without a node exposes its top");
+        var nodes = new java.util.ArrayList<net.minecraft.world.entity.Entity>();
+        for (BlockPos at : List.of(receiverAt, emitterAt)) {
+            var type = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE
+                    .getValue(Identifier.fromNamespaceAndPath("logisticsnetworks", "logistics_node"));
+            var node = type.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+            helper.assertTrue(node != null, "The Logistics Network node could not be created");
+            try {
+                node.getClass().getMethod("setAttachedPos", BlockPos.class).invoke(node, at);
+                node.getClass().getMethod("setValid", boolean.class).invoke(node, true);
+            } catch (ReflectiveOperationException e) {
+                helper.fail("The node API changed: " + e);
+            }
+            node.setPos(net.minecraft.world.phys.Vec3.atBottomCenterOf(at));
+            helper.assertTrue(level.addFreshEntity(node), "The node was not added to the level");
+            nodes.add(node);
+        }
+        var receiverDevice = helper.getBlockEntity(new BlockPos(5, 2, 2), TileDimensionalReceiver.class);
+        helper.runAfterDelay(29, () -> {
+            var node = nodes.get(0);
+            var found = level.getEntities((net.minecraft.world.entity.Entity) null,
+                    new net.minecraft.world.phys.AABB(receiverAt).inflate(1), e -> true);
+            helper.assertTrue(receiverDevice.isWrappedByNode(), "The Receiver did not see its node: alive=" + node.isAlive()
+                    + " added=" + node.isAddedToLevel() + " pos=" + node.position() + " block=" + node.blockPosition()
+                    + " receiver=" + receiverAt + " box=" + node.getBoundingBox() + " found=" + found);
+        });
+        long[] pulled = new long[1];
+        for (int tick = 30; tick <= 50; tick++) {
+            helper.runAfterDelay(tick, () -> {
+                helper.assertTrue(nodes.stream().allMatch(net.minecraft.world.entity.Entity::isAlive), "A node was removed");
+                for (Direction side : Direction.values()) {
+                    helper.assertTrue(level.getCapability(Capabilities.Energy.BLOCK, receiverAt, side) != null,
+                            "The Receiver with a node hides its " + side + " face");
+                    helper.assertTrue(level.getCapability(Capabilities.Energy.BLOCK, emitterAt, side) != null,
+                            "The Emitter with a node hides its " + side + " face");
+                }
+                pulled[0] += MachineEnergy.extract(level.getCapability(Capabilities.Energy.BLOCK, receiverAt, Direction.UP), 300, false);
+            });
+        }
+        helper.runAfterDelay(52, () -> {
+            helper.assertTrue(pulled[0] >= 300L * 15, "The node pulled only " + pulled[0] + " FE through the top");
+            nodes.forEach(n -> n.discard());
+        });
+        helper.runAfterDelay(80, () -> {
+            helper.assertTrue(level.getCapability(Capabilities.Energy.BLOCK, receiverAt, Direction.UP) == null,
+                    "The Receiver still exposes its top after the node left");
+            helper.assertTrue(level.getCapability(Capabilities.Energy.BLOCK, receiverAt, Direction.EAST) != null,
+                    "The Receiver base closed");
             releaseMachines(helper);
             helper.succeed();
         });

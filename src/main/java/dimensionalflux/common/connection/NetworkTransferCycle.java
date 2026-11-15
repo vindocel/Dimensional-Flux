@@ -1,5 +1,6 @@
 package dimensionalflux.common.connection;
 
+import dimensionalflux.common.device.DimensionalBatteryHandler;
 import dimensionalflux.common.device.DimensionalConnectorHandler;
 import dimensionalflux.common.device.DimensionalEmitterHandler;
 import dimensionalflux.common.device.TileDimensionalDevice;
@@ -7,6 +8,7 @@ import dimensionalflux.common.device.TileDimensionalEmitter;
 import dimensionalflux.common.util.SaturatingMath;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,10 @@ import java.util.Map;
  *     <li>Emitters close their cycle and the network records the energy consumed for the buffer budget.</li>
  *     <li>Buffered energy above the budget moves into batteries, and batteries close their cycle.</li>
  * </ol>
+ * Batteries of the same priority form a pool that works as one battery: energy for the pool is split in proportion
+ * to each battery's free room, energy taken from it in proportion to each battery's charge, each within its own
+ * transfer limit, so the limits add up and the levels move together. A higher-priority pool fills first and is
+ * drained last.
  * Sources that can give nothing more are skipped with cursors instead of being asked again for every receiver,
  * so a cycle grows with the number of devices rather than with emitters times receivers. A source is only skipped
  * while nothing could have refilled it: an Emitter whose machine gave nothing is asked again only after energy
@@ -33,9 +39,19 @@ final class NetworkTransferCycle {
 
     private final OrderedCursor<TileDimensionalDevice> mBuffered = new OrderedCursor<>();
     private final OrderedCursor<TileDimensionalDevice> mPulled = new OrderedCursor<>();
-    private final OrderedCursor<TileDimensionalDevice> mStored = new OrderedCursor<>();
     private final OrderedCursor<TileDimensionalDevice> mConsumers = new OrderedCursor<>();
-    private final OrderedCursor<TileDimensionalDevice> mBatteryRoom = new OrderedCursor<>();
+
+    /** Higher priority first. */
+    private static final Comparator<TileDimensionalDevice> DESCENDING_PRIORITY =
+            (lhs, rhs) -> Integer.compare(rhs.getTransferHandler().getPriority(), lhs.getTransferHandler().getPriority());
+    private final List<TileDimensionalDevice> mSortedBatteries = new ArrayList<>();
+    /** Battery pools, highest priority first; the batteries of one priority work as one battery. */
+    private final List<List<TileDimensionalDevice>> mPools = new ArrayList<>();
+    /** The pool drained next: pools are drained from the lowest priority up, and those above it may still give. */
+    private int mDrainPool;
+    private long[] mCaps = new long[0];
+    private long[] mWeights = new long[0];
+    private long[] mShares = new long[0];
 
     private final List<TileDimensionalDevice> mEmitters = new ArrayList<>();
     private final List<TileDimensionalDevice> mConsumerList = new ArrayList<>();
@@ -79,7 +95,7 @@ final class NetworkTransferCycle {
 
         mBuffered.reset(mEmitters);
         mPulled.reset(mEmitters);
-        mStored.reset(batteries);
+        buildPools(batteries);
         if (mEmptyAt.length < mEmitters.size()) {
             mEmptyAt = new long[mEmitters.size()];
         }
@@ -92,7 +108,13 @@ final class NetworkTransferCycle {
             var receiver = receivers.get(index);
             var handler = receiver.getTransferHandler();
             boolean storage = receiver.getDeviceType().isStorage();
-            if (shareByDemand && !storage) {
+            if (storage) {
+                int end = poolEnd(receivers, index);
+                chargePool(receivers.subList(index, end));
+                index = end - 1;
+                continue;
+            }
+            if (shareByDemand) {
                 int end = groupEnd(receivers, index);
                 if (end - index > 1) {
                     unmet = SaturatingMath.add(unmet, shareGroup(receivers.subList(index, end)));
@@ -278,14 +300,142 @@ final class NetworkTransferCycle {
             }
         }
         if (storage) return;
-        // energy stored in batteries
-        for (int i = mStored.live(0); i < mStored.size() && destination.getRequest() > 0; i = mStored.live(i + 1)) {
-            long request = destination.getRequest();
-            long moved = mStored.get(i).getTransferHandler().removeFromBuffer(request);
-            if (moved > 0) destination.addToBuffer(moved);
-            // batteries are filled only after every consumer, so an empty or limited one stays so in this pass
-            if (moved < request) mStored.remove(i);
+        drainPools(destination);
+    }
+
+    // ---- battery pools ----
+
+    /** Groups the batteries into pools of one priority, highest priority first. */
+    private void buildPools(List<TileDimensionalDevice> batteries) {
+        mSortedBatteries.clear();
+        mSortedBatteries.addAll(batteries);
+        mSortedBatteries.sort(DESCENDING_PRIORITY);
+        mPools.clear();
+        int start = 0;
+        while (start < mSortedBatteries.size()) {
+            int end = poolEnd(mSortedBatteries, start);
+            mPools.add(mSortedBatteries.subList(start, end));
+            start = end;
         }
+        mDrainPool = mPools.size() - 1;
+        int largest = 0;
+        for (var pool : mPools) largest = Math.max(largest, pool.size());
+        if (mCaps.length < largest) {
+            mCaps = new long[largest];
+            mWeights = new long[largest];
+            mShares = new long[largest];
+        }
+    }
+
+    /** The end (exclusive) of the run of batteries with the same priority that starts at {@code start}. */
+    private static int poolEnd(List<TileDimensionalDevice> devices, int start) {
+        int priority = devices.get(start).getTransferHandler().getPriority();
+        int end = start + 1;
+        while (end < devices.size() && devices.get(end).getDeviceType().isStorage()
+                && devices.get(end).getTransferHandler().getPriority() == priority) {
+            end++;
+        }
+        return end;
+    }
+
+    /** The free room of a battery, which weighs its share of the energy going into its pool. */
+    private static long roomOf(TransferHandler handler) {
+        return handler instanceof DimensionalBatteryHandler battery
+                ? Math.max(0, battery.getMaxEnergyStorage() - battery.getBuffer()) : handler.getRequest();
+    }
+
+    /** Charges one pool from the network: the energy for all of it is gathered first, then split by free room. */
+    private void chargePool(List<TileDimensionalDevice> pool) {
+        int size = pool.size();
+        long wanted = 0;
+        for (int i = 0; i < size; i++) {
+            var handler = pool.get(i).getTransferHandler();
+            mCaps[i] = handler.getRequest();
+            mWeights[i] = roomOf(handler);
+            wanted = SaturatingMath.add(wanted, mCaps[i]);
+        }
+        if (wanted <= 0) return;
+        Pool gather = new Pool(wanted);
+        supply(gather, true);
+        if (gather.gathered <= 0) return;
+        split(gather.gathered, size);
+        for (int i = 0; i < size; i++) {
+            if (mShares[i] > 0) pool.get(i).getTransferHandler().addToBuffer(mShares[i]);
+        }
+    }
+
+    /** Gives a consumer energy stored in batteries, each pool split by charge, from the lowest priority up. */
+    private void drainPools(TransferHandler destination) {
+        while (mDrainPool >= 0 && destination.getRequest() > 0) {
+            var pool = mPools.get(mDrainPool);
+            int size = pool.size();
+            long available = 0;
+            for (int i = 0; i < size; i++) {
+                var handler = (DimensionalBatteryHandler) pool.get(i).getTransferHandler();
+                mCaps[i] = handler.getAvailable();
+                mWeights[i] = handler.getBuffer();
+                available = SaturatingMath.add(available, mCaps[i]);
+            }
+            long request = destination.getRequest();
+            if (available > 0) {
+                split(Math.min(request, available), size);
+                long moved = 0;
+                for (int i = 0; i < size; i++) {
+                    if (mShares[i] > 0) moved += pool.get(i).getTransferHandler().removeFromBuffer(mShares[i]);
+                }
+                if (moved > 0) destination.addToBuffer(moved);
+                // batteries are filled only after every consumer, so a pool that gave all it could stays so
+                if (request < available) return;
+            }
+            mDrainPool--;
+        }
+    }
+
+    /**
+     * Splits {@code amount} over the first {@code size} entries of the scratch arrays into {@link #mShares}, in
+     * proportion to {@link #mWeights} and never above {@link #mCaps}; what a capped entry cannot take goes to the
+     * others, and the last few FE of rounding go one each, in order. The caps must add up to at least the amount.
+     */
+    private void split(long amount, int size) {
+        java.util.Arrays.fill(mShares, 0, size, 0);
+        long left = amount;
+        while (left > 0) {
+            long weightSum = 0;
+            int open = 0;
+            for (int i = 0; i < size; i++) {
+                if (mShares[i] < mCaps[i]) {
+                    weightSum = SaturatingMath.add(weightSum, Math.max(1, mWeights[i]));
+                    open++;
+                }
+            }
+            if (open == 0) return;
+            long given = 0;
+            for (int i = 0; i < size && given < left; i++) {
+                if (mShares[i] >= mCaps[i]) continue;
+                long part = portion(left, Math.max(1, mWeights[i]), weightSum);
+                part = Math.min(part, Math.min(mCaps[i] - mShares[i], left - given));
+                mShares[i] += part;
+                given += part;
+            }
+            if (given == 0) {
+                for (int i = 0; i < size && given < left; i++) {
+                    if (mShares[i] < mCaps[i]) {
+                        mShares[i]++;
+                        given++;
+                    }
+                }
+            }
+            left -= given;
+        }
+    }
+
+    /** {@code amount * weight / total}, exact while it fits in a long. */
+    private static long portion(long amount, long weight, long total) {
+        long product = amount * weight;
+        if (Math.multiplyHigh(amount, weight) == 0 && product >= 0) {
+            return product / total;
+        }
+        return Math.min(amount, (long) Math.floor(amount * ((double) weight / total)));
     }
 
     /**
@@ -315,10 +465,6 @@ final class NetworkTransferCycle {
     }
 
     /**
-     * Moves buffered energy above the budget into batteries, devices in order, each into the batteries that still
-     * have room in this cycle.
-     */
-    /**
      * Throws away buffered energy above the ceiling, from Emitters first (energy staged by pushing machines), then
      * from the other devices. Returns the energy thrown away.
      */
@@ -329,7 +475,8 @@ final class NetworkTransferCycle {
                 if (removed >= excess) break;
                 var type = device.getDeviceType();
                 if (type.isStorage() || type.isEmitter() != (pass == 0)) continue;
-                long taken = device.getTransferHandler().discard(excess - removed);
+                var handler = device.getTransferHandler();
+                long taken = handler.discard(Math.min(excess - removed, handler.getBuffer() - handler.getHeldForDemand()));
                 if (taken > 0) {
                     removed += taken;
                     device.markEnergyChanged();
@@ -339,24 +486,45 @@ final class NetworkTransferCycle {
         return removed;
     }
 
+    /**
+     * Moves buffered energy above the budget into batteries, highest-priority pool first, each pool split by free
+     * room like the energy it gets during the cycle; the energy comes from the devices in order. Uses the pools of
+     * the last {@link #run}.
+     */
     void moveExcessToBatteries(List<TileDimensionalDevice> devices, List<TileDimensionalDevice> batteries, long excess) {
         if (excess <= 0 || batteries.isEmpty()) return;
-        mBatteryRoom.reset(batteries);
-        for (var device : devices) {
-            if (excess == 0) break;
-            if (device.getDeviceType().isStorage()) continue;
-            var source = device.getTransferHandler();
-            for (int i = mBatteryRoom.live(0); excess > 0 && source.getBuffer() > 0 && i < mBatteryRoom.size();
-                 i = mBatteryRoom.live(i + 1)) {
-                var battery = mBatteryRoom.get(i);
-                long moved = Math.min(excess, Math.min(source.getBuffer(), battery.getTransferHandler().getRequest()));
-                if (moved > 0) {
-                    source.moveReserveTo(battery.getTransferHandler(), moved);
+        int source = 0;
+        for (var pool : mPools) {
+            if (excess <= 0 || source >= devices.size()) break;
+            int size = pool.size();
+            long room = 0;
+            for (int i = 0; i < size; i++) {
+                var handler = pool.get(i).getTransferHandler();
+                mCaps[i] = handler.getRequest();
+                mWeights[i] = roomOf(handler);
+                room = SaturatingMath.add(room, mCaps[i]);
+            }
+            long amount = Math.min(excess, room);
+            if (amount <= 0) continue;
+            split(amount, size);
+            for (int i = 0; i < size; i++) {
+                var battery = pool.get(i);
+                long share = mShares[i];
+                while (share > 0 && source < devices.size()) {
+                    var device = devices.get(source);
+                    var handler = device.getTransferHandler();
+                    long spare = device.getDeviceType().isStorage() ? 0 : handler.getBuffer() - handler.getHeldForDemand();
+                    if (spare <= 0) {
+                        source++;
+                        continue;
+                    }
+                    long moved = Math.min(share, spare);
+                    handler.moveReserveTo(battery.getTransferHandler(), moved);
                     device.markEnergyChanged();
                     battery.markEnergyChanged();
+                    share -= moved;
                     excess -= moved;
                 }
-                if (battery.getTransferHandler().getRequest() <= 0) mBatteryRoom.remove(i);
             }
         }
     }
