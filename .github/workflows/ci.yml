@@ -1,7 +1,7 @@
 name: CI
 
-# Builds every Minecraft version Stonecutter is configured for. No publishing secrets are available to CI or pull
-# requests.
+# Builds every Minecraft version Stonecutter is configured for (settings.gradle.kts) and runs its GameTests.
+# No publishing secrets are available to CI or pull requests.
 on:
   push:
     branches:
@@ -24,6 +24,11 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Test release validation
+        run: |
+          python3 -B scripts/test-release.py
+          python3 -B scripts/test-published.py
+
       - name: List the Stonecutter versions
         id: list
         shell: bash
@@ -43,11 +48,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Java 25
+      # Gradle runs on Java 25; a version on another Java (1.21.1: Java 21) gets it through the toolchain.
+      - name: Set up Java
         uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: '25'
+          java-version: |
+            21
+            25
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6

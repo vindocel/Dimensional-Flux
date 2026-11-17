@@ -166,7 +166,7 @@ public abstract class GuiTabCore extends GuiDimensionalCore {
         // the tab of the open window stays selected, like the tabs of Bigger Reactors Rework and Dimensional Flux Miner
         for (GuiButtonCore button : mButtons) {
             if (button instanceof NavigationButton nav) {
-                nav.setSelected(findPopup(popup -> popup instanceof GuiTabPopup tab && tab.getTab() == nav.getTab()) != null);
+                nav.setSelected(findPopup(popup -> popup instanceof GuiTabPopup tab && tab.isNavigationTab(nav.getTab())) != null);
             } else if (button instanceof dimensionalflux.client.gui.button.IconTabButton icon) {
                 icon.setSelected(findPopup(popup -> isWindowOfTab(popup, icon)) != null);
             }
@@ -196,7 +196,7 @@ public abstract class GuiTabCore extends GuiDimensionalCore {
             return;
         }
         if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && button instanceof NavigationButton nav) {
-            GuiPopupCore<?> existing = findPopup(popup -> popup instanceof GuiTabPopup tab && tab.getTab() == nav.getTab());
+            GuiPopupCore<?> existing = findPopup(popup -> popup instanceof GuiTabPopup tab && tab.isNavigationTab(nav.getTab()));
             if (existing != null) {
                 // clicking the selected tab again closes its window
                 closePopup(existing);
@@ -343,7 +343,7 @@ public abstract class GuiTabCore extends GuiDimensionalCore {
             }
             return;
         }
-        GuiPopupCore<?> existing = findPopup(popup -> popup instanceof GuiTabPopup window && window.getTab() == tab);
+        GuiPopupCore<?> existing = findPopup(popup -> popup instanceof GuiTabPopup window && window.isNavigationTab(tab));
         if (existing != null) {
             focusPopup(existing);
             return;
@@ -375,10 +375,19 @@ public abstract class GuiTabCore extends GuiDimensionalCore {
     /** Closes this tab's window without disturbing another window opened or focused since the request. */
     protected final void closeTabWindow() {
         if (mRoot != null) {
-            mRoot.closePopup(mRoot.findPopup(popup -> popup instanceof GuiTabPopup tab && tab.getTab() == getNavigationTab()));
+            mRoot.closePopup(mRoot.findPopup(popup -> popup instanceof GuiTabPopup tab && tab.belongsTo(this)));
         } else {
             openHome();
         }
+    }
+
+    /** Opens the named network's form without changing the device or configurator link. */
+    public final void openNetworkEditor(dimensionalflux.common.connection.DimensionalNetwork network) {
+        var host = windowHost();
+        if (!network.isValid() || !network.getPlayerAccess(mPlayer).canEdit()) return;
+        var existing = host.findPopup(popup -> popup instanceof GuiTabPopup tab && tab.editsNetwork(network.getNetworkID()));
+        if (existing != null) host.focusPopup(existing);
+        else host.openPopup(GuiTabPopup.networkEditor(host, network.getNetworkID()));
     }
 
     /** A new screen of a navigation tab, to be shown in a window over this one. */

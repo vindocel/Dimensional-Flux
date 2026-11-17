@@ -69,9 +69,8 @@ neoForge {
         register("client") {
             client()
             loadedMods = setOf(mods.getByName(modId))
-            if (minecraftVersion == "26.1.2") {
-                gameDirectory = rootProject.file("run")
-            }
+            // Version-specific instances keep mods, settings and saves independent.
+            gameDirectory = rootProject.file("run/$minecraftVersion")
         }
         register("server") {
             server()

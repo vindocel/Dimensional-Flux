@@ -232,11 +232,19 @@ The repository uses **Stonecutter** with **ModDevGradle**: every Minecraft versi
 ```bash
 ./gradlew :26.1.2:build               # jar in versions/26.1.2/build/libs/dimensional-flux-<version>+26.1.2.jar
 ./gradlew :26.1.2:runGameTestServer   # in-world GameTests (a separate test mod, never in the released jar)
-./gradlew :26.1.2:runClient           # development client (uses the local run/ folder)
+./gradlew :26.1.2:runClient           # development client (uses run/26.1.2)
 ./gradlew :26.1.2:runServer           # development server
 ```
 
-On Windows use `gradlew.bat`. The Gradle wrapper provisions Gradle itself; a JDK 25 is required.
+On Windows use `gradlew.bat`. Gradle runs on JDK 25; the wrapper provisions Gradle itself and the Foojay resolver provisions each target's Java toolchain.
+
+Each client uses `run/<minecraft>`, with its own `mods/`, `config/`, `saves/`, `resourcepacks/` and `shaderpacks/`. For the current target:
+
+```powershell
+.\gradlew.bat :26.1.2:runClient
+```
+
+Put compatible test mods in `run/26.1.2/mods`; the development mod is loaded from source. New approved targets use the same command with their Minecraft version. `gradlew.bat build` builds all configured targets; qualify tasks as `:<minecraft>:build` to select one. Isolated runs can use `-Ptest_run_root=<directory>`; each run then uses `<directory>/<minecraft>/<run-name>`.
 
 | Component | Version |
 |---|---|
@@ -251,10 +259,10 @@ On Windows use `gradlew.bat`. The Gradle wrapper provisions Gradle itself; a JDK
 | Workflow | When | What |
 |---|---|---|
 | 🧪 **CI** (`ci.yml`) | every push to `production` or `main` and every pull request | builds every Stonecutter version and runs its GameTests; no publishing credentials |
-| 📦 **Release** (`release.yml`) | a GitHub Release is published | validates the tag and its target branch, builds the tagged Minecraft version with the tag's version, runs the GameTests, checks the jar and uploads it to CurseForge and Modrinth with the release body as changelog |
+| 📦 **Release** (`release.yml`) | a GitHub Release is published | validates the tag and its target branch, builds every selected Minecraft version with the tag's version, runs all selected GameTests, checks the jars and uploads each artifact to CurseForge and Modrinth with the release body as changelog |
 
 - 🌿 **Branches**: day-to-day work goes to `production`; `main` only receives stable versions.
-- 🏷️ **Tags** look like `v0.1.0-beta.1+26.1.2`: `gradle.properties` keeps the base version, the channel (alpha, beta, release) comes from the tag, and the `+<minecraft>` suffix picks the Stonecutter version to publish.
+- 🏷️ **Tags** look like `v0.1.0-beta.1+26.1.2`: `gradle.properties` keeps the base version, the channel (alpha, beta, release) comes from the tag, and no suffix publishes all configured targets, `+<minecraft>` selects one, and `+<minecraft>-<minecraft>` selects a group. Every selected build and GameTest must pass before publishing starts.
 - ✅ Alpha and beta releases are marked **Pre-release** on GitHub; stable releases are not.
 - 📘 Full release and multi-version workflow: [docs/RELEASING.md](docs/RELEASING.md).
 

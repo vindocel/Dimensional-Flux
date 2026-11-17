@@ -24,8 +24,9 @@ they need no version commit:
 | `v0.1.0-beta.1+26.1.2` | beta | checked | `0.1.0-beta.1` |
 | `v0.1.0+26.1.2` | release | unchecked | `0.1.0` |
 
-The `+<minecraft>` suffix chooses the Minecraft version to build and publish. A tag without it (`v0.1.0-beta.1`) is
-accepted only while a single Minecraft version is configured. A `mod_version` that already carries a channel
+A tag without a Minecraft suffix (`v0.1.0-beta.1`) builds and publishes **all configured Minecraft versions**.
+The `+<minecraft>` suffix selects one version. Separate several versions with `-` to select a group, for example
+`v0.1.0-beta.1+26.1.2-26.3` once both targets have been approved and configured. Unknown or repeated targets are rejected. A `mod_version` that already carries a channel
 (`0.1.0-beta.2`) must match the tag exactly.
 
 The JAR is named `dimensional-flux-<version>+<minecraft>.jar`, e.g. `dimensional-flux-0.1.0-beta.1+26.1.2.jar`.
@@ -40,16 +41,20 @@ The JAR is named `dimensional-flux-<version>+<minecraft>.jar`, e.g. `dimensional
    CurseForge and Modrinth changelog.
 5. Check **Set as a pre-release** for an alpha or a beta, leave it unchecked for a stable release, then **Publish**.
 
-`release.yml` then checks out the tag and, in the `management` environment:
+`release.yml` resolves the tag and builds a matrix from `settings.gradle.kts` and each target's properties:
 
-1. validates the tag (format, base version, Minecraft suffix, Pre-release flag), that the Minecraft version is one
-   Stonecutter builds, and that the tagged commit is on the selected target branch;
-2. builds that Minecraft version from scratch with the version of the tag (`:<minecraft>:build`);
-3. runs the GameTests (`:<minecraft>:runGameTestServer`);
-4. checks the JAR (one distribution JAR, its file name, its version and its Minecraft range in `neoforge.mods.toml`);
-5. publishes it to CurseForge and Modrinth as alpha, beta or release for that Minecraft version.
+1. validates the tag, base version, selected targets, Pre-release flag and ancestry on the target branch;
+2. builds each selected target from scratch with the tag's version (`:<minecraft>:build`, `-Prelease_version`);
+3. runs each target's GameTests with the same release version;
+4. validates and saves one distribution JAR per target, checking its name, version and Minecraft range;
+5. waits for **every selected build and GameTest** to pass before any store upload starts;
+6. in the `management` environment, downloads and revalidates each artifact and checks which stores already have it;
+7. publishes missing files to CurseForge and Modrinth as alpha, beta or release, with a distinct store version
+   `v<version>+<minecraft>` and the Java version from that target's properties.
 
-Any failed check stops the job before anything is uploaded.
+A failed build, GameTest or artifact check prevents publishing for the entire selection. Uploads to separate stores
+are independent: if a store fails after another succeeds, rerun the workflow; existing files are skipped. CurseForge
+lookups use the public CFWidget API and Modrinth uses its official API; lookup failures stop that target's uploads.
 
 ## Several Minecraft versions
 
@@ -58,10 +63,14 @@ Every Minecraft version lives on the same branch: **Stonecutter** builds each on
 (NeoForge version and other version-specific values). Shared code and resources stay in `src/main`; code that differs
 between versions uses Stonecutter conditions.
 
-- To add a Minecraft version, add it to `versions(...)` in `settings.gradle.kts` and create `versions/<minecraft>`.
-  CI builds and tests it from the next push.
+- After approval of a port, add its version to `versions(...)` in `settings.gradle.kts` and create
+  `versions/<minecraft>/gradle.properties` with `neo_version`, `java_version` and the exact
+  `minecraft_version_range=[<minecraft>]`. Adapt APIs and dependencies for that target. CI and suffix-free releases
+  pick it up automatically; the client uses `run/<minecraft>` without another path change.
 - To release one Minecraft version, publish a release whose tag carries its suffix, e.g. `v0.1.0-beta.1+26.3`.
-  Release each version with its own tag; the same mod version may ship for several Minecraft versions.
+- To release every configured target at once, use `v0.1.0-beta.1`.
+- To release a group, use `v0.1.0-beta.1+26.1.2-26.3` after those versions are configured.
+- Only Minecraft 26.1.2 is currently configured; other versions here illustrate future selection.
 - No automation can decide which code is compatible with which Minecraft version; CI on every configured version is
   what proves it.
 
@@ -74,10 +83,20 @@ pull requests never get publishing credentials.
 ## Checking locally before a tag
 
 ```bash
-./gradlew :26.1.2:build
+python3 -B scripts/test-release.py
+python3 -B scripts/test-published.py
+./gradlew build                       # all configured targets
+./gradlew :26.1.2:build               # one target
 ./gradlew :26.1.2:runGameTestServer
 bash scripts/validate-release.sh versions
 TAG=v0.1.0-beta.1+26.1.2 PRERELEASE=true bash scripts/validate-release.sh tag
 ```
 
 On Windows use `gradlew.bat` and run the script from Git Bash.
+
+## Local client instances
+
+Run `gradlew.bat :26.1.2:runClient` on Windows. Each target uses `run/<minecraft>` with independent mods,
+settings, shader packs and worlds. The existing 26.1.2 instance was moved intact from `run/` to `run/26.1.2`.
+The development mod is loaded from the source build; do not put a second copy in `mods/`.
+`-Ptest_run_root=<directory>` overrides all run directories to `<directory>/<minecraft>/<run-name>` for isolated checks.

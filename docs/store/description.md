@@ -93,6 +93,7 @@ Powers every machine inside its area, with no cables and no connectors.
 - 📐 Area from 9 to 32 blocks, offset on each axis.
 - 🧊 Live 3D preview of the covered machines.
 - ✅ Turn each machine on or off, rename it, give it its own priority and limit.
+- 📋 Sort machines by name or current consumption, and enable **Share equally** when equal sharing is wanted.
 - ⚡ Electric arcs while it works.
 
 ---
@@ -130,12 +131,14 @@ Every device opens a screen with side tabs; each tab opens a window you can move
 ![Choosing and creating networks](https://cdn.modrinth.com/data/ufMZiRnE/images/ffb8d076dcb632874a2873cc1da8d85243c434e8.png)
 
 - 🔐 **Public**, **Private** or **Locked** with a password.
+- ✏️ Hold **Shift** and click the pencil to edit another network directly from the list, or its trash button to delete it, when permitted.
 - 🔁 Right click a network to make it the **backup**.
 
 ![Statistics and connections](https://cdn.modrinth.com/data/ufMZiRnE/images/267ae33b0816b9145f8411deebf70a8d04933d93.png)
 
 - 📈 Input in green, output in red, the balance and the storage gauge.
 - 🔦 Light any machine up through the walls from the connections list.
+- 🔢 **Connections** and **Machines in area** offer **Automatic**, **Name**, **Highest consumption** and **Lowest consumption** ordering.
 
 ![Members and network options](https://cdn.modrinth.com/data/ufMZiRnE/images/e5e302ae9673bcebdb653b6ab859b11cc7cb0327.png)
 
@@ -154,7 +157,7 @@ Every device opens a screen with side tabs; each tab opens a window you can move
 
 ![Dimensional Flux Guide](https://cdn.modrinth.com/data/ufMZiRnE/images/fbb76165d88c25d55a59064687b037aa3bab7b91.png)
 
-Pick up your first **Dimensional Flux Shard** and the guide is yours. The book opens in your hand and turns its pages as you read.
+Craft the guide with a **Book** and a **Dimensional Flux Shard**. The book opens in your hand and turns its pages as you read.
 
 - 📚 Every device, priorities, limits, batteries and monitoring, chapter by chapter.
 - 🧾 Crafting grids read live from your server.

@@ -17,7 +17,11 @@ import dimensionalflux.client.gui.DfStyle;
 import dimensionalflux.client.gui.EnumNavigationTab;
 import dimensionalflux.client.gui.list.GuiListTab;
 import dimensionalflux.client.gui.list.ListSort;
+import dimensionalflux.client.gui.list.MachineOrder;
 import dimensionalflux.client.gui.list.RowGrid;
+import dimensionalflux.client.gui.list.PageBar;
+import dimensionalflux.client.gui.basic.GuiButtonCore;
+import dimensionalflux.client.gui.button.SimpleButton;
 import dimensionalflux.client.gui.popup.PopupMachineEdit;
 import dimensionalflux.client.render.BlockHighlighter;
 import dimensionalflux.common.connection.AttachedMachine;
@@ -44,7 +48,7 @@ import java.util.List;
 public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
 
     /** Size of the light-up and edit buttons at the end of a row. */
-    private static final int SMALL = DfStyle.ACTION_BUTTON_SIZE;
+    private static final int SMALL = 14;
     /** Ticks between two refreshes of the rows shown. */
     private static final int REFRESH_TICKS = 5;
 
@@ -56,6 +60,10 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
                     .thenComparingInt(d -> -d.getRawPriority());
 
     private int mTicks;
+    private int mRankingTicks;
+    private MachineOrder mOrder = MachineOrder.AUTOMATIC;
+    private SimpleButton mSortButton;
+    private int mRowMouseX, mRowMouseY;
 
     public GuiTabConnections(@Nonnull DimensionalMenu menu, @Nonnull Player player) {
         super(menu, player);
@@ -70,10 +78,42 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
     }
 
     @Override
+    public int panelWidth() {
+        return 224;
+    }
+
+    @Override
+    public int panelHeight() {
+        return 199;
+    }
+
+    @Override
     public void init() {
         super.init();
-        mGrid = new RowGrid(leftPos + 15, topPos + 22, 19, 7, 146, 18);
+        mGrid = new RowGrid(leftPos + 12, topPos + 60, 24, 5, 200, 23);
+        mPageBar = new PageBar(this, mGrid.x(), topPos + 183, mGrid.width(), getNetwork().getNetworkColor());
+        mSortButton = null;
+        if (getNetwork().isValid()) updateSortButton();
         refreshRows();
+    }
+
+    private void updateSortButton() {
+        if (mSortButton != null) mButtons.remove(mSortButton);
+        mSortButton = new SimpleButton(this, leftPos + 90, topPos + 37, 122, 17,
+                DimensionalTranslate.SORT_BY.get() + ": " + mOrder.label());
+        mButtons.add(mSortButton);
+    }
+
+    @Override
+    public void onButtonClicked(GuiButtonCore button, float mouseX, float mouseY, int mouseButton) {
+        super.onButtonClicked(button, mouseX, mouseY, mouseButton);
+        if (button == mSortButton && (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT || mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT)) {
+            if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT) DfStyle.playClick();
+            mOrder = mOrder.cycle(mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+            sortRows(mSort);
+            showPage(0);
+            updateSortButton();
+        }
     }
 
     private void refreshRows() {
@@ -107,11 +147,19 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
             return;
         }
         int x = leftPos + 12, y = topPos + 10;
-        String label = DimensionalTranslate.SORT_BY.get() + ":";
-        int labelWidth = Math.min(font.width(label), 80);
-        DfStyle.scrollingPanelText(gr, font, label, x, y, labelWidth, DfStyle.TEXT);
-        DfStyle.scrollingText(gr, font, DimensionalTranslate.SORTING_SMART.get(), x + labelWidth + 4, y,
-                146 - labelWidth, DfStyle.statAccent());
+        DfStyle.glass(gr, x, y, mGrid.width(), 21);
+        SteelframePaint.fill(gr, x + 3, y + 3, x + 6, y + 18, 0xFF000000 | getNetwork().getNetworkColor());
+        DfStyle.scrollingText(gr, font, getNetwork().getNetworkName(), x + 12, y + 7,
+                mGrid.width() - 19, DfStyle.screenTextColor());
+        DfStyle.scrollingPanelText(gr, font, DimensionalTranslate.TOTAL.get() + ": " + mRows.size(),
+                x, topPos + 42, 74, DfStyle.TEXT);
+    }
+
+    @Override
+    protected void drawForegroundLayer(GuiGraphicsExtractor gr, int mouseX, int mouseY, float deltaTicks) {
+        mRowMouseX = mouseX;
+        mRowMouseY = mouseY;
+        super.drawForegroundLayer(gr, mouseX, mouseY, deltaTicks);
     }
 
     // ---- a row ----
@@ -128,11 +176,11 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
     }
 
     private int editX(int rowX) {
-        return rowX + mGrid.width() - SMALL - 1;
+        return rowX + mGrid.width() - SMALL - 4;
     }
 
     private int highlightX(int rowX) {
-        return editX(rowX) - SMALL;
+        return editX(rowX) - SMALL - 4;
     }
 
     /** The block a row stands for: the machine, or the device itself. */
@@ -152,20 +200,20 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
             SteelframePaint.fill(gr, x, y, x + mGrid.width(), y + mGrid.height(), dark ? 0x14FFFFFF : 0x14000000);
         }
         SteelframePaint.fill(gr, x + 1, y + 2, x + 3, y + mGrid.height() - 2, 0xFF000000 | row.getDeviceType().mColor);
-        renderItemStack(gr, row.getDisplayStack(), x + 5, y + 1);
+        renderItemStack(gr, row.getDisplayStack(), x + 5, y + (mGrid.height() - 16) / 2);
 
         int buttonY = y + (mGrid.height() - SMALL) / 2;
-        DfStyle.actionButton(gr, DfStyle.Icon.HIGHLIGHT, highlightX(x), buttonY, false,
-                BlockHighlighter.isHighlighted(highlightPos(row)), false);
-        DfStyle.actionButton(gr, DfStyle.Icon.EDIT, editX(x), buttonY, false, false, false);
+        drawAction(gr, DfStyle.Icon.HIGHLIGHT, highlightX(x), buttonY,
+                BlockHighlighter.isHighlighted(highlightPos(row)));
+        drawAction(gr, DfStyle.Icon.EDIT, editX(x), buttonY, false);
 
         int text = DfStyle.onPanel(DfStyle.TEXT);
         int muted = DfStyle.onPanel(DfStyle.TEXT_MUTED);
         int textX = x + 24, right = highlightX(x) - 4;
         boolean loaded = row.isChunkLoaded();
-        DfStyle.scrollingText(gr, font, displayName(row), textX, y + 1, right - textX, loaded ? text : muted);
+        DfStyle.scrollingText(gr, font, displayName(row), textX, y + 3, right - textX, loaded ? text : muted);
         if (!loaded) {
-            DfStyle.scrollingText(gr, font, DimensionalTranslate.CHUNK_UNLOADED.get(), textX, y + 10, right - textX, muted);
+            DfStyle.scrollingText(gr, font, DimensionalTranslate.CHUNK_UNLOADED.get(), textX, y + 13, right - textX, muted);
             return;
         }
         long change = row.getTransferChange();
@@ -174,10 +222,16 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
                 : type.isStorage() ? DimensionalTranslate.CHANGE : DimensionalTranslate.OUTPUT).get();
         String value = change == 0 ? "0 " + EnergyFormat.RATE : (change > 0 ? "+" : "") + EnergyFormat.rate(change);
         int labelWidth = Math.min(font.width(label), (right - textX) / 2);
-        DfStyle.scrollingText(gr, font, label, textX, y + 10, labelWidth, muted);
+        DfStyle.scrollingText(gr, font, label, textX, y + 13, labelWidth, muted);
         int color = change > 0 ? (dark ? 0xFF6BD47A : 0xFF2E8B3A) : change < 0 ? (dark ? 0xFFE07A66 : 0xFFB0412E) : muted;
         int valueWidth = Math.min(font.width(value), right - textX - labelWidth - 4);
-        DfStyle.scrollingText(gr, font, value, right - valueWidth, y + 10, valueWidth, color);
+        DfStyle.scrollingText(gr, font, value, right - valueWidth, y + 13, valueWidth, color);
+    }
+
+    private void drawAction(GuiGraphicsExtractor gr, DfStyle.Icon icon, int x, int y, boolean active) {
+        DfStyle.button(gr, x, y, SMALL, SMALL, inside(mRowMouseX, mRowMouseY, x, y, SMALL, SMALL), active, false);
+        int inset = (SMALL - DfStyle.ACTION_ICON_SIZE) / 2;
+        DfStyle.icon(gr, icon, x + inset, y + inset, DfStyle.ACTION_ICON_SIZE, 0xFFFFFFFF);
     }
 
     // ---- tooltips ----
@@ -334,7 +388,7 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
         super.onResponseAction(key, code);
         if (code == DimensionalConstants.RESPONSE_REJECT) {
             closeTabWindow();
-        } else if (key == DimensionalConstants.REQUEST_UPDATE_NETWORK) {
+        } else if (key == DimensionalConstants.REQUEST_UPDATE_NETWORK || key == DimensionalConstants.REQUEST_UPDATE_CONNECTION) {
             refreshRows();
         }
     }
@@ -342,6 +396,11 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
     @Override
     protected void containerTick() {
         super.containerTick();
+        if (mOrder.usesConsumption() && getCurrentPopup() == null && ++mRankingTicks >= 20) {
+            mRankingTicks = 0;
+            // Rankings need current rates for the entire list, including machines on other pages.
+            ClientMessages.updateNetwork(getToken(), getNetwork(), NetworkView.CONNECTIONS);
+        }
         if (getCurrentPopup() == null && ++mTicks >= REFRESH_TICKS) {
             mTicks = 0;
             ClientMessages.updateConnections(getToken(), getNetwork(), mPageRows);
@@ -350,6 +409,11 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
 
     @Override
     protected void sortRows(ListSort sortType) {
-        mRows.sort(ORDER);
+        mRows.sort(mOrder.comparator(ORDER, GuiTabConnections::displayName, GuiTabConnections::consumption));
+    }
+
+    private static long consumption(IDimensionalDevice row) {
+        long change = row.getTransferChange();
+        return change >= 0 ? 0 : change == Long.MIN_VALUE ? Long.MAX_VALUE : -change;
     }
 }

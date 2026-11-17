@@ -174,6 +174,8 @@ public final class DimensionalTranslate {
     public static final DimensionalTranslate SORTING_SMART = gui("label.sort.smart");
     public static final DimensionalTranslate SORTING_ID = gui("label.sort.id");
     public static final DimensionalTranslate SORTING_NAME = gui("label.sort.name");
+    public static final DimensionalTranslate SORTING_CONSUMPTION_HIGH = gui("label.sort.consumption_high");
+    public static final DimensionalTranslate SORTING_CONSUMPTION_LOW = gui("label.sort.consumption_low");
 
     // Buttons.
     public static final DimensionalTranslate BATCH_DISCONNECT_BUTTON = gui("button.batchdisconnect");
@@ -228,6 +230,9 @@ public final class DimensionalTranslate {
     public static final DimensionalTranslate TOTAL = gui("label.total");
     public static final DimensionalTranslate DELETE_NETWORK = gui("label.deletenetwork");
     public static final DimensionalTranslate DOUBLE_SHIFT = gui("label.doubleshift");
+    public static final DimensionalTranslate EDIT_NETWORK = gui("label.edit_network");
+    public static final DimensionalTranslate HOLD_SHIFT_EDIT = gui("label.hold_shift_edit");
+    public static final DimensionalTranslate HOLD_SHIFT_DELETE = gui("label.hold_shift_delete");
     public static final DimensionalTranslate TRANSFER_OWNERSHIP = gui("label.transferownership");
     public static final DimensionalTranslate USERNAME = gui("label.playername");
     public static final DimensionalTranslate ACCESS = gui("label.playeraccess");

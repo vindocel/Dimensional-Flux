@@ -51,6 +51,8 @@ public class GuiTabNetworkForm extends GuiTabCore {
     private static final SecurityLevel[] SECURITY_CHOICES = {SecurityLevel.PUBLIC, SecurityLevel.PRIVATE, SecurityLevel.ENCRYPTED};
 
     private final Purpose mPurpose;
+    @Nullable
+    private final Integer mTargetNetworkId;
     private final EnumMap<SecurityLevel, SimpleButton> mSecurityButtons = new EnumMap<>(SecurityLevel.class);
     private final ColorButton[] mSwatches = new ColorButton[EnumNetworkColor.VALUES.length];
     private SimpleButton mCustomColor;
@@ -70,8 +72,13 @@ public class GuiTabNetworkForm extends GuiTabCore {
     private int mShiftPresses;
 
     public GuiTabNetworkForm(@Nonnull DimensionalMenu menu, @Nonnull Player player, Purpose purpose) {
+        this(menu, player, purpose, null);
+    }
+
+    public GuiTabNetworkForm(@Nonnull DimensionalMenu menu, @Nonnull Player player, Purpose purpose, @Nullable Integer networkId) {
         super(menu, player);
         mPurpose = purpose;
+        mTargetNetworkId = networkId;
         if (purpose == Purpose.CREATE) {
             mSecurity = SecurityLevel.PRIVATE;
             mColor = EnumNetworkColor.WHITE.getRGB();
@@ -80,6 +87,16 @@ public class GuiTabNetworkForm extends GuiTabCore {
             mColor = getNetwork().getNetworkColor();
             mShareByDemand = getNetwork().isShareByDemand();
         }
+    }
+
+    @Override
+    public DimensionalNetwork getNetwork() {
+        return mTargetNetworkId == null ? super.getNetwork() : dimensionalflux.client.ClientCache.getNetwork(mTargetNetworkId);
+    }
+
+    @Override
+    public dimensionalflux.api.network.AccessLevel getAccessLevel() {
+        return getNetwork().getPlayerAccess(mPlayer);
     }
 
     @Override
@@ -360,9 +377,15 @@ public class GuiTabNetworkForm extends GuiTabCore {
         if (mPurpose == Purpose.CREATE) {
             if (key == DimensionalConstants.REQUEST_CREATE_NETWORK && code == DimensionalConstants.RESPONSE_SUCCESS) {
                 switchTab(EnumNavigationTab.TAB_SELECTION, false);
+                if (isEmbedded()) {
+                    closeTabWindow();
+                }
+            } else if (key == DimensionalConstants.REQUEST_CREATE_NETWORK) {
+                updateSubmit();
             }
         } else if (code == DimensionalConstants.RESPONSE_REJECT
-                || code == DimensionalConstants.RESPONSE_SUCCESS && key == DimensionalConstants.REQUEST_DELETE_NETWORK) {
+                || key == DimensionalConstants.REQUEST_DELETE_NETWORK
+                && !dimensionalflux.client.ClientCache.getNetwork(getNetwork().getNetworkID()).isValid()) {
             closeTabWindow();
         }
     }

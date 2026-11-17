@@ -8,6 +8,8 @@ import dimensionalflux.client.gui.GuiDimensionalDeviceHome;
 import dimensionalflux.client.gui.basic.GuiPopupCore;
 import dimensionalflux.client.gui.basic.GuiButtonCore;
 import dimensionalflux.client.gui.button.SwitchButton;
+import dimensionalflux.client.gui.button.SimpleButton;
+import dimensionalflux.client.gui.list.MachineOrder;
 import dimensionalflux.client.render.BlockHighlighter;
 import dimensionalflux.client.render.TeslaViewportCache;
 import dimensionalflux.common.device.TileDimensionalDevice;
@@ -25,6 +27,7 @@ import org.lwjgl.glfw.GLFW;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Comparator;
 
 /**
  * The machines inside the Tesla Broadcaster area that take energy in, drawn like the network connections list: a
@@ -35,19 +38,21 @@ import java.util.List;
 public class PopupTeslaTargets extends GuiPopupCore<GuiDimensionalDeviceHome> {
 
     // the same size and rows as the connections window
-    private static final int ROW_X = 13;
-    private static final int ROW_W = 146;
-    private static final int ROW_H = 18;
-    private static final int GRID = 19;
-    private static final int ROWS = 6;
-    private static final int LIST_Y = 53;
-    private static final int SMALL = DfStyle.ACTION_BUTTON_SIZE;
+    private static final int ROW_X = 12;
+    private static final int ROW_W = 200;
+    private static final int ROW_H = 23;
+    private static final int GRID = 24;
+    private static final int ROWS = 5;
+    private static final int LIST_Y = BAR - 2 + 82;
+    private static final int SMALL = 14;
     private static final long REFRESH_MS = 2000;
 
     private final TileTeslaBroadcaster mTesla;
     private int mScroll;
     private long mLastRequest;
     private SwitchButton mShareEqually;
+    private SimpleButton mSortButton;
+    private MachineOrder mOrder = MachineOrder.AUTOMATIC;
 
     public PopupTeslaTargets(GuiDimensionalDeviceHome host, TileTeslaBroadcaster tesla) {
         super(host);
@@ -61,7 +66,17 @@ public class PopupTeslaTargets extends GuiPopupCore<GuiDimensionalDeviceHome> {
 
     @Override
     protected int windowHeight() {
-        return DfStyle.PANEL_H + BAR - 2;
+        return 216 + BAR - 2;
+    }
+
+    @Override
+    protected int windowWidth() {
+        return 224;
+    }
+
+    @Override
+    protected int windowX() {
+        return DfStyle.PANEL_X - (224 - DfStyle.PANEL_W) / 2;
     }
 
     @Override
@@ -72,14 +87,30 @@ public class PopupTeslaTargets extends GuiPopupCore<GuiDimensionalDeviceHome> {
     @Override
     public void init() {
         super.init();
-        mShareEqually = new SwitchButton(this, winLeft() + 136, winTop() + 35, mTesla.isSharingEqually());
+        mShareEqually = new SwitchButton(this, rowX() + ROW_W - DfStyle.SWITCH_WIDTH - 4,
+                winTop() + BAR - 2 + 60, mTesla.isSharingEqually());
         mButtons.add(mShareEqually);
+        mSortButton = null;
+        updateSortButton();
         requestMachines();
+    }
+
+    private void updateSortButton() {
+        if (mSortButton != null) mButtons.remove(mSortButton);
+        mSortButton = new SimpleButton(this, winLeft() + 90, winTop() + BAR - 2 + 37, 122, 17,
+                DimensionalTranslate.SORT_BY.get() + ": " + mOrder.label());
+        mButtons.add(mSortButton);
     }
 
     @Override
     public void onButtonClicked(GuiButtonCore button, int mouseX, int mouseY, int mouseButton) {
         super.onButtonClicked(button, mouseX, mouseY, mouseButton);
+        if (button == mSortButton && (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT || mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT)) {
+            if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT) DfStyle.playClick();
+            mOrder = mOrder.cycle(mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+            mScroll = 0;
+            updateSortButton();
+        }
         if (button == mShareEqually && mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             var settings = new net.minecraft.nbt.CompoundTag();
             settings.putBoolean(TileTeslaBroadcaster.SHARE_EQUALLY, !mTesla.isSharingEqually());
@@ -92,7 +123,7 @@ public class PopupTeslaTargets extends GuiPopupCore<GuiDimensionalDeviceHome> {
         ClientMessages.teslaMachines(mHost.getToken(), mTesla);
     }
 
-    /** The machines inside the current area, nearest first. */
+    /** The machines inside the current area, in the selected display order. */
     private List<TeslaViewportCache.Machine> machines() {
         BlockPos min = mTesla.getAreaMin().subtract(mTesla.getBlockPos());
         int size = mTesla.getAreaSize();
@@ -104,7 +135,9 @@ public class PopupTeslaTargets extends GuiPopupCore<GuiDimensionalDeviceHome> {
                 inside.add(m);
             }
         }
-        inside.sort((a, b) -> Integer.compare(a.offset().distManhattan(BlockPos.ZERO), b.offset().distManhattan(BlockPos.ZERO)));
+        Comparator<TeslaViewportCache.Machine> nearest = Comparator.comparingInt(m -> m.offset().distManhattan(BlockPos.ZERO));
+        inside.sort(mOrder.comparator(nearest.thenComparing(m -> m.offset()), PopupTeslaTargets::displayName,
+                m -> mTesla.isTargetEnabled(worldPos(m)) ? Math.max(0, m.delivered()) : 0));
         return inside;
     }
 
@@ -130,11 +163,11 @@ public class PopupTeslaTargets extends GuiPopupCore<GuiDimensionalDeviceHome> {
     }
 
     private int renameX() {
-        return rowX() + ROW_W - SMALL - 1;
+        return rowX() + ROW_W - SMALL - 4;
     }
 
     private int highlightX() {
-        return renameX() - SMALL;
+        return renameX() - SMALL - 4;
     }
 
     private static boolean inside(double mx, double my, int x, int y, int w, int h) {
@@ -152,15 +185,19 @@ public class PopupTeslaTargets extends GuiPopupCore<GuiDimensionalDeviceHome> {
         boolean dark = DfStyle.isDark();
         int text = DfStyle.onPanel(DfStyle.TEXT), muted = DfStyle.onPanel(DfStyle.TEXT_MUTED);
 
-        // header like "Sort by: Smart" of the connections window
-        int hx = winLeft() + 10, hy = winTop() + 22;
-        String label = DimensionalTranslate.TESLA_TARGETS_POWERED.get() + ":";
-        String count = on + " / " + machines.size();
-        int headerLabelWidth = Math.min(font.width(label), 84);
-        DfStyle.scrollingPanelText(gr, font, label, hx, hy, headerLabelWidth, DfStyle.TEXT);
-        DfStyle.scrollingText(gr, font, count, hx + headerLabelWidth + 4, hy, 148 - headerLabelWidth, DfStyle.statAccent());
+        int hx = rowX(), hy = winTop() + BAR - 2 + 10;
+        DfStyle.glass(gr, hx, hy, ROW_W, 21);
+        int networkColor = mHost.getNetwork().getNetworkColor();
+        SteelframePaint.fill(gr, hx + 3, hy + 3, hx + 6, hy + 18, 0xFF000000 | networkColor);
+        String networkName = mHost.getNetwork().isValid() ? mHost.getNetwork().getNetworkName() : DimensionalTranslate.ERROR_NO_SELECTED.get();
+        DfStyle.scrollingText(gr, font, networkName, hx + 12, hy + 7,
+                ROW_W - 70, DfStyle.screenTextColor());
+        DfStyle.scrollingText(gr, font, on + " / " + machines.size(), hx + ROW_W - 48, hy + 7,
+                42, DfStyle.screenTextColor());
+        DfStyle.scrollingPanelText(gr, font, DimensionalTranslate.TOTAL.get() + ": " + machines.size(),
+                hx, winTop() + BAR - 2 + 42, 74, DfStyle.TEXT);
         DfStyle.scrollingPanelText(gr, font, DimensionalTranslate.TESLA_SHARE_EQUALLY.get(),
-                hx, winTop() + 38, 120, DfStyle.TEXT);
+                hx, winTop() + BAR - 2 + 63, ROW_W - DfStyle.SWITCH_WIDTH - 12, DfStyle.TEXT);
         mShareEqually.setChecked(mTesla.isSharingEqually());
 
         if (machines.isEmpty()) {
@@ -177,26 +214,24 @@ public class PopupTeslaTargets extends GuiPopupCore<GuiDimensionalDeviceHome> {
             }
             SteelframePaint.fill(gr, x + 1, y + 2, x + 3, y + ROW_H - 2,
                     enabled ? 0xFF000000 | DimensionalDeviceType.BROADCASTER.mColor : 0xFF8A8A8A);
-            gr.item(new ItemStack(m.state().getBlock().asItem()), x + 5, y + 1);
+            gr.item(new ItemStack(m.state().getBlock().asItem()), x + 5, y + (ROW_H - 16) / 2);
 
             int by = y + (ROW_H - SMALL) / 2;
             boolean lit = BlockHighlighter.isHighlighted(globalPos(pos));
-            DfStyle.actionButton(gr, DfStyle.Icon.HIGHLIGHT, highlightX(), by,
-                    inside(mouseX, mouseY, highlightX(), by, SMALL, SMALL), lit, false);
-            DfStyle.actionButton(gr, DfStyle.Icon.EDIT, renameX(), by,
-                    inside(mouseX, mouseY, renameX(), by, SMALL, SMALL), false, false);
+            drawAction(gr, DfStyle.Icon.HIGHLIGHT, highlightX(), by, mouseX, mouseY, lit);
+            drawAction(gr, DfStyle.Icon.EDIT, renameX(), by, mouseX, mouseY, false);
 
             int textX = x + 24, right = highlightX() - 4;
-            DfStyle.scrollingText(gr, font, displayName(m), textX, y + 1, right - textX, enabled ? text : muted);
+            DfStyle.scrollingText(gr, font, displayName(m), textX, y + 3, right - textX, enabled ? text : muted);
             if (enabled) {
-                int labelWidth = Math.min(font.width(DimensionalTranslate.INPUT.get()), (right - textX) / 2);
-                DfStyle.scrollingText(gr, font, DimensionalTranslate.INPUT.get(), textX, y + 10, labelWidth, muted);
-                String value = (m.delivered() > 0 ? "+" : "") + dimensionalflux.common.util.EnergyFormat.rate(m.delivered());
-                int color = m.delivered() > 0 ? (dark ? 0xFF6BD47A : 0xFF2E8B3A) : muted;
+                int labelWidth = Math.min(font.width(DimensionalTranslate.OUTPUT.get()), (right - textX) / 2);
+                DfStyle.scrollingText(gr, font, DimensionalTranslate.OUTPUT.get(), textX, y + 13, labelWidth, muted);
+                String value = consumptionRate(m.delivered());
+                int color = m.delivered() > 0 ? (dark ? 0xFFE07A66 : 0xFFB0412E) : muted;
                 int valueWidth = Math.min(font.width(value), right - textX - labelWidth - 4);
-                DfStyle.scrollingText(gr, font, value, right - valueWidth, y + 10, valueWidth, color);
+                DfStyle.scrollingText(gr, font, value, right - valueWidth, y + 13, valueWidth, color);
             } else {
-                DfStyle.scrollingText(gr, font, DimensionalTranslate.TESLA_TARGET_OFF_SHORT.get(), textX, y + 10, right - textX, muted);
+                DfStyle.scrollingText(gr, font, DimensionalTranslate.TESLA_TARGET_OFF_SHORT.get(), textX, y + 13, right - textX, muted);
             }
         }
         if (machines.size() > ROWS) {
@@ -206,8 +241,11 @@ public class PopupTeslaTargets extends GuiPopupCore<GuiDimensionalDeviceHome> {
             SteelframePaint.fill(gr, rowX() + ROW_W + 3, top, rowX() + ROW_W + 5, top + thumb, DfStyle.accentHover());
         }
         super.drawForegroundLayer(gr, mouseX, mouseY, deltaTicks);
-        if (inside(mouseX, mouseY, hx, winTop() + 35, 150, 14)) {
+        if (inside(mouseX, mouseY, hx, winTop() + BAR - 2 + 60, ROW_W, 16)) {
             tip(gr, DimensionalTranslate.TESLA_SHARE_EQUALLY_HELP.get(), mouseX, mouseY);
+        }
+        if (inside(mouseX, mouseY, hx + ROW_W - 52, hy, 52, 21)) {
+            tip(gr, DimensionalTranslate.TESLA_TARGETS_POWERED.get() + ": " + on + " / " + machines.size(), mouseX, mouseY);
         }
 
         for (int i = 0; i < ROWS && mScroll + i < machines.size(); i++) {
@@ -230,6 +268,16 @@ public class PopupTeslaTargets extends GuiPopupCore<GuiDimensionalDeviceHome> {
                 gr.setComponentTooltipForNextFrame(font, lines, mouseX, mouseY, ItemStack.EMPTY);
             }
         }
+    }
+
+    private void drawAction(GuiGraphicsExtractor gr, DfStyle.Icon icon, int x, int y, int mouseX, int mouseY, boolean active) {
+        DfStyle.button(gr, x, y, SMALL, SMALL, inside(mouseX, mouseY, x, y, SMALL, SMALL), active, false);
+        int inset = (SMALL - DfStyle.ACTION_ICON_SIZE) / 2;
+        DfStyle.icon(gr, icon, x + inset, y + inset, DfStyle.ACTION_ICON_SIZE, 0xFFFFFFFF);
+    }
+
+    private static String consumptionRate(long delivered) {
+        return dimensionalflux.common.util.EnergyFormat.rate(-Math.max(0, delivered));
     }
 
     private void tip(GuiGraphicsExtractor gr, String text, int mouseX, int mouseY) {

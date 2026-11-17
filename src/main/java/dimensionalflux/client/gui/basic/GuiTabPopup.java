@@ -20,6 +20,8 @@ public class GuiTabPopup extends GuiPopupCore<GuiTabCore> {
 
     private final EnumNavigationTab mTab;
     private final GuiTabCore mInner;
+    @Nullable
+    private Integer mEditorNetworkId;
     // the inner screen was laid out with the window at this position; while the window is dragged, it is drawn shifted
     private int mLaidLeft;
     /** Size of the tab's panel when it was laid out. */
@@ -37,9 +39,29 @@ public class GuiTabPopup extends GuiPopupCore<GuiTabCore> {
         return mTab;
     }
 
+    public boolean isNavigationTab(EnumNavigationTab tab) {
+        return mEditorNetworkId == null && mTab == tab;
+    }
+
+    public boolean belongsTo(GuiTabCore screen) {
+        return mInner == screen;
+    }
+
+    public boolean editsNetwork(int id) {
+        return mEditorNetworkId != null && mEditorNetworkId == id;
+    }
+
+    static GuiTabPopup networkEditor(GuiTabCore home, int networkId) {
+        var form = new dimensionalflux.client.gui.tab.GuiTabNetworkForm(home.getMenu(), home.mPlayer,
+                dimensionalflux.client.gui.tab.GuiTabNetworkForm.Purpose.EDIT, networkId);
+        var popup = new GuiTabPopup(home, EnumNavigationTab.TAB_SETTING, form);
+        popup.mEditorNetworkId = networkId;
+        return popup;
+    }
+
     @Override
     protected String positionKey() {
-        return getClass().getName() + ':' + mTab.name();
+        return getClass().getName() + ':' + mTab.name() + (mEditorNetworkId == null ? "" : ":" + mEditorNetworkId);
     }
 
     /** A wider tab window stays centered over Home. */
