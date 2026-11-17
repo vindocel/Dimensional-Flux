@@ -50,6 +50,7 @@ final class MachineLink {
     /** The machine's energy handler, or null when it has none or is blacklisted. */
     @Nullable
     private EnergyHandler handler() {
+        if (!mIsPeer && mMachine != null && MachineEnergy.isBlockBlacklisted(mMachine.getBlockState())) return null;
         if (mHandler != null) {
             return mHandler.getCapability();
         }

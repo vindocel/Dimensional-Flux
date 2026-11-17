@@ -17,6 +17,10 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(javaVersion)
 
 repositories {
     exclusiveContent {
+        forRepository { maven("https://maven.latvian.dev/releases") }
+        filter { includeGroup("dev.latvian.mods") }
+    }
+    exclusiveContent {
         forRepository { maven("https://api.modrinth.com/maven") }
         filter { includeGroup("maven.modrinth") }
     }
@@ -36,6 +40,8 @@ repositories {
 }
 
 dependencies {
+    compileOnly("dev.latvian.mods:kubejs-neoforge:${property("kubejs_version")}") { isTransitive = false }
+    compileOnly("dev.latvian.mods:rhino:${property("rhino_version")}") { isTransitive = false }
     compileOnly("maven.modrinth:jade:26.1.12+neoforge")
     compileOnly("maven.modrinth:jei:60HrmNPh")
     compileOnly("me.shedaniel:RoughlyEnoughItems-neoforge:26.1.819")

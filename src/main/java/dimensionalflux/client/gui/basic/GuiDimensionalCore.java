@@ -164,9 +164,12 @@ public abstract class GuiDimensionalCore extends GuiPopupHost {
 
     // shared drawing
 
+    protected static final int HOME_DISPLAY_X = DfStyle.PANEL_X + 8;
+    protected static final int HOME_DISPLAY_WIDTH = DfStyle.PANEL_W - 16;
+
     /** The network name in the standard bar at the top of a screen. */
     protected void renderNetwork(GuiGraphicsExtractor gr, String name, int color, int y) {
-        renderNetwork(gr, name, color, leftPos + 20, y, 135);
+        renderNetwork(gr, name, color, leftPos + HOME_DISPLAY_X, y, HOME_DISPLAY_WIDTH);
     }
 
     /** The network name in a sunken well with a stripe in the network color. */
@@ -178,10 +181,10 @@ public abstract class GuiDimensionalCore extends GuiPopupHost {
 
     /** A glass display with the device item, its last transfer and its buffer or stored energy. */
     protected void renderTransfer(GuiGraphicsExtractor gr, IDimensionalDevice device, int x, int y) {
-        DfStyle.glass(gr, leftPos + 10, y - 5, 156, 29);
-        int itemX = leftPos + 14;
+        DfStyle.glass(gr, leftPos + HOME_DISPLAY_X, y - 5, HOME_DISPLAY_WIDTH, 29);
+        int itemX = leftPos + HOME_DISPLAY_X + 4;
         int textX = Math.max(x, itemX + 20);
-        int textW = leftPos + 162 - textX;
+        int textW = leftPos + HOME_DISPLAY_X + HOME_DISPLAY_WIDTH - 4 - textX;
         int color = DfStyle.screenLabelColor();
         DfStyle.scrollingText(gr, font, EnergyFormat.transferInfo(device), textX, y, textW, color);
         DimensionalTranslate label = device.getDeviceType().isStorage() ? DimensionalTranslate.ENERGY : DimensionalTranslate.BUFFER;

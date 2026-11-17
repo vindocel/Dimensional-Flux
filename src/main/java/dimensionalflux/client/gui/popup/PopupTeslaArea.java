@@ -53,9 +53,10 @@ public class PopupTeslaArea extends GuiPopupCore<GuiDimensionalDeviceHome> {
 
     // sliders in two columns (Size and X, then Y and Z), so the preview gets most of the window
     private static final int COLUMN_X = 8;
-    private static final int COLUMN_W = (WIN_W - 2 * COLUMN_X) / 2;
+    private static final int COLUMN_GAP = 8;
+    private static final int COLUMN_W = (WIN_W - 2 * COLUMN_X - COLUMN_GAP) / 2;
     private static final int TRACK_X = 60;
-    private static final int TRACK_W = COLUMN_W - TRACK_X - 8;
+    private static final int TRACK_W = COLUMN_W - TRACK_X;
     private static final int FIRST_ROW = 22;
     private static final int ROW_STEP = 15;
     private static final int SWITCH_ROW = FIRST_ROW + 2 * ROW_STEP;
@@ -195,7 +196,7 @@ public class PopupTeslaArea extends GuiPopupCore<GuiDimensionalDeviceHome> {
 
     /** Left edge of the column of a slider. */
     private int columnX(int row) {
-        return ox() + COLUMN_X + (row % 2) * COLUMN_W;
+        return ox() + COLUMN_X + (row % 2) * (COLUMN_W + COLUMN_GAP);
     }
 
     private int trackX(int row) {

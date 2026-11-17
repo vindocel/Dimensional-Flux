@@ -35,8 +35,8 @@ import java.util.function.Predicate;
  */
 public class GuiDimensionalDeviceHome extends GuiTabCore {
 
-    private static final int FIELD_X = 16, FIELD_W = 144, FIELD_H = 12;
-    private static final int SWITCH_X = 140, LABEL_X = 20, LABEL_W = 116;
+    private static final int FIELD_X = HOME_DISPLAY_X, FIELD_W = HOME_DISPLAY_WIDTH, FIELD_H = 12;
+    private static final int SWITCH_GAP = 8;
 
     public DimensionalEditBox mCustomName;
     public DimensionalEditBox mPriority;
@@ -53,19 +53,24 @@ public class GuiDimensionalDeviceHome extends GuiTabCore {
     private IconTabButton mTargetsTab;
 
     public GuiDimensionalDeviceHome(@Nonnull DimensionalMenu menu, @Nonnull Player player) {
-        // the screen ends below the last switch row; it stays centered
-        super(menu, player, 166 - unusedHeight(menu));
+        // Center the Tesla's original frame; other devices can collapse absent content rows.
+        super(menu, player, initialHeight(menu));
     }
 
-    /** The panel was laid out for three switch rows; each row the device lacks is cut off the bottom. */
+    /** The Tesla keeps its original full Home height and centering in either chunk-policy state. */
+    private static int initialHeight(DimensionalMenu menu) {
+        return 166 - (menu.mProvider instanceof TileTeslaBroadcaster ? ROW_STEP : unusedHeight(menu));
+    }
+
+    /** Content height saved by absent rows; navigation can impose a taller panel minimum. */
     private static int unusedHeight(DimensionalMenu menu) {
         boolean storage = menu.mProvider instanceof TileDimensionalDevice device && device.getDeviceType().isStorage();
-        return (storage ? 2 : 1) * ROW_STEP;
+        return (storage || !DimensionalConfig.enableChunkLoading ? 2 : 1) * ROW_STEP;
     }
 
     @Override
     public int panelHeight() {
-        return super.panelHeight() - unusedHeight(menu);
+        return Math.max(super.panelHeight() - unusedHeight(menu), minimumNavigationHeight());
     }
 
     @Override
@@ -85,6 +90,18 @@ public class GuiDimensionalDeviceHome extends GuiTabCore {
 
     private static int switchY(int row) {
         return 118 + row * ROW_STEP;
+    }
+
+    private int switchLabelWidth() {
+        return FIELD_W - SWITCH_GAP - DfStyle.SWITCH_WIDTH;
+    }
+
+    private int switchLabelX() {
+        return leftPos + FIELD_X;
+    }
+
+    private int switchX() {
+        return leftPos + FIELD_X + FIELD_W - DfStyle.SWITCH_WIDTH;
     }
 
     /** Height of the ear that holds the redstone tab: one tab. */
@@ -139,8 +156,8 @@ public class GuiDimensionalDeviceHome extends GuiTabCore {
         addRenderableWidget(mLimit);
 
         mRowLabels.clear();
-        mDisableLimit = new SwitchButton(this, leftPos + SWITCH_X, topPos + switchY(mRowLabels.size()), device.getDisableLimit());
         mRowLabels.add(DimensionalTranslate.DISABLE_LIMIT);
+        mDisableLimit = new SwitchButton(this, switchX(), topPos + switchY(0), device.getDisableLimit());
         mButtons.add(mDisableLimit);
         mRedstone = null;
         if (device.usesRedstone()) {
@@ -166,12 +183,7 @@ public class GuiDimensionalDeviceHome extends GuiTabCore {
             mButtons.add(mRedstone);
         }
         mChunkLoading = null;
-        if (!device.getDeviceType().isStorage()) {
-            mChunkLoading = new SwitchButton(this, leftPos + SWITCH_X, topPos + switchY(mRowLabels.size()), device.isForcedLoading());
-            mRowLabels.add(DimensionalTranslate.CHUNK_LOADING);
-            mChunkLoading.setClickable(DimensionalConfig.enableChunkLoading);
-            mButtons.add(mChunkLoading);
-        }
+        updateChunkLoadingControl();
 
         mAreaTab = mTargetsTab = null;
         if (isTesla()) {
@@ -181,6 +193,24 @@ public class GuiDimensionalDeviceHome extends GuiTabCore {
             mButtons.add(mAreaTab);
             mButtons.add(mTargetsTab);
         }
+    }
+
+    /** Reflects the effective server policy without rebuilding fields or closing floating windows. */
+    private void updateChunkLoadingControl() {
+        boolean show = !getDevice().getDeviceType().isStorage() && DimensionalConfig.enableChunkLoading;
+        if (show && mChunkLoading == null) {
+            var device = getDevice();
+            mRowLabels.add(DimensionalTranslate.CHUNK_LOADING);
+            mChunkLoading = new SwitchButton(this, switchX(), topPos + switchY(mRowLabels.size() - 1), device.isForcedLoading());
+            mButtons.add(mChunkLoading);
+        } else if (!show && mChunkLoading != null) {
+            mButtons.remove(mChunkLoading);
+            mRowLabels.remove(DimensionalTranslate.CHUNK_LOADING);
+            mChunkLoading = null;
+        }
+        mDisableLimit.x = switchX();
+        if (mChunkLoading != null) mChunkLoading.x = switchX();
+        if (mRedstone != null) mRedstone.y = redstoneEarY() + 4;
     }
 
     @Override
@@ -254,8 +284,8 @@ public class GuiDimensionalDeviceHome extends GuiTabCore {
         }
         int label = TextColors.opaque(color);
         for (int row = 0; row < mRowLabels.size(); row++) {
-            DfStyle.scrollingPanelText(gr, font, mRowLabels.get(row).get(), leftPos + LABEL_X, topPos + switchY(row) + 3,
-                    LABEL_W, label);
+            DfStyle.scrollingPanelText(gr, font, mRowLabels.get(row).get(), switchLabelX(), topPos + switchY(row) + 3,
+                    switchLabelWidth(), label);
         }
     }
 
@@ -280,7 +310,7 @@ public class GuiDimensionalDeviceHome extends GuiTabCore {
         } else if (button == mDisableLimit) {
             mDisableLimit.toggle();
             send(tag -> tag.putBoolean(DimensionalConstants.DISABLE_LIMIT, mDisableLimit.isChecked()));
-        } else if (button == mChunkLoading) {
+        } else if (button == mChunkLoading && DimensionalConfig.enableChunkLoading) {
             // the switch follows the server, which may refuse chunk loading
             send(tag -> tag.putBoolean(DimensionalConstants.FORCED_LOADING, !mChunkLoading.isChecked()));
         }
@@ -289,6 +319,7 @@ public class GuiDimensionalDeviceHome extends GuiTabCore {
     @Override
     protected void containerTick() {
         super.containerTick();
+        updateChunkLoadingControl();
         // the chunk-loading switch follows the server, which may refuse it
         if (mChunkLoading != null) {
             mChunkLoading.setChecked(getDevice().isForcedLoading());
@@ -301,7 +332,7 @@ public class GuiDimensionalDeviceHome extends GuiTabCore {
         if (super.onMouseClicked(mouseX, mouseY, mouseButton)) {
             return true;
         }
-        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && mouseX >= leftPos + 20 && mouseX < leftPos + 155
+        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && mouseX >= leftPos + HOME_DISPLAY_X && mouseX < leftPos + HOME_DISPLAY_X + HOME_DISPLAY_WIDTH
                 && mouseY >= topPos + 8 && mouseY < topPos + 20) {
             switchTab(EnumNavigationTab.TAB_SELECTION, false);
             return true;

@@ -49,5 +49,6 @@ public final class DfPayloads {
         registrar.playToClient(NetworkRankingPayload.TYPE, NetworkRankingPayload.STREAM_CODEC);
         registrar.playToClient(NetworkDeletedPayload.TYPE, NetworkDeletedPayload.STREAM_CODEC);
         registrar.playToClient(TeslaMachinesPayload.TYPE, TeslaMachinesPayload.STREAM_CODEC);
+        registrar.playToClient(ConfigStatePayload.TYPE, ConfigStatePayload.STREAM_CODEC);
     }
 }

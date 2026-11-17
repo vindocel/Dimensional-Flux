@@ -51,6 +51,7 @@ public class PopupMachineEdit extends GuiPopupCore<GuiDimensionalCore> {
     private static final int FIELD_W = WIN_W - 2 * FIELD_X;
 
     private final Spec mSpec;
+    private boolean mChunkDraft;
 
     private DimensionalEditBox mName;
     private DimensionalEditBox mPriority;
@@ -66,10 +67,15 @@ public class PopupMachineEdit extends GuiPopupCore<GuiDimensionalCore> {
     public PopupMachineEdit(GuiDimensionalCore host, Spec spec) {
         super(host);
         mSpec = spec;
+        mChunkDraft = Boolean.TRUE.equals(spec.chunk());
+    }
+
+    private boolean hasChunkRow() {
+        return mSpec.chunk() != null && dimensionalflux.DimensionalConfig.enableChunkLoading;
     }
 
     private int switchRows() {
-        return 1 + (mSpec.chunk() != null ? 1 : 0) + (mSpec.enabled() != null ? 1 : 0);
+        return 1 + (hasChunkRow() ? 1 : 0) + (mSpec.enabled() != null ? 1 : 0);
     }
 
     private static final int SWITCHES_Y = 104;
@@ -123,9 +129,9 @@ public class PopupMachineEdit extends GuiPopupCore<GuiDimensionalCore> {
         int row = 0;
         mBypass = new SwitchButton(this, sx, switchY(row++) - 3, mSpec.bypass());
         mButtons.add(mBypass);
-        if (mSpec.chunk() != null) {
-            mChunk = new SwitchButton(this, sx, switchY(row++) - 3, mSpec.chunk());
-            mChunk.setClickable(dimensionalflux.DimensionalConfig.enableChunkLoading);
+        mChunk = null;
+        if (hasChunkRow()) {
+            mChunk = new SwitchButton(this, sx, switchY(row++) - 3, mChunkDraft);
             mButtons.add(mChunk);
         }
         if (mSpec.enabled() != null) {
@@ -137,6 +143,23 @@ public class PopupMachineEdit extends GuiPopupCore<GuiDimensionalCore> {
         mApply = new SimpleButton(this, winLeft() + WIN_W / 2 + 4, by, 48, 12, DimensionalTranslate.APPLY.get());
         mButtons.add(mCancel);
         mButtons.add(mApply);
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        if (hasChunkRow() == (mChunk != null)) return;
+        if (mChunk != null) {
+            mChunkDraft = mChunk.isChecked();
+            mButtons.remove(mChunk);
+            mChunk = null;
+        } else {
+            mChunk = new SwitchButton(this, winLeft() + WIN_W - FIELD_X - DfStyle.SWITCH_WIDTH,
+                    switchY(1) - 3, mChunkDraft);
+            mButtons.add(mChunk);
+        }
+        if (mEnabled != null) mEnabled.y = switchY(1 + (hasChunkRow() ? 1 : 0)) - 3;
+        mCancel.y = mApply.y = winTop() + windowHeight() - 18;
     }
 
     private int switchY(int row) {
@@ -180,7 +203,7 @@ public class PopupMachineEdit extends GuiPopupCore<GuiDimensionalCore> {
                     TransferHandler.PRI_USER_MIN, TransferHandler.PRI_USER_MAX));
             tag.putLong(DimensionalConstants.LIMIT, mLimit.getValidLong());
             tag.putBoolean(DimensionalConstants.DISABLE_LIMIT, mBypass.isChecked());
-            if (mChunk != null && mChunk.isClickable()) {
+            if (mChunk != null && hasChunkRow()) {
                 tag.putBoolean(DimensionalConstants.FORCED_LOADING, mChunk.isChecked());
             }
             if (mEnabled != null) {

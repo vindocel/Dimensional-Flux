@@ -54,6 +54,26 @@ public final class DeviceSettings {
         return sApplyToAll;
     }
 
+    public static boolean globalDark() { load(); return sAllDark; }
+    public static boolean globalParticles() { load(); return sAllParticles; }
+
+    /** Edits shared preferences from the mod configuration screen, without inventing a device position. */
+    public static void setGlobalAppearance(boolean dark, boolean particles, boolean shared) {
+        load();
+        if (sApplyToAll && !shared) {
+            DARK.replaceAll((key, old) -> sAllDark);
+            PARTICLES.replaceAll((key, old) -> sAllParticles);
+        }
+        sAllDark = dark;
+        sAllParticles = particles;
+        sApplyToAll = shared;
+        if (shared) {
+            DARK.replaceAll((key, old) -> dark);
+            PARTICLES.replaceAll((key, old) -> particles);
+        }
+        save();
+    }
+
     /** Dark look of the screens of the device at {@code pos}; null for screens not tied to a device. */
     public static boolean dark(BlockPos pos) {
         load();

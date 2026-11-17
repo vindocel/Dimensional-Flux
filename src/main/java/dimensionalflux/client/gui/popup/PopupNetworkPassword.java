@@ -30,7 +30,7 @@ public class PopupNetworkPassword extends GuiPopupCore<GuiTabSelection> {
     @Override
     public void init() {
         super.init();
-        int center = leftPos + imageWidth / 2;
+        int center = winLeft() + windowWidth() / 2;
         mCancel = new SimpleButton(this, center - GAP - BUTTON_W, topPos + 86, BUTTON_W, BUTTON_H, DimensionalTranslate.CANCEL.get());
         mConnect = new SimpleButton(this, center + GAP, topPos + 86, BUTTON_W, BUTTON_H, DimensionalTranslate.CONNECT.get());
         mConnect.setClickable(false);
@@ -50,7 +50,7 @@ public class PopupNetworkPassword extends GuiPopupCore<GuiTabSelection> {
         super.drawForegroundLayer(gr, mouseX, mouseY, deltaTicks);
         if (mHost.mSelectedNetwork != null) {
             DfStyle.centered(gr, font, DimensionalTranslate.CONNECTING_TO.format(mHost.mSelectedNetwork.getNetworkName()),
-                    leftPos + 88, topPos + 48, TextColors.opaque(0xFFFFFF));
+                    winLeft() + windowWidth() / 2, topPos + 48, TextColors.opaque(0xFFFFFF));
         }
     }
 

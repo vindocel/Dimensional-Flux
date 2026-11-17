@@ -75,13 +75,13 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
     @Override
     public void init() {
         super.init();
-        mGrid = new RowGrid(leftPos + 12, topPos + 54, 22, 5, 184, 21);
+        mGrid = new RowGrid(contentLeft(12), topPos + 54, 22, 5, 184, 21);
         mPageBar = new PageBar(this, mGrid.x(), topPos + 169, mGrid.width(), getNetwork().getNetworkColor());
         setRows(ClientCache.getAllNetworks());
         mDisconnect = null;
         mSortButton = null;
         if (!mRows.isEmpty()) {
-            mDisconnect = new EditButton(this, leftPos + 178, topPos + 15, 8, 8, DfStyle.Icon.DISCONNECT, DfStyle.Icon.DISCONNECT,
+            mDisconnect = new EditButton(this, contentLeft(178), topPos + 15, 8, 8, DfStyle.Icon.DISCONNECT, DfStyle.Icon.DISCONNECT,
                     DimensionalTranslate.BATCH_DISCONNECT_BUTTON.get(), DimensionalTranslate.BATCH_DISCONNECT_BUTTON.get());
             mDisconnect.setClickable(getNetwork().isValid());
             mButtons.add(mDisconnect);
@@ -91,7 +91,7 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
 
     private void updateSortButton() {
         if (mSortButton != null) mButtons.remove(mSortButton);
-        mSortButton = new SimpleButton(this, leftPos + 94, topPos + 33, 102, 17,
+        mSortButton = new SimpleButton(this, contentLeft(94), topPos + 33, 102, 17,
                 DimensionalTranslate.SORT_BY.get() + ": " + mSort.getTranslatedName());
         mButtons.add(mSortButton);
     }

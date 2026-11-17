@@ -64,7 +64,7 @@ public final class PopupNetworkRanking extends GuiPopupCore<GuiTabCore> {
     @Override
     public void init() {
         super.init();
-        mButtons.add(new GuiButtonCore(this, winLeft() + WIDTH - INSET - 82, winTop() + 25, 72, 16) {
+        mButtons.add(new GuiButtonCore(this, winLeft() + WIDTH - INSET - 4 - 72, winTop() + 25, 72, 16) {
             @Override
             protected void drawButton(GuiGraphicsExtractor gr, int mouseX, int mouseY, float deltaTicks) {
                 boolean hovered = isMouseHovered(mouseX, mouseY);
@@ -128,7 +128,7 @@ public final class PopupNetworkRanking extends GuiPopupCore<GuiTabCore> {
 
     @Override
     public void drawForegroundLayer(GuiGraphicsExtractor gr, int mouseX, int mouseY, float deltaTicks) {
-        int x = winLeft() + INSET, w = WIDTH - 2 * INSET - 2, y = winTop() + ROW_Y;
+        int x = winLeft() + INSET, w = WIDTH - 2 * INSET, y = winTop() + ROW_Y;
         var entries = entries();
         int period = minutes();
         int seconds = Math.min(period * 60, mHost.getNetwork().getStatistics().recordedRankingSeconds());
@@ -136,7 +136,7 @@ public final class PopupNetworkRanking extends GuiPopupCore<GuiTabCore> {
                 : Component.translatable("gui.dimensionalflux.stat.ranking_total",
                         String.format(java.util.Locale.ROOT, "%d:%02d", seconds / 60, seconds % 60)).getString();
         int cardY = winTop() + 22;
-        DfStyle.glass(gr, x, cardY, w + 2, 34);
+        DfStyle.glass(gr, x, cardY, w, 34);
         DfStyle.icon(gr, DfStyle.Icon.STATISTICS, x + 7, cardY + 9, 0xFFFFFFFF);
         DfStyle.scrollingText(gr, font, Component.translatable("gui.dimensionalflux.stat.ranking_period").getString(),
                 x + 29, cardY + 7, w - 116, DfStyle.screenTextColor());

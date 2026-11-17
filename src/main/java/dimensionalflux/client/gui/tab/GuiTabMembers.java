@@ -85,7 +85,7 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
     public void init() {
         super.init();
         int listY = topPos + 64 + teamRows() * TEAM_STEP;
-        mGrid = new RowGrid(leftPos + INSET, listY, ROW_PITCH, (HEIGHT - 14 - (listY - topPos)) / ROW_PITCH,
+        mGrid = new RowGrid(contentLeft(INSET), listY, ROW_PITCH, (HEIGHT - 14 - (listY - topPos)) / ROW_PITCH,
                 CONTENT_WIDTH, ROW_HEIGHT);
         mPageBar = new PageBar(this, mGrid.x(), topPos + HEIGHT - 12, CONTENT_WIDTH, getNetwork().getNetworkColor());
         mTeamSharing = null;
@@ -355,11 +355,19 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
 
     @Override
     protected void onRowClicked(NetworkMember element, int mouseButton) {
-        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && canOpenMember(element)) {
             var host = windowHost();
             host.closePopup(host.findPopup(popup -> popup instanceof PopupMemberEdit));
             host.openPopup(new PopupMemberEdit(host, this, element));
         }
+    }
+
+    private boolean canOpenMember(NetworkMember element) {
+        return !getNetwork().getOwnerUUID().equals(element.getPlayerUUID());
+    }
+
+    private int memberContentRight(NetworkMember element, int rowX) {
+        return rowX + CONTENT_WIDTH - 4 - (canOpenMember(element) ? DfStyle.ACTION_BUTTON_SIZE + 6 : 0);
     }
 
     @Override
@@ -383,18 +391,23 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
 
         int textX = x + 24;
         int editX = x + CONTENT_WIDTH - DfStyle.ACTION_BUTTON_SIZE - 4;
-        int textRight = editX - 6;
+        int textRight = memberContentRight(element, x);
         boolean teamMember = isOnSharedTeam(element);
+        int textWidth = textRight - textX - (teamMember ? 24 : 0);
         DfStyle.scrollingText(gr, font, element.getCachedName(), textX, y + 1,
-                textRight - textX, DfStyle.onPanel(DfStyle.TEXT));
+                textWidth, DfStyle.onPanel(DfStyle.TEXT));
         int roleColor = shownAccess(element) == AccessLevel.BLOCKED
                 ? DfStyle.onPanel(DfStyle.TEXT_MUTED) : DfStyle.statInputColor();
         DfStyle.scrollingText(gr, font, memberRoleName(element), textX, y + 11,
-                textRight - textX - (teamMember ? 24 : 0), roleColor);
+                textWidth, roleColor);
         if (teamMember) {
-            DfStyle.scrollingText(gr, font, "FTB", textRight - 19, y + 11, 19, DfStyle.statAccent());
+            DfStyle.scrollingText(gr, font, "FTB", textRight - 19,
+                    y + (mGrid.height() - font.lineHeight) / 2, 19, DfStyle.statAccent());
         }
-        DfStyle.actionButton(gr, DfStyle.Icon.EDIT, editX, y + 4, hovered, false, false);
+        if (canOpenMember(element)) {
+            DfStyle.actionButton(gr, DfStyle.Icon.EDIT, editX,
+                    y + (mGrid.height() - DfStyle.ACTION_BUTTON_SIZE) / 2, hovered, false, false);
+        }
     }
 
     @Override

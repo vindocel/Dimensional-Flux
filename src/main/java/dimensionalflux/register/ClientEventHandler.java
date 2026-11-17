@@ -25,6 +25,7 @@ public final class ClientEventHandler {
     @SubscribeEvent
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientCache.release();
+        dimensionalflux.client.ConfigServerState.clear();
         BlockHighlighter.clear();
     }
 

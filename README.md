@@ -84,7 +84,7 @@ Both connectors exchange energy only through their mounting faces; a machine wit
 
 ## 📖 Dimensional Flux Guide
 
-Your first **Dimensional Flux Shard** earns you the guide; more copies are crafted from a **Book + Dimensional Flux Shard** (shapeless).
+Craft the guide from a **Book + Dimensional Flux Shard** (shapeless). It is not granted automatically.
 
 - 🎞️ **Animated book**: it opens in your hand, stays half open while you read, turns a leaf with every page and closes when you leave.
 - 📄 **Real pages**: a presentation and clickable **contents** open the book; every chapter starts on a left page, with a page-turn animation and sound. The cyan ribbon goes back to the contents.
@@ -210,15 +210,18 @@ Any FE generator, energy store or machine connects through its energy faces, suc
 
 ## 🧩 Configuration
 
-The server configuration sets network ownership limits, administrative access, chunk loading, energy limits, battery capacity and blacklists. The client configuration sets button sounds; the in-game settings window handles the look and the particles.
+The server configuration sets network ownership limits, administrative access, chunk loading, energy limits, battery capacity, ore generation and blacklists. **Mods → Dimensional Flux → Config** opens the editor for client preferences and local-world server rules. Remote-server rules and script-owned values are read-only.
+
+**Modpack creators and server administrators:** the [Customization Guide](docs/CUSTOMIZATION.md) lists every option, default and range, with complete TOML, KubeJS and datapack examples, supported changes, fixed mechanics and troubleshooting. KubeJS is optional; its server events override configuration in memory without rewriting TOML files.
 
 | Setting | Default |
 |---|---|
-| Networks per player | 5 |
+| Networks per player | 10 |
 | Device transfer limit | 800,000 FE/t |
 | Battery capacity | 256,000,000 FE |
 | Battery transfer limit | 720,000 FE/t |
 | Device chunk loading | Allowed |
+| Natural shard ore generation | Enabled |
 | Button sounds | Enabled |
 | Particles | Enabled |
 | Apply the look to all devices | Enabled |

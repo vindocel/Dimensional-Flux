@@ -122,13 +122,14 @@ public class GuiTabStatistics extends GuiTabCore {
         int[] counts = {stats.emitterCount, stats.receiverCount, stats.batteryCount, stats.controllerCount};
         String[] names = {DimensionalTranslate.EMITTERS.get(), DimensionalTranslate.RECEIVERS.get(),
                 DimensionalTranslate.STORAGES.get(), DimensionalTranslate.CONTROLLERS.get()};
-        int cell = w / 4;
+        int gap = 4, cell = (w - 3 * gap) / 4;
+        int groupLeft = x + (w - (4 * cell + 3 * gap)) / 2;
         for (int i = 0; i < 4; i++) {
-            int cx = x + i * cell;
-            dimensionalflux.client.gui.DfStyle.slot(gr, cx, y, cell - 3, 18);
+            int cx = groupLeft + i * (cell + gap);
+            dimensionalflux.client.gui.DfStyle.slot(gr, cx, y, cell, 18);
             gr.item(icons[i], cx + 1, y + 1);
             dimensionalflux.client.gui.DfStyle.text(gr, font, "× " + counts[i], cx + 20, y + 5, dimensionalflux.client.gui.DfStyle.onPanel(dimensionalflux.client.gui.DfStyle.TEXT));
-            if (mouseX >= cx && mouseX < cx + cell - 3 && mouseY >= y && mouseY < y + 18) {
+            if (mouseX >= cx && mouseX < cx + cell && mouseY >= y && mouseY < y + 18) {
                 gr.setTooltipForNextFrame(font, java.util.List.of(net.minecraft.network.chat.Component.literal(
                         names[i] + ": " + counts[i]).getVisualOrderText()), mouseX, mouseY);
             }
@@ -167,7 +168,7 @@ public class GuiTabStatistics extends GuiTabCore {
 
     /** Left edge and width of the content inside the panel. */
     private int contentX() {
-        return leftPos + dimensionalflux.client.gui.DfStyle.PANEL_X + 6;
+        return contentLeft(6);
     }
 
     private int contentW() {

@@ -78,6 +78,15 @@ public abstract class GuiTabCore extends GuiDimensionalCore {
         return dimensionalflux.client.gui.DfStyle.PANEL_W;
     }
 
+    /** Content coordinates are relative to the panel body, including inside floating tab windows. */
+    protected final int contentLeft(int inset) {
+        return leftPos + DfStyle.PANEL_X + inset;
+    }
+
+    protected final int contentRight(int inset) {
+        return contentLeft(0) + panelWidth() - inset;
+    }
+
     /**
      * Whether this screen offers a tab. Each device keeps the tabs that make sense for it: Wireless charging only on
      * the Dimensional Controller (everywhere) and the Tesla Broadcaster (inside its area), and the Connections list of the
@@ -140,6 +149,11 @@ public abstract class GuiTabCore extends GuiDimensionalCore {
 
     private int rightEarHeight() {
         return (mRightTabs + extraRightTabs()) * dimensionalflux.client.gui.DfStyle.TAB_STEP + 4;
+    }
+
+    /** Top inset and bottom cap keep either navigation ear inside the main panel. */
+    protected final int minimumNavigationHeight() {
+        return 4 + Math.max(leftEarHeight(), rightEarHeight()) + 2;
     }
 
     @Override
@@ -261,12 +275,18 @@ public abstract class GuiTabCore extends GuiDimensionalCore {
         return 38 + promptHint(tab).size() * 10;
     }
 
+    private int promptContentY(EnumNavigationTab tab) {
+        int lines = promptHint(tab).size();
+        int contentHeight = (lines == 0 ? 20 : 32 + (lines - 1) * 10) + font.lineHeight;
+        return topPos + PROMPT_Y + (promptCardHeight(tab) - contentHeight) / 2;
+    }
+
     private int promptButtonY(EnumNavigationTab tab) {
         return topPos + PROMPT_Y + promptCardHeight(tab) + PROMPT_GAP;
     }
 
     private boolean overPromptButton(EnumNavigationTab tab, double mouseX, double mouseY) {
-        int x = leftPos + PROMPT_X, y = promptButtonY(tab);
+        int x = contentLeft(PROMPT_X), y = promptButtonY(tab);
         return mouseX >= x && mouseX < x + PROMPT_W && mouseY >= y && mouseY < y + PROMPT_BUTTON_H;
     }
 
@@ -279,16 +299,17 @@ public abstract class GuiTabCore extends GuiDimensionalCore {
                                           @Nonnull EnumNavigationTab wanted, int mouseX, int mouseY) {
         EnumNavigationTab tab = promptTab(wanted);
         DimensionalTranslate message = tab != wanted ? DimensionalTranslate.ERROR_NO_NETWORK : error;
-        int x = leftPos + PROMPT_X, y = topPos + PROMPT_Y, h = promptCardHeight(tab), centerX = x + PROMPT_W / 2;
+        int x = contentLeft(PROMPT_X), y = topPos + PROMPT_Y, h = promptCardHeight(tab), centerX = x + PROMPT_W / 2;
         dimensionalflux.client.gui.DfStyle.glass(gr, x, y, PROMPT_W, h);
         dimensionalflux.client.gui.DfStyle.Icon icon = dimensionalflux.client.gui.DfStyle.Icon.values()[tab.ordinal()];
         int text = dimensionalflux.client.gui.DfStyle.screenTextColor();
         int label = dimensionalflux.client.gui.DfStyle.screenLabelColor();
-        dimensionalflux.client.gui.DfStyle.icon(gr, icon, centerX - 8, y + 6, 16, text);
+        int contentY = promptContentY(tab);
+        dimensionalflux.client.gui.DfStyle.icon(gr, icon, centerX - 8, contentY, 16, text);
         String title = message.get();
         int titleWidth = Math.min(font.width(title), PROMPT_TEXT_W);
-        dimensionalflux.client.gui.DfStyle.scrollingText(gr, font, title, centerX - titleWidth / 2, y + 26, titleWidth, text);
-        int lineY = y + 38;
+        dimensionalflux.client.gui.DfStyle.scrollingText(gr, font, title, centerX - titleWidth / 2, contentY + 20, titleWidth, text);
+        int lineY = contentY + 32;
         for (var line : promptHint(tab)) {
             dimensionalflux.client.gui.SteelframePaint.text(gr, font, line, centerX - font.width(line) / 2, lineY, label, false);
             lineY += 10;

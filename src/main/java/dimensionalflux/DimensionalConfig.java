@@ -10,6 +10,10 @@ import dimensionalflux.common.util.MachineEnergy;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.Collections;
+import java.math.BigDecimal;
 
 /**
  * The settings of the mod. A server file holds the rules of networks, chunk loading, the blacklists and the energy
@@ -22,11 +26,12 @@ public final class DimensionalConfig {
     public static boolean enableButtonSound = true;
 
     // server: networks
-    public static int maximumPerPlayer = 5;
+    public static int maximumPerPlayer = 10;
     public static boolean enableSuperAdmin = true;
     public static int superAdminRequiredPermission = 1;
     // server: general
     public static boolean enableChunkLoading = true;
+    public static volatile boolean enableOreGeneration = true;
     // server: energy
     public static long defaultLimit = 800_000;
     public static long batteryCapacity = 256_000_000;
@@ -36,6 +41,10 @@ public final class DimensionalConfig {
     private static final Runnable CLIENT_LOAD;
     private static final ModConfigSpec SERVER_SPEC;
     private static final Runnable SERVER_LOAD;
+    private static final Map<String, ModConfigSpec.ConfigValue<?>> CLIENT_OPTIONS, SERVER_OPTIONS;
+    private static volatile Map<String, Object> overrides = Map.of();
+    private static java.util.function.Supplier<Map<String, Object>> overrideProvider;
+    private static ModConfig loadedClient, loadedServer;
 
     static {
         Section client = new Section();
@@ -43,11 +52,12 @@ public final class DimensionalConfig {
         var buttonSound = client.flag("enableButtonSound", true, "Play a sound when a screen button is pressed.");
         client.pop();
         CLIENT_SPEC = client.builder.build();
-        CLIENT_LOAD = () -> enableButtonSound = buttonSound.get();
+        CLIENT_OPTIONS = options(CLIENT_SPEC);
+        CLIENT_LOAD = () -> enableButtonSound = value(buttonSound);
 
         Section server = new Section();
         server.push("networks");
-        var perPlayer = server.range("maximumPerPlayer", 5, -1, Integer.MAX_VALUE,
+        var perPlayer = server.range("maximumPerPlayer", 10, -1, Integer.MAX_VALUE,
                 "How many networks each player may own; -1 removes the limit.",
                 "0 lets only super admins create networks. Super admins are never limited.");
         var superAdmin = server.flag("enableSuperAdmin", true,
@@ -55,12 +65,18 @@ public final class DimensionalConfig {
                 "When off, no one can use a device or delete a network without permission.");
         var adminPermission = server.range("superAdminRequiredPermission", 1, 0, 3,
                 "The permission level (see ops.json) a player needs to turn super admin on.",
-                "0 lets anyone turn it on; in single player the level is not checked.",
+                "0 removes the self-activation check; the command still requires moderator permissions.",
+                "Activation uses /dimensionalflux superadmin <targets> <enable>.",
                 "Players with level 3 or 4 can make others super admin with a command, whatever their level.");
         server.pop();
 
         server.push("general");
         var chunkLoading = server.flag("enableChunkLoading", true, "Lets devices keep their chunk loaded.");
+        server.pop();
+
+        server.push("worldgen");
+        var oreGeneration = server.flag("enableOreGeneration", true,
+                "Generate Dimensional Flux Shard ores in newly generated chunks. Existing ores are not removed.");
         server.pop();
 
         server.push("blacklist");
@@ -80,15 +96,17 @@ public final class DimensionalConfig {
         server.pop();
 
         SERVER_SPEC = server.builder.build();
+        SERVER_OPTIONS = options(SERVER_SPEC);
         SERVER_LOAD = () -> {
-            maximumPerPlayer = perPlayer.get();
-            enableSuperAdmin = superAdmin.get();
-            superAdminRequiredPermission = adminPermission.get();
-            enableChunkLoading = chunkLoading.get();
-            MachineEnergy.reloadBlacklist(blockBlacklist.get(), itemBlacklist.get());
-            defaultLimit = limit.get();
-            batteryCapacity = capacity.get();
-            batteryTransfer = transfer.get();
+            maximumPerPlayer = value(perPlayer);
+            enableSuperAdmin = value(superAdmin);
+            superAdminRequiredPermission = value(adminPermission);
+            enableChunkLoading = value(chunkLoading);
+            enableOreGeneration = value(oreGeneration);
+            MachineEnergy.reloadBlacklist(value(blockBlacklist), value(itemBlacklist));
+            defaultLimit = value(limit);
+            batteryCapacity = value(capacity);
+            batteryTransfer = value(transfer);
         };
     }
 
@@ -103,13 +121,149 @@ public final class DimensionalConfig {
         container.registerConfig(ModConfig.Type.SERVER, SERVER_SPEC);
         container.getEventBus().addListener(ModConfigEvent.Loading.class, event -> apply(event.getConfig()));
         container.getEventBus().addListener(ModConfigEvent.Reloading.class, event -> apply(event.getConfig()));
+        container.getEventBus().addListener(ModConfigEvent.Unloading.class, event -> {
+            if (event.getConfig().getSpec() == SERVER_SPEC) {
+                loadedServer = null;
+                overrideProvider = null;
+                setOverrides(Map.of());
+            }
+        });
     }
 
     private static void apply(ModConfig config) {
         if (config.getSpec() == CLIENT_SPEC) {
+            loadedClient = config;
             CLIENT_LOAD.run();
         } else if (config.getSpec() == SERVER_SPEC) {
+            loadedServer = config;
+            if (overrideProvider != null) setOverrides(overrideProvider.get());
+            else SERVER_LOAD.run();
+            dimensionalflux.network.s2c.ConfigStatePayload.broadcast();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T value(ModConfigSpec.ConfigValue<T> option) {
+        String key = String.join(".", option.getPath());
+        Object override = overrides.get(key);
+        if (override != null) return (T) override;
+        var spec = SERVER_OPTIONS.containsKey(key) ? SERVER_SPEC : CLIENT_SPEC;
+        return spec.isLoaded() ? option.get() : option.getDefault();
+    }
+
+    public static Map<String, ModConfigSpec.ConfigValue<?>> serverOptions() {
+        return SERVER_OPTIONS;
+    }
+
+    public static Map<String, ModConfigSpec.ConfigValue<?>> clientOptions() {
+        return CLIENT_OPTIONS;
+    }
+
+    private static Map<String, ModConfigSpec.ConfigValue<?>> options(ModConfigSpec spec) {
+        Map<String, ModConfigSpec.ConfigValue<?>> found = new LinkedHashMap<>();
+        collect(spec.getValues().valueMap().values(), found);
+        return Collections.unmodifiableMap(found);
+    }
+
+    private static void collect(Iterable<Object> values, Map<String, ModConfigSpec.ConfigValue<?>> found) {
+        for (Object value : values) {
+            if (value instanceof ModConfigSpec.ConfigValue<?> option) found.put(String.join(".", option.getPath()), option);
+            else if (value instanceof com.electronwill.nightconfig.core.UnmodifiableConfig inner) collect(inner.valueMap().values(), found);
+        }
+    }
+
+    public static Object checkedValue(String key, Object raw, boolean client) {
+        var option = (client ? clientOptions() : serverOptions()).get(key);
+        if (option == null) throw new IllegalArgumentException("Unknown configuration key: " + key);
+        Object fallback = option.getDefault(), converted;
+        try {
+            if (fallback instanceof Boolean) {
+                if (!(raw instanceof Boolean)) throw new IllegalArgumentException("Expected a boolean: " + key);
+                converted = raw;
+            } else if (fallback instanceof Number) {
+                if (!(raw instanceof Number || raw instanceof String)) throw new IllegalArgumentException("Expected a number: " + key);
+                BigDecimal number = new BigDecimal(raw.toString());
+                converted = fallback instanceof Integer ? (Object) number.intValueExact() : (Object) number.longValueExact();
+            } else if (fallback instanceof List<?>) {
+                if (!(raw instanceof Iterable<?> entries)) throw new IllegalArgumentException("Expected a list: " + key);
+                List<String> list = new ArrayList<>();
+                for (Object entry : entries) {
+                    if (!(entry instanceof CharSequence text)) throw new IllegalArgumentException("Expected registry IDs or tags: " + key);
+                    String id = text.toString().trim();
+                    if (id.length() > 256 || !id.isEmpty() && net.minecraft.resources.Identifier.tryParse(id.startsWith("#") ? id.substring(1) : id) == null)
+                        throw new IllegalArgumentException("Invalid registry ID or tag: " + key);
+                    if (list.size() >= 1024) throw new IllegalArgumentException("Too many blacklist entries: " + key);
+                    list.add(id);
+                }
+                converted = List.copyOf(list);
+            } else throw new IllegalArgumentException("Unsupported configuration type: " + key);
+        } catch (ArithmeticException | NumberFormatException error) {
+            throw new IllegalArgumentException("Expected a whole number within the allowed range: " + key);
+        }
+        if (!option.getSpec().test(converted)) throw new IllegalArgumentException("Value outside the allowed range: " + key);
+        return converted;
+    }
+
+    public static Map<String, Object> fileValues(boolean client) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        boolean loaded = client ? CLIENT_SPEC.isLoaded() : SERVER_SPEC.isLoaded();
+        (client ? clientOptions() : serverOptions()).forEach((key, option) -> result.put(key, loaded ? option.get() : option.getDefault()));
+        return Collections.unmodifiableMap(result);
+    }
+
+    public static Map<String, Object> effectiveServerValues() {
+        Map<String, Object> result = new LinkedHashMap<>(fileValues(false));
+        result.putAll(overrides);
+        return Collections.unmodifiableMap(result);
+    }
+
+    public static Map<String, Object> overrides() {
+        return overrides;
+    }
+
+    public static void setOverrides(Map<String, ?> requested) {
+        Map<String, Object> checked = new LinkedHashMap<>();
+        requested.forEach((key, raw) -> checked.put(key, checkedValue(key, raw, false)));
+        overrides = Map.copyOf(checked);
+        SERVER_LOAD.run();
+    }
+
+    /** Rebuilds file-relative script filters when a world's server file first loads or reloads. */
+    public static void setOverrideProvider(java.util.function.Supplier<Map<String, Object>> provider) {
+        setOverrides(provider.get());
+        overrideProvider = provider;
+    }
+
+    public static void clearOverrides() {
+        overrideProvider = null;
+        setOverrides(Map.of());
+    }
+
+    public static boolean isLoaded(boolean client) {
+        return client ? loadedClient != null : loadedServer != null;
+    }
+
+    /** Saves only validated file values; script overrides remain independent of the file. */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static void saveValues(boolean client, Map<String, ?> changes) {
+        if (!isLoaded(client)) throw new IllegalStateException("Configuration is not loaded");
+        var catalog = client ? clientOptions() : serverOptions();
+        if (!client && changes.keySet().stream().anyMatch(overrides::containsKey))
+            throw new IllegalStateException("A script controls one of the changed settings");
+        Map<String, Object> checked = new LinkedHashMap<>();
+        changes.forEach((key, raw) -> checked.put(key, checkedValue(key, raw, client)));
+        var before = fileValues(client);
+        try {
+            checked.forEach((key, value) -> ((ModConfigSpec.ConfigValue) catalog.get(key)).set(value));
+            if (!checked.isEmpty()) catalog.get(checked.keySet().iterator().next()).save();
+        } catch (RuntimeException error) {
+            before.forEach((key, value) -> ((ModConfigSpec.ConfigValue) catalog.get(key)).set(value));
+            throw error;
+        }
+        if (client) CLIENT_LOAD.run();
+        else {
             SERVER_LOAD.run();
+            dimensionalflux.network.s2c.ConfigStatePayload.broadcast();
         }
     }
 
@@ -142,8 +296,8 @@ public final class DimensionalConfig {
             return describe(key, comment).defineInRange(key, fallback, min, max);
         }
 
-        ModConfigSpec.ConfigValue<List<String>> list(String key, List<String> fallback, String... comment) {
-            return describe(key, comment).<List<String>>define(key, new ArrayList<>(fallback));
+        ModConfigSpec.ConfigValue<List<? extends String>> list(String key, List<String> fallback, String... comment) {
+            return describe(key, comment).defineListAllowEmpty(key, fallback, () -> "", value -> value instanceof String);
         }
     }
 }

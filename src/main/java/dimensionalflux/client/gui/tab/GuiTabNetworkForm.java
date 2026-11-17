@@ -115,11 +115,11 @@ public class GuiTabNetworkForm extends GuiTabCore {
     }
 
     private int left() {
-        return leftPos + INSET;
+        return contentLeft(INSET);
     }
 
     private int right() {
-        return leftPos + panelWidth() - INSET;
+        return contentRight(INSET);
     }
 
     /** Settings has nothing to show without a linked network. */

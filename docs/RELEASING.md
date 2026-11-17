@@ -65,7 +65,8 @@ between versions uses Stonecutter conditions.
 
 - After approval of a port, add its version to `versions(...)` in `settings.gradle.kts` and create
   `versions/<minecraft>/gradle.properties` with `neo_version`, `java_version` and the exact
-  `minecraft_version_range=[<minecraft>]`. Adapt APIs and dependencies for that target. CI and suffix-free releases
+  `minecraft_version_range=[<minecraft>]`, plus compatible `kubejs_version` and `rhino_version` pins for the optional
+  compile-only scripting integration. Adapt APIs and dependencies for that target. CI and suffix-free releases
   pick it up automatically; the client uses `run/<minecraft>` without another path change.
 - To release one Minecraft version, publish a release whose tag carries its suffix, e.g. `v0.1.0-beta.1+26.3`.
 - To release every configured target at once, use `v0.1.0-beta.1`.

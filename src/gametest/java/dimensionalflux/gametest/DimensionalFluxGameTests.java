@@ -91,6 +91,7 @@ final class DimensionalFluxGameTests {
     private static final Identifier GREEDY_PULL = DimensionalFlux.location("port_greedy_pull");
     private static final Identifier BATTERY_POOL = DimensionalFlux.location("port_battery_pool");
     private static final Identifier RESERVE_ESTIMATE = DimensionalFlux.location("port_reserve_estimate");
+    private static final Identifier CONFIGURATION = DimensionalFlux.location("configuration");
     /** The energy store of the stick used as a charged curio. */
     private static final SimpleEnergyHandler CURIO_BATTERY = new SimpleEnergyHandler(1_000_000);
     private static final Map<BlockPos, SimpleEnergyHandler> EMITTERS = new HashMap<>();
@@ -152,6 +153,7 @@ final class DimensionalFluxGameTests {
             registry.register(GREEDY_PULL, DimensionalFluxGameTests::greedyPull);
             registry.register(BATTERY_POOL, DimensionalFluxGameTests::batteryPool);
             registry.register(RESERVE_ESTIMATE, DimensionalFluxGameTests::reserveEstimate);
+            registry.register(CONFIGURATION, DimensionalFluxGameTests::configuration);
         });
     }
 
@@ -159,6 +161,7 @@ final class DimensionalFluxGameTests {
     static void tests(RegisterGameTestsEvent event) {
         var environment = event.registerEnvironment(STRUCTURE, new TestEnvironmentDefinition.AllOf(List.of()));
         var data = new TestData<>(environment, STRUCTURE, 200, 0, true, Rotation.NONE);
+        event.registerTest(CONFIGURATION, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, CONFIGURATION), data));
         for (Identifier id : List.of(TELEMETRY, TRANSFER, STORAGE, SECURITY, CELL, MATERIALS, PLUG_PRIORITY, POINT_PRIORITY, PLACEMENT_ACCESS, CONFIGURATOR_PASTE, CONFIGURATOR_WAND, DEVICE_RECIPES, MONITORING, ORE_GENERATION, MAP_COLORS, SATURATION, SHARD_RECIPES, MOUNTING_FACE, CONNECTOR_ORIENTATION, ACTIVE_STATE, TESLA_AREA, TESLA_OFFSET, TESLA_PREVIEW, HIDE_BLOCK, TESLA_TARGETS, TESLA_INPUTS, MACHINE_EDIT, STAGING_CEILING, REDSTONE_MODE, SHARE_BY_DEMAND, SCOREBOARD_TEAM, RECEIVER_PULL, NETWORK_BRIDGE, BRIDGE_LOOP, STEADY_PULL, GREEDY_PULL, BATTERY_POOL)) {
             event.registerTest(id, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, id), data));
         }
@@ -173,6 +176,59 @@ final class DimensionalFluxGameTests {
         if (net.neoforged.fml.ModList.get().isLoaded("curios")) {
             event.registerTest(CURIOS_CHARGING, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, CURIOS_CHARGING), data));
         }
+    }
+
+    /** Configuration overrides affect real handlers and filters without changing the saved file. */
+    private static void configuration(GameTestHelper helper) {
+        var before = dimensionalflux.DimensionalConfig.overrides();
+        var file = dimensionalflux.DimensionalConfig.fileValues(false);
+        var furnace = new BlockPos(1, 2, 1);
+        helper.setBlock(furnace, Blocks.FURNACE);
+        EMITTERS.put(helper.absolutePos(furnace), new SimpleEnergyHandler(1000));
+        var receiver = new dimensionalflux.common.device.DimensionalReceiverHandler(() -> {});
+        helper.assertTrue(receiver.bindMachine(helper.getLevel().getBlockEntity(helper.absolutePos(furnace)), Direction.DOWN), "Could not bind the cached test receiver");
+        receiver.onCycleStart();
+        helper.assertTrue(receiver.getRequest() > 0, "The unblocked cached receiver had no demand");
+        try {
+            dimensionalflux.DimensionalConfig.setOverrides(Map.of(
+                    "energy.batteryCapacity", "9007199254740993", "energy.batteryTransfer", 1234,
+                    "worldgen.enableOreGeneration", false,
+                    "blacklist.blockBlacklistStrings", List.of("#minecraft:mineable/pickaxe"),
+                    "blacklist.itemBlackListStrings", List.of("#minecraft:logs")));
+            var battery = new dimensionalflux.common.device.DimensionalBatteryHandler();
+            helper.assertTrue(battery.getMaxEnergyStorage() == 9007199254740993L && battery.getLimit() == 1234,
+                    "Configured battery capacity or initial transfer lost precision");
+            helper.assertTrue(MachineEnergy.isItemBlacklisted(new ItemStack(net.minecraft.world.item.Items.OAK_LOG)), "Item tag blacklist was ignored");
+            helper.assertTrue(MachineEnergy.machine(helper.getLevel().getBlockEntity(helper.absolutePos(furnace)), Direction.UP) == null,
+                    "Block tag blacklist did not block the furnace capability");
+            receiver.onCycleStart();
+            helper.assertTrue(receiver.getRequest() == 0, "A cached receiver ignored the updated blacklist");
+            helper.assertTrue(!new dimensionalflux.common.level.FluxShardVeinFeature().place(null), "Disabled worldgen accessed the world");
+            var active = dimensionalflux.DimensionalConfig.overrides();
+            for (var bad : List.of(Map.of("energy.batteryCapacity", "9223372036854775808"),
+                    Map.of("energy.batteryCapacity", "1.5"), Map.of("worldgen.enableOreGeneration", "false"), Map.of("unknown.option", 1))) {
+                boolean rejected = false;
+                try { dimensionalflux.DimensionalConfig.setOverrides(bad); }
+                catch (IllegalArgumentException expected) { rejected = true; }
+                helper.assertTrue(rejected && dimensionalflux.DimensionalConfig.overrides().equals(active), "Invalid override changed the active configuration");
+            }
+            boolean locked = false;
+            try { dimensionalflux.DimensionalConfig.saveValues(false, Map.of("energy.batteryCapacity", 100)); }
+            catch (IllegalStateException expected) { locked = true; }
+            helper.assertTrue(locked && file.equals(dimensionalflux.DimensionalConfig.fileValues(false)), "Scripted configuration changed the saved file");
+            var buffer = io.netty.buffer.Unpooled.buffer();
+            try {
+                var payload = dimensionalflux.network.s2c.ConfigStatePayload.current();
+                dimensionalflux.network.s2c.ConfigStatePayload.STREAM_CODEC.encode(buffer, payload);
+                helper.assertTrue(dimensionalflux.network.s2c.ConfigStatePayload.STREAM_CODEC.decode(buffer).equals(payload), "Configuration payload round trip failed");
+            } finally { buffer.release(); }
+        } finally {
+            dimensionalflux.DimensionalConfig.setOverrides(before);
+        }
+        helper.assertTrue(file.equals(dimensionalflux.DimensionalConfig.fileValues(false)), "Configuration overrides changed TOML values");
+        receiver.onCycleStart();
+        helper.assertTrue(receiver.getRequest() > 0, "The cached receiver did not resume after the filter was cleared");
+        helper.succeed();
     }
 
     /**

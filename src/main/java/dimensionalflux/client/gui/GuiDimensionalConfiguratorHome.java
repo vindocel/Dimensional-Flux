@@ -71,7 +71,7 @@ public class GuiDimensionalConfiguratorHome extends GuiTabCore {
             return true;
         }
         if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-            if (mouseX >= leftPos + 20 && mouseX < leftPos + 155 && mouseY >= topPos + 8 && mouseY < topPos + 20) {
+            if (mouseX >= leftPos + HOME_DISPLAY_X && mouseX < leftPos + HOME_DISPLAY_X + HOME_DISPLAY_WIDTH && mouseY >= topPos + 8 && mouseY < topPos + 20) {
                 switchTab(EnumNavigationTab.TAB_SELECTION, false);
                 return true;
             }

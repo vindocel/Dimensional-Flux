@@ -34,6 +34,13 @@ public final class ClientPayloads {
         event.register(NetworkRankingPayload.TYPE, ClientPayloads::onNetworkRanking);
         event.register(NetworkDeletedPayload.TYPE, ClientPayloads::onNetworkDeleted);
         event.register(TeslaMachinesPayload.TYPE, ClientPayloads::onTeslaMachines);
+        event.register(ConfigStatePayload.TYPE, (payload, context) -> {
+            try {
+                dimensionalflux.client.ConfigServerState.accept(payload.json());
+            } catch (RuntimeException error) {
+                dimensionalflux.DimensionalFlux.LOGGER.warn("Invalid server configuration snapshot was ignored");
+            }
+        });
     }
 
     private static LocalPlayer player(IPayloadContext context) {

@@ -35,7 +35,7 @@ public abstract class GuiListTab<T> extends GuiTabCore {
     @Override
     public void init() {
         super.init();
-        mPageBar = new PageBar(this, leftPos + 14, topPos + 157, 148, getNetwork().getNetworkColor());
+        mPageBar = new PageBar(this, contentLeft(12), topPos + 157, panelWidth() - 24, getNetwork().getNetworkColor());
     }
 
     /** Draws one row with its top-left corner at x, y. */

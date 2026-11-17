@@ -172,7 +172,7 @@ Craft the guide with a **Book** and a **Dimensional Flux Shard**. The book opens
 | Loader | NeoForge 26.1.2.126+ |
 | Java | 25 |
 | Required mods | none |
-| Optional | Jade, Curios, FTB Teams, FTB Chunks, JEI, REI |
+| Optional | Jade, Curios, FTB Teams, FTB Chunks, JEI, REI, KubeJS |
 
 ---
 
@@ -188,7 +188,7 @@ No. Any Forge Energy (FE) source and machine works.
 Yes. A network reaches every dimension, as long as the devices' chunks are loaded (Load Chunk helps).
 
 **Can I use it in a modpack?**
-Yes.
+Yes. Client preferences and local-world server rules have an in-game configuration screen. Server owners can configure battery capacity, transfer defaults, network limits, chunk loading and ore generation. Optional KubeJS server events customize these rules and block/item filters without rewriting the server configuration file; recipes and tags use the normal KubeJS APIs.
 
 ---
 

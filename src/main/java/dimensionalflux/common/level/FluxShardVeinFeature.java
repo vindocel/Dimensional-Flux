@@ -25,6 +25,7 @@ public final class FluxShardVeinFeature extends Feature<NoneFeatureConfiguration
 
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
+        if (!dimensionalflux.DimensionalConfig.enableOreGeneration) return false;
         WorldGenLevel level = context.level();
         BlockPos origin = context.origin().immutable();
         BlockState ore = oreAt(level, origin);

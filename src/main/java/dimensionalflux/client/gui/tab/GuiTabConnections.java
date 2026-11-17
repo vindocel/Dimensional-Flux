@@ -90,7 +90,7 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
     @Override
     public void init() {
         super.init();
-        mGrid = new RowGrid(leftPos + 12, topPos + 60, 24, 5, 200, 23);
+        mGrid = new RowGrid(contentLeft(12), topPos + 60, 24, 5, 200, 23);
         mPageBar = new PageBar(this, mGrid.x(), topPos + 183, mGrid.width(), getNetwork().getNetworkColor());
         mSortButton = null;
         if (getNetwork().isValid()) updateSortButton();
@@ -99,7 +99,7 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
 
     private void updateSortButton() {
         if (mSortButton != null) mButtons.remove(mSortButton);
-        mSortButton = new SimpleButton(this, leftPos + 90, topPos + 37, 122, 17,
+        mSortButton = new SimpleButton(this, contentLeft(90), topPos + 37, 122, 17,
                 DimensionalTranslate.SORT_BY.get() + ": " + mOrder.label());
         mButtons.add(mSortButton);
     }
@@ -146,7 +146,7 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
             renderNavigationPrompt(gr, DimensionalTranslate.ERROR_NO_SELECTED, EnumNavigationTab.TAB_SELECTION, mouseX, mouseY);
             return;
         }
-        int x = leftPos + 12, y = topPos + 10;
+        int x = mGrid.x(), y = topPos + 10;
         DfStyle.glass(gr, x, y, mGrid.width(), 21);
         SteelframePaint.fill(gr, x + 3, y + 3, x + 6, y + 18, 0xFF000000 | getNetwork().getNetworkColor());
         DfStyle.scrollingText(gr, font, getNetwork().getNetworkName(), x + 12, y + 7,

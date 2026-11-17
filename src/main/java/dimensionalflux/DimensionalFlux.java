@@ -27,6 +27,12 @@ public final class DimensionalFlux {
     public DimensionalFlux(IEventBus bus) {
         sCuriosLoaded = ModList.get().isLoaded("curios");
         DimensionalConfig.init();
+        if (net.neoforged.fml.loading.FMLEnvironment.getDist().isClient()) {
+            net.neoforged.fml.ModLoadingContext.get().getActiveContainer().registerExtensionPoint(
+                    net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
+                    (net.neoforged.neoforge.client.gui.IConfigScreenFactory) (mod, parent) ->
+                            new dimensionalflux.client.config.DimensionalConfigScreen(parent));
+        }
         DataAttachments.REGISTER.register(bus);
         DimensionalDataComponents.REGISTRY.register(bus);
     }

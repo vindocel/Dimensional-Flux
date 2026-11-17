@@ -26,24 +26,32 @@ import java.util.Set;
  */
 public final class MachineEnergy {
 
-    private static final Set<Block> BLOCK_BLACKLIST = new HashSet<>();
-    private static final Set<Item> ITEM_BLACKLIST = new HashSet<>();
+    private record Filters(Set<Block> blocks, Set<Item> items,
+                           Set<net.minecraft.tags.TagKey<Block>> blockTags, Set<net.minecraft.tags.TagKey<Item>> itemTags) {}
+    private static volatile Filters filters = new Filters(Set.of(), Set.of(), Set.of(), Set.of());
 
     private MachineEnergy() {
     }
 
     /** Takes the blacklists from the server config; entries that are not registry ids are logged and skipped. */
-    public static void reloadBlacklist(List<String> blocks, List<String> items) {
-        BLOCK_BLACKLIST.clear();
-        ITEM_BLACKLIST.clear();
+    public static void reloadBlacklist(List<? extends String> blocks, List<? extends String> items) {
+        Set<Block> blocked = new HashSet<>();
+        Set<Item> charged = new HashSet<>();
+        Set<net.minecraft.tags.TagKey<Block>> blockTags = new HashSet<>();
+        Set<net.minecraft.tags.TagKey<Item>> itemTags = new HashSet<>();
         for (String id : blocks) {
-            parse(id, "block").flatMap(BuiltInRegistries.BLOCK::getOptional).ifPresent(BLOCK_BLACKLIST::add);
+            if (id != null && id.startsWith("#")) parse(id.substring(1), "block tag").ifPresent(tag -> blockTags.add(
+                    net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK, tag)));
+            else parse(id, "block").flatMap(BuiltInRegistries.BLOCK::getOptional).ifPresent(blocked::add);
         }
         for (String id : items) {
-            parse(id, "item").flatMap(BuiltInRegistries.ITEM::getOptional).ifPresent(ITEM_BLACKLIST::add);
+            if (id != null && id.startsWith("#")) parse(id.substring(1), "item tag").ifPresent(tag -> itemTags.add(
+                    net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, tag)));
+            else parse(id, "item").flatMap(BuiltInRegistries.ITEM::getOptional).ifPresent(charged::add);
         }
+        filters = new Filters(Set.copyOf(blocked), Set.copyOf(charged), Set.copyOf(blockTags), Set.copyOf(itemTags));
         DimensionalFlux.LOGGER.info("Energy blacklist loaded: {} block entries, {} item entries",
-                BLOCK_BLACKLIST.size(), ITEM_BLACKLIST.size());
+                blocked.size() + blockTags.size(), charged.size() + itemTags.size());
     }
 
     private static java.util.Optional<Identifier> parse(@Nullable String id, String kind) {
@@ -58,7 +66,17 @@ public final class MachineEnergy {
     }
 
     public static boolean isItemBlacklisted(ItemStack stack) {
-        return ITEM_BLACKLIST.contains(stack.getItem());
+        var current = filters;
+        if (current.items.contains(stack.getItem())) return true;
+        for (var tag : current.itemTags) if (stack.is(tag)) return true;
+        return false;
+    }
+
+    public static boolean isBlockBlacklisted(net.minecraft.world.level.block.state.BlockState state) {
+        var current = filters;
+        if (current.blocks.contains(state.getBlock())) return true;
+        for (var tag : current.blockTags) if (state.is(tag)) return true;
+        return false;
     }
 
     /**
@@ -70,7 +88,7 @@ public final class MachineEnergy {
         if (target == null || target.isRemoved() || target instanceof IDimensionalDevice) {
             return null;
         }
-        if (BLOCK_BLACKLIST.contains(target.getBlockState().getBlock())) {
+        if (isBlockBlacklisted(target.getBlockState())) {
             return null;
         }
         Level level = target.getLevel();

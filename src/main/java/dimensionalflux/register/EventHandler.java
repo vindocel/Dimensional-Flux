@@ -39,6 +39,7 @@ public final class EventHandler {
     public static void onServerStopped(ServerStoppedEvent event) {
         DimensionalNetworkData.release();
         dimensionalflux.common.device.NetworkBridges.clear();
+        dimensionalflux.DimensionalConfig.clearOverrides();
     }
 
     /** A joining player gets the list of networks and their super admin status. */
@@ -47,6 +48,7 @@ public final class EventHandler {
         if (event.getEntity() instanceof ServerPlayer player) {
             NetworkSync.sendSummaries(player, DimensionalNetworkData.getAllNetworks());
             NetworkSync.syncPlayerData(player);
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, dimensionalflux.network.s2c.ConfigStatePayload.current());
         }
     }
 
