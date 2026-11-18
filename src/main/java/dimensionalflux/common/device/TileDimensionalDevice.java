@@ -355,6 +355,11 @@ public abstract class TileDimensionalDevice extends BlockEntity implements IDime
         return mBackupNetworkID;
     }
 
+    /** The configured primary network, including while this device is running on its backup. */
+    public int getPrimaryNetworkID() {
+        return isOnBackup() ? mPrimaryNetworkID : mNetworkID;
+    }
+
     /** Whether the device is running on its backup network now. */
     public boolean isOnBackup() {
         return mPrimaryNetworkID != DimensionalConstants.INVALID_NETWORK_ID;

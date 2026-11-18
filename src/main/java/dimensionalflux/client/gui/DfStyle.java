@@ -246,6 +246,14 @@ public final class DfStyle {
         return 0xFF000000 | withLightness(rgb, sDark ? 0.82f : 0.18f);
     }
 
+    /** Equal RGB mixture, with an opaque result and each channel rounded to the nearest integer. */
+    public static int mixNetworkColors(int first, int second) {
+        int red = ((first >> 16 & 255) + (second >> 16 & 255) + 1) / 2;
+        int green = ((first >> 8 & 255) + (second >> 8 & 255) + 1) / 2;
+        int blue = ((first & 255) + (second & 255) + 1) / 2;
+        return 0xFF000000 | red << 16 | green << 8 | blue;
+    }
+
     /** {@code rgb} with its hue and saturation, at the given HSL lightness. */
     private static int withLightness(int rgb, float lightness) {
         float r = (rgb >> 16 & 0xFF) / 255f, g = (rgb >> 8 & 0xFF) / 255f, b = (rgb & 0xFF) / 255f;
@@ -363,7 +371,7 @@ public final class DfStyle {
         STATISTICS("statistics", 16), MEMBERS("members", 16), SETTINGS("settings", 16), CREATE("create", 16),
         AREA("area", 16), CLOSE("close", 6), EDIT("edit", 8), SELECT_OFF("select_off", 8), SELECT_ON("select_on", 8),
         DISCONNECT("disconnect", 8), LOCK("lock", 8), LOCK_OPEN("lock_open", 8), TRASH("trash", 8), NETWORK_SETTINGS("network_settings", 16), HIGHLIGHT("highlight", 8),
-        MACHINES("machines", 16), USER("user", 8), INFINITY("infinity", 8),
+        MACHINES("machines", 16), USER("user", 8), INFINITY("infinity", 8), BACKUP_LINK("backup_link", 6),
         REDSTONE_IGNORE("redstone_ignore", 16), REDSTONE_WITH_SIGNAL("redstone_with_signal", 16),
         REDSTONE_WITHOUT_SIGNAL("redstone_without_signal", 16);
 

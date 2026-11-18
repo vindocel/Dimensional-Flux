@@ -84,6 +84,11 @@ public abstract class GuiListTab<T> extends GuiTabCore {
         return mGrid;
     }
 
+    /** Top of a row; lists may reserve a little more space for a contextual status. */
+    protected int rowTop(int slot) {
+        return mGrid.rowTop(slot);
+    }
+
     /** The row of the page shown under a point, or null. */
     @Nullable
     protected T rowAt(double mouseX, double mouseY) {
@@ -98,7 +103,7 @@ public abstract class GuiListTab<T> extends GuiTabCore {
             mPageBar.drawButton(gr, mouseX, mouseY, deltaTicks);
         }
         for (int slot = 0; slot < mPageRows.size(); slot++) {
-            drawRow(gr, mPageRows.get(slot), mGrid.x(), mGrid.rowTop(slot));
+            drawRow(gr, mPageRows.get(slot), mGrid.x(), rowTop(slot));
         }
         T hovered = rowAt(mouseX, mouseY);
         if (hovered != null && getCurrentPopup() == null) {

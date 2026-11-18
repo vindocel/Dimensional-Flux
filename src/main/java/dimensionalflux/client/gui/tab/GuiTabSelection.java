@@ -45,6 +45,7 @@ import java.util.List;
 public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
 
     private static final int DELETE_BUTTON_SIZE = 14;
+    private static final int BACKUP_EXTRA_HEIGHT = 4;
     private EditButton mDisconnect;
     private SimpleButton mSortButton;
     private int mDeletingNetwork = DimensionalConstants.INVALID_NETWORK_ID;
@@ -133,20 +134,42 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
     @Override
     public void drawRow(GuiGraphicsExtractor gr, DimensionalNetwork network, int x, int y) {
         boolean linked = getNetwork() == network;
-        DfStyle.networkRow(gr, x, y, mGrid.width(), mGrid.height(), network);
+        int height = rowHeight(network);
+        DfStyle.networkRow(gr, x, y, mGrid.width(), height, network);
         var device = backupDevice();
-        boolean backup = device != null && device.getBackupNetworkID() == network.getNetworkID();
-        String name = backup ? network.getNetworkName() + " · " + DimensionalTranslate.BACKUP.get() : network.getNetworkName();
+        boolean backup = isBackup(network);
         boolean canDelete = network.getPlayerAccess(mPlayer).canDelete();
         int textWidth = mGrid.width() - 26 - (canDelete ? 20 : 0) - (canEditRow(network) ? 20 : 0);
-        DfStyle.scrollingPanelText(gr, font, name, x + 19, y + 3, textWidth, DfStyle.TEXT);
-        String details = network.getSecurityLevel().getName() + " · " + network.getPlayerAccess(mPlayer).getName();
-        DfStyle.scrollingPanelText(gr, font, details, x + 19, y + 12, textWidth, DfStyle.TEXT);
+        DfStyle.scrollingPanelText(gr, font, network.getNetworkName(), x + 19, y + (backup ? 2 : 3), textWidth, DfStyle.TEXT);
+        if (backup) {
+            var primary = ClientCache.getNetwork(device.getPrimaryNetworkID());
+            int primaryColor = primary.isValid() ? primary.getNetworkColor() : 0x798488;
+            boolean active = device.isOnBackup() && linked;
+            String status = active ? Component.translatable("gui.dimensionalflux.network.backup.in_use").getString()
+                    : DimensionalTranslate.BACKUP.get();
+            int labelWidth = Math.min(font.width(status), Math.max(1, textWidth - 24));
+            int iconX = x + 19 + labelWidth + 3;
+            int ink = DfStyle.networkInk(primaryColor);
+            DfStyle.scrollingPanelText(gr, font, status, x + 19, y + 11, labelWidth,
+                    active ? 0xFFFFD966 : DfStyle.TEXT);
+            DfStyle.icon(gr, DfStyle.Icon.BACKUP_LINK, iconX, y + 12,
+                    DfStyle.onPanel(DfStyle.mixNetworkColors(network.getNetworkColor(), primaryColor)));
+            DfStyle.scrollingPanelText(gr, font, primary.isValid() ? primary.getNetworkName() : DimensionalTranslate.ERROR_NO_SELECTED.get(),
+                    iconX + 9, y + 11, textWidth - labelWidth - 12, ink);
+            int left = x + 5, right = x + mGrid.width() - 4, middle = (left + right) / 2;
+            SteelframePaint.fill(gr, left, y + height - 4, middle, y + height - 2,
+                    0xFF000000 | network.getNetworkColor());
+            SteelframePaint.fill(gr, middle, y + height - 4, right, y + height - 2,
+                    0xFF000000 | primaryColor);
+        } else {
+            String details = network.getSecurityLevel().getName() + " · " + network.getPlayerAccess(mPlayer).getName();
+            DfStyle.scrollingPanelText(gr, font, details, x + 19, y + 12, textWidth, DfStyle.TEXT);
+        }
         // Keep each network's hue with enough contrast against either panel theme.
         DfStyle.icon(gr, network.getSecurityLevel() == SecurityLevel.PUBLIC ? DfStyle.Icon.LOCK_OPEN : DfStyle.Icon.LOCK,
-                x + 6, y + (mGrid.height() - 8) / 2, 8, DfStyle.networkInk(network.getNetworkColor()));
+                x + 6, y + (height - 8) / 2, 8, DfStyle.networkInk(network.getNetworkColor()));
         if (canEditRow(network)) {
-            int editY = y + deleteInsetY();
+            int editY = y + deleteInsetY(network);
             boolean armed = shiftHeld();
             DfStyle.button(gr, editX(network), editY, DELETE_BUTTON_SIZE, DELETE_BUTTON_SIZE,
                     armed && overEdit(network, mRowMouseX, mRowMouseY), false, !armed);
@@ -155,7 +178,7 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
                     DfStyle.ACTION_ICON_SIZE, armed ? 0xFFFFFFFF : 0xFF8A9499);
         }
         if (canDelete) {
-            int deleteX = deleteX(), deleteY = y + deleteInsetY();
+            int deleteX = deleteX(), deleteY = y + deleteInsetY(network);
             boolean armed = shiftHeld() && mDeletingNetwork == DimensionalConstants.INVALID_NETWORK_ID;
             DfStyle.button(gr, deleteX, deleteY, DELETE_BUTTON_SIZE, DELETE_BUTTON_SIZE,
                     armed && overDelete(deleteX, deleteY, mRowMouseX, mRowMouseY), false, !armed);
@@ -165,8 +188,8 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
         }
         if (linked) {
             int marker = 0xFF000000 | ((network.getNetworkColor() & 0xFEFEFE) >>> 1);
-            SteelframePaint.fill(gr, x - 3, y, x - 1, y + mGrid.height(), marker);
-            SteelframePaint.fill(gr, x + mGrid.width() + 1, y, x + mGrid.width() + 3, y + mGrid.height(), marker);
+            SteelframePaint.fill(gr, x - 3, y, x - 1, y + height, marker);
+            SteelframePaint.fill(gr, x + mGrid.width() + 1, y, x + mGrid.width() + 3, y + height, marker);
         }
     }
 
@@ -180,7 +203,7 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
             gr.setComponentTooltipForNextFrame(font, lines, mouseX, mouseY, ItemStack.EMPTY);
             return;
         }
-        if (network.getPlayerAccess(mPlayer).canDelete() && overDelete(deleteX(), rowY(network) + deleteInsetY(), mouseX, mouseY)) {
+        if (network.getPlayerAccess(mPlayer).canDelete() && overDelete(deleteX(), rowY(network) + deleteInsetY(network), mouseX, mouseY)) {
             lines.add(DimensionalTranslate.DELETE_NETWORK.makeComponent().withStyle(ChatFormatting.RED));
             lines.add(Component.literal(network.getNetworkName()));
             lines.add(DimensionalTranslate.HOLD_SHIFT_DELETE.makeComponent().withStyle(ChatFormatting.GRAY));
@@ -200,6 +223,14 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
         }
         var device = backupDevice();
         if (device != null) {
+            if (isBackup(network)) {
+                var primary = ClientCache.getNetwork(device.getPrimaryNetworkID());
+                lines.add(Component.translatable("gui.dimensionalflux.network.backup.primary",
+                        primary.isValid() ? primary.getNetworkName() : DimensionalTranslate.ERROR_NO_SELECTED.get()));
+                lines.add(Component.translatable(device.isOnBackup() && getNetwork() == network
+                        ? "gui.dimensionalflux.network.backup.running" : "gui.dimensionalflux.network.backup.standby")
+                        .withStyle(ChatFormatting.GOLD));
+            }
             lines.add((device.getBackupNetworkID() == network.getNetworkID() ? DimensionalTranslate.BACKUP_CLEAR
                     : DimensionalTranslate.BACKUP_SET).makeComponent().withStyle(ChatFormatting.GRAY));
         }
@@ -210,6 +241,36 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
     @Nullable
     private dimensionalflux.common.device.TileDimensionalDevice backupDevice() {
         return menu.mProvider instanceof dimensionalflux.common.device.TileDimensionalDevice device && device.usesBackup() ? device : null;
+    }
+
+    private boolean isBackup(DimensionalNetwork network) {
+        var device = backupDevice();
+        return device != null && device.getBackupNetworkID() == network.getNetworkID();
+    }
+
+    private int rowHeight(DimensionalNetwork network) {
+        return mGrid.height() + (isBackup(network) ? BACKUP_EXTRA_HEIGHT : 0);
+    }
+
+    @Override
+    protected int rowTop(int slot) {
+        int extra = 0;
+        for (int i = 0; i < slot && i < mPageRows.size(); i++) {
+            if (isBackup(mPageRows.get(i))) extra += BACKUP_EXTRA_HEIGHT;
+        }
+        return super.rowTop(slot) + extra;
+    }
+
+    @Override
+    @Nullable
+    protected DimensionalNetwork rowAt(double mouseX, double mouseY) {
+        if (mouseX < mGrid.x() || mouseX >= mGrid.x() + mGrid.width()) return null;
+        for (int slot = 0; slot < mPageRows.size(); slot++) {
+            var network = mPageRows.get(slot);
+            int top = rowTop(slot);
+            if (mouseY >= top && mouseY < top + rowHeight(network)) return network;
+        }
+        return null;
     }
 
     @Override
@@ -241,7 +302,7 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
             return true;
         }
         if (row != null && row.getPlayerAccess(mPlayer).canDelete()
-                && overDelete(deleteX(), rowY(row) + deleteInsetY(), mouseX, mouseY)) {
+                && overDelete(deleteX(), rowY(row) + deleteInsetY(row), mouseX, mouseY)) {
             if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && shiftHeld()
                     && mDeletingNetwork == DimensionalConstants.INVALID_NETWORK_ID) {
                 DfStyle.playClick();
@@ -304,17 +365,17 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
     }
 
     private boolean overEdit(DimensionalNetwork network, double mouseX, double mouseY) {
-        int x = editX(network), y = rowY(network) + deleteInsetY();
+        int x = editX(network), y = rowY(network) + deleteInsetY(network);
         return mouseX >= x && mouseX < x + DELETE_BUTTON_SIZE
                 && mouseY >= y && mouseY < y + DELETE_BUTTON_SIZE;
     }
 
-    private int deleteInsetY() {
-        return (mGrid.height() - DELETE_BUTTON_SIZE) / 2;
+    private int deleteInsetY(DimensionalNetwork network) {
+        return (rowHeight(network) - DELETE_BUTTON_SIZE) / 2;
     }
 
     private int rowY(DimensionalNetwork network) {
-        return mGrid.rowTop(mPageRows.indexOf(network));
+        return rowTop(mPageRows.indexOf(network));
     }
 
     private static boolean overDelete(int x, int y, double mouseX, double mouseY) {

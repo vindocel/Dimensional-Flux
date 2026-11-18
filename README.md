@@ -131,6 +131,7 @@ Owners assign **User** or **Administrator** access and can block individual play
 ### 🔁 Backup networks, redstone and chunk loading
 
 - 🔁 **Backup network** (Receivers and Tesla Broadcasters): right-click a network in Network Selection to make it the backup, again to clear it. After five seconds without energy on its own network the device moves to the backup, and it returns once its own network has had energy for five seconds.
+  Its row shows a two-color stripe and a small chain icon linking it to this device's primary network. The icon blends both network colors equally in RGB. The status changes from Backup to In use during failover; security and access remain in the tooltip. Other devices keep their own independent backup choices.
 - 🔴 **Redstone tab** (Emitters, Receivers and Tesla Broadcasters): always on, only with a signal or only without one. A stopped device stays linked.
 - 📶 **Comparator**: next to a Dimensional Battery it reads the stored charge from 0 to 15.
 - 🗺️ **Load Chunk** keeps a device's chunk loaded when the server allows it.
