@@ -49,6 +49,7 @@ public final class SteelframeTextures {
         textures.add(DimensionalFlux.location("textures/block/guide_book.png"));
         textures.add(DimensionalFlux.location("textures/hud/energy/energy_empty.png"));
         textures.add(DimensionalFlux.location("textures/hud/energy/energy_shimmer_sheet.png"));
+        textures.addAll(dimensionalflux.client.config.DimensionalConfigScreen.previewTextures());
         return textures;
     }
 

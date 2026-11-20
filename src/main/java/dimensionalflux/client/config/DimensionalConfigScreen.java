@@ -12,18 +12,35 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /** Full-screen, draft-based editor. Remote server rules and scripted options are read-only. */
 public final class DimensionalConfigScreen extends Screen {
     private record Option(String key, int tab, boolean client, boolean appearance, Object fallback) {}
     private record Row(Option option, int y, AbstractWidget control, Button reset) {}
+    /** Preview size in GUI pixels; the files are native captures at twice that size, drawn without resampling at GUI scale 2. */
+    private static final int PREVIEW_WIDTH = 208, PREVIEW_HEIGHT = 117, PREVIEW_SCALE = 2;
+    /** Options with a visible effect, shown with a picture of it under their help; every other option has none. */
+    private static final Map<String, String> PREVIEWS = Map.of(
+            "appearance.dark", "dark_screens",
+            "appearance.shared", "device_settings",
+            "general.enableChunkLoading", "chunk_loading",
+            "energy.defaultLimit", "transfer_limit",
+            "energy.batteryCapacity", "battery",
+            "energy.batteryTransfer", "battery",
+            "worldgen.enableOreGeneration", "shard_ores");
+    /** Previews that show interface text and therefore have a Brazilian Portuguese capture beside the English one. */
+    private static final Set<String> LOCALIZED_PREVIEWS = Set.of("dark_screens", "device_settings", "chunk_loading",
+            "transfer_limit", "battery");
     private final Screen parent;
     private final List<Option> options = new ArrayList<>();
     private final Map<String, Object> opened = new LinkedHashMap<>(), draft = new LinkedHashMap<>();
@@ -188,7 +205,8 @@ public final class DimensionalConfigScreen extends Screen {
             y = paragraph(g, text("default_value", String.valueOf(selected.fallback)), y + 6, ConfigStyle.MUTED);
             if (scripted(selected)) y = paragraph(g, text("scripted"), y + 4, ConfigStyle.ACCENT);
             else if (!editable(selected) && !selected.client) y = paragraph(g, text("server_read_only"), y + 4, ConfigStyle.MUTED);
-            if (errors.containsKey(selected.key)) paragraph(g, text("invalid_value"), y + 4, 0xFFFF7777);
+            if (errors.containsKey(selected.key)) y = paragraph(g, text("invalid_value"), y + 4, 0xFFFF7777);
+            preview(g, selected.key, y + 8);
         }
         if (!saveError.getString().isEmpty()) paragraph(g, saveError, contentTop + 8, 0xFFFF7777);
         List<Option> current = options.stream().filter(option -> option.tab == tab).toList();
@@ -206,6 +224,36 @@ public final class DimensionalConfigScreen extends Screen {
             y += 10;
         }
         return y;
+    }
+
+    /** Every preview texture, so the Steelframe texture guard can load them straight from the jar. */
+    public static List<Identifier> previewTextures() {
+        List<Identifier> textures = new ArrayList<>();
+        for (String file : Set.copyOf(PREVIEWS.values())) {
+            textures.add(previewTexture(file, false));
+            if (LOCALIZED_PREVIEWS.contains(file)) textures.add(previewTexture(file, true));
+        }
+        return textures;
+    }
+
+    private static Identifier previewTexture(String file, boolean portuguese) {
+        return DimensionalFlux.location("textures/gui/config/" + (portuguese ? "pt_br/" : "") + file + ".png");
+    }
+
+    private void preview(GuiGraphicsExtractor g, String key, int y) {
+        String file = PREVIEWS.get(key);
+        if (file == null) return;
+        // as wide as the panel allows, then shrunk to the room left above the footer; hidden when that is too small
+        int w = Math.min(PREVIEW_WIDTH, panelWidth - 16), h = w * PREVIEW_HEIGHT / PREVIEW_WIDTH, room = height - 57 - y;
+        if (room < 40) return;
+        if (h > room) { h = room; w = h * PREVIEW_WIDTH / PREVIEW_HEIGHT; }
+        int x = panelX + (panelWidth - w) / 2;
+        boolean portuguese = LOCALIZED_PREVIEWS.contains(file)
+                && "pt_br".equals(minecraft.getLanguageManager().getSelected());
+        ConfigStyle.fill(g, x - 1, y - 1, x + w + 1, y + h + 1, 0xFF3C5A60);
+        int sourceWidth = PREVIEW_WIDTH * PREVIEW_SCALE, sourceHeight = PREVIEW_HEIGHT * PREVIEW_SCALE;
+        g.blit(RenderPipelines.GUI_TEXTURED, previewTexture(file, portuguese), x, y, 0, 0, w, h,
+                sourceWidth, sourceHeight, sourceWidth, sourceHeight);
     }
 
     @Override
