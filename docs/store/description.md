@@ -122,34 +122,36 @@ Pick one of the sixteen dye colors or create your own. The devices, the screens,
 
 Every device opens a screen with side tabs; each tab opens a window you can move, and several stay open together.
 
-![Device screen and its settings](https://cdn.modrinth.com/data/ufMZiRnE/images/a8bfd23a1fed3174ca9d731b8a83e3e917a37443.png)
+![Device screen and its settings](https://cdn.modrinth.com/data/ufMZiRnE/images/cf4efdea2f27ef477f7a592af2478ae36912fe9e.png)
 
 - 🌗 **Light or dark look**, particles on or off, for one device or all of them.
 - 🔴 **Redstone tab**: always on, only with a signal or only without one.
 - 🗺️ **Load Chunk** keeps a far generator working.
 
-![Choosing and creating networks](https://cdn.modrinth.com/data/ufMZiRnE/images/ffb8d076dcb632874a2873cc1da8d85243c434e8.png)
+![Choosing and creating networks](https://cdn.modrinth.com/data/ufMZiRnE/images/3cd6378f9aa1ac2fee2cd06056640fc79f1893c1.png)
 
 - 🔐 **Public**, **Private** or **Locked** with a password.
 - ✏️ Hold **Shift** and click the pencil to edit another network directly from the list, or its trash button to delete it, when permitted.
 - 🔁 Right click a network to make it the **backup**.
 
-![Statistics and connections](https://cdn.modrinth.com/data/ufMZiRnE/images/267ae33b0816b9145f8411deebf70a8d04933d93.png)
+![Statistics and connections](https://cdn.modrinth.com/data/ufMZiRnE/images/b32051b048be2c127c99452f1f0820e4a2113aad.png)
 
 - 📈 Input in green, output in red, the balance and the storage gauge.
 - 🔦 Light any machine up through the walls from the connections list.
 - 🔢 **Connections** and **Machines in area** offer **Automatic**, **Name**, **Highest consumption** and **Lowest consumption** ordering.
 
-![Members and network options](https://cdn.modrinth.com/data/ufMZiRnE/images/e5e302ae9673bcebdb653b6ab859b11cc7cb0327.png)
+![Tesla Broadcaster and machines in area](https://cdn.modrinth.com/data/ufMZiRnE/images/a11734a3f0d33909b3218c06bc953a181ef146b2.png)
+
+![Members and network options](https://cdn.modrinth.com/data/ufMZiRnE/images/837aa187263b52c90e31606d527a3d26c39367a5.png)
 
 - 👥 Users, administrators and blocks; share with your FTB Teams party or your `/team`.
 - ⚖️ **Distribution**: serve by priority, or share what is left in proportion to what each machine asks for.
 
-![Charging items](https://cdn.modrinth.com/data/ufMZiRnE/images/fbed8346538cc39c484a3216e87d12ae275d4cfc.png)
+![Charging items](https://cdn.modrinth.com/data/ufMZiRnE/images/7093595892f44aada27163211a96814c6e7f7f60.png)
 
 - 🧲 Choose which slots charge and the total FE/t they may take.
 
-![The dark look](https://cdn.modrinth.com/data/ufMZiRnE/images/1657630667de837944037d668c1d1f225045775f.png)
+![The dark look](https://cdn.modrinth.com/data/ufMZiRnE/images/b63da3ebbc0eaf21c2436fb0d787f898e44da553.png)
 
 ---
 
