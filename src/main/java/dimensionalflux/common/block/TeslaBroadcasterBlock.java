@@ -58,6 +58,12 @@ public class TeslaBroadcasterBlock extends DimensionalDeviceBlock {
     private static final VoxelShape UPPER = Shapes.or(
             Block.box(4.5, 0, 4.5, 11.5, 7.5, 11.5),
             Block.box(1, 7.5, 1, 15, 11.5, 15));
+    /**
+     * The outline and hit shape of either half: both halves joined, in that half's own block coordinates, so the
+     * whole broadcaster is selected as one piece whichever half is aimed at. Collision keeps the per-half shapes.
+     */
+    private static final VoxelShape WHOLE_FROM_LOWER = Shapes.or(LOWER, UPPER.move(0, 1, 0));
+    private static final VoxelShape WHOLE_FROM_UPPER = WHOLE_FROM_LOWER.move(0, -1, 0);
 
     public TeslaBroadcasterBlock(Properties props) {
         super(props);
@@ -151,6 +157,12 @@ public class TeslaBroadcasterBlock extends DimensionalDeviceBlock {
     @Nonnull
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return state.getValue(HALF) == DoubleBlockHalf.LOWER ? WHOLE_FROM_LOWER : WHOLE_FROM_UPPER;
+    }
+
+    @Nonnull
+    @Override
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return state.getValue(HALF) == DoubleBlockHalf.LOWER ? LOWER : UPPER;
     }
 
