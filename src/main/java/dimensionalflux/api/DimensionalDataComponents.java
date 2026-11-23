@@ -43,6 +43,12 @@ public final class DimensionalDataComponents {
                     .persistent(Identifier.CODEC)
                     .networkSynchronized(Identifier.STREAM_CODEC));
 
+    /** Present while a Dimensional Configurator is in wrench mode. */
+    public static final DataComponentType<Boolean> WRENCH_MODE = register(
+            "wrench_mode", builder -> builder
+                    .persistent(Codec.BOOL)
+                    .networkSynchronized(ByteBufCodecs.BOOL));
+
     private DimensionalDataComponents() {
     }
 

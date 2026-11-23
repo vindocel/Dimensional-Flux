@@ -14,7 +14,7 @@ import dimensionalflux.client.gui.tab.GuiTabMembers;
 import dimensionalflux.register.ClientMessages;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.KeyEvent;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import javax.annotation.Nonnull;
 
@@ -145,7 +145,7 @@ public class PopupMemberEdit extends GuiPopupCore<GuiTabCore> {
     @Override
     public void onButtonClicked(GuiButtonCore button, int mouseX, int mouseY, int mouseButton) {
         super.onButtonClicked(button, mouseX, mouseY, mouseButton);
-        if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT || !button.isClickable() ||
+        if (mouseButton != InputConstants.MOUSE_BUTTON_LEFT || !button.isClickable() ||
                 mHost.getNetwork().getNetworkID() != networkID) return;
 
         byte type;
@@ -169,7 +169,7 @@ public class PopupMemberEdit extends GuiPopupCore<GuiTabCore> {
     @Override
     public boolean keyPressed(@Nonnull KeyEvent event) {
         if (mTransferOwnership != null) {
-            if (event.key() == GLFW.GLFW_KEY_LEFT_SHIFT || event.key() == GLFW.GLFW_KEY_RIGHT_SHIFT) {
+            if (event.key() == InputConstants.KEY_LSHIFT || event.key() == InputConstants.KEY_RSHIFT) {
                 if (++transferShiftPresses >= 2 && canTransfer()) {
                     mTransferOwnership.setClickable(true);
                 }

@@ -22,7 +22,7 @@ import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -105,13 +105,13 @@ public class PopupTeslaTargets extends GuiPopupCore<GuiDimensionalDeviceHome> {
     @Override
     public void onButtonClicked(GuiButtonCore button, int mouseX, int mouseY, int mouseButton) {
         super.onButtonClicked(button, mouseX, mouseY, mouseButton);
-        if (button == mSortButton && (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT || mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT)) {
-            if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT) DfStyle.playClick();
-            mOrder = mOrder.cycle(mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+        if (button == mSortButton && (mouseButton == InputConstants.MOUSE_BUTTON_LEFT || mouseButton == InputConstants.MOUSE_BUTTON_RIGHT)) {
+            if (mouseButton == InputConstants.MOUSE_BUTTON_RIGHT) DfStyle.playClick();
+            mOrder = mOrder.cycle(mouseButton == InputConstants.MOUSE_BUTTON_RIGHT);
             mScroll = 0;
             updateSortButton();
         }
-        if (button == mShareEqually && mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (button == mShareEqually && mouseButton == InputConstants.MOUSE_BUTTON_LEFT) {
             var settings = new net.minecraft.nbt.CompoundTag();
             settings.putBoolean(TileTeslaBroadcaster.SHARE_EQUALLY, !mTesla.isSharingEqually());
             ClientMessages.editTile(mHost.getToken(), mTesla, settings);
@@ -286,7 +286,7 @@ public class PopupTeslaTargets extends GuiPopupCore<GuiDimensionalDeviceHome> {
 
     @Override
     public boolean mouseClicked(@Nonnull MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             List<TeslaViewportCache.Machine> machines = machines();
             for (int i = 0; i < ROWS && mScroll + i < machines.size(); i++) {
                 TeslaViewportCache.Machine m = machines.get(mScroll + i);

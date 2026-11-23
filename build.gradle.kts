@@ -39,14 +39,29 @@ repositories {
     }
 }
 
+// Optional integrations are pinned per Minecraft version in versions/<minecraft>/gradle.properties.
+// A target without a build of an integration leaves its property out, and its compat classes are not compiled.
+fun optionalVersion(name: String) = findProperty(name) as String?
+
 dependencies {
-    compileOnly("dev.latvian.mods:kubejs-neoforge:${property("kubejs_version")}") { isTransitive = false }
-    compileOnly("dev.latvian.mods:rhino:${property("rhino_version")}") { isTransitive = false }
-    compileOnly("maven.modrinth:jade:26.1.12+neoforge")
-    compileOnly("maven.modrinth:jei:60HrmNPh")
-    compileOnly("me.shedaniel:RoughlyEnoughItems-neoforge:26.1.819")
-    compileOnly("dev.architectury:architectury-neoforge:20.1.17")
-    compileOnly("top.theillusivec4.curios:curios-neoforge:15.0.0+26.1.2")
+    val kubejs = optionalVersion("kubejs_version")
+    val rhino = optionalVersion("rhino_version")
+    if (kubejs != null && rhino != null) {
+        compileOnly("dev.latvian.mods:kubejs-neoforge:$kubejs") { isTransitive = false }
+        compileOnly("dev.latvian.mods:rhino:$rhino") { isTransitive = false }
+    }
+    optionalVersion("jade_version")?.let { compileOnly("maven.modrinth:jade:$it") }
+    optionalVersion("jei_version")?.let { compileOnly("maven.modrinth:jei:$it") }
+    optionalVersion("rei_version")?.let { compileOnly("me.shedaniel:RoughlyEnoughItems-neoforge:$it") }
+    optionalVersion("architectury_version")?.let { compileOnly("dev.architectury:architectury-neoforge:$it") }
+    optionalVersion("curios_version")?.let { compileOnly("top.theillusivec4.curios:curios-neoforge:$it") }
+}
+
+if (optionalVersion("kubejs_version") == null) {
+    sourceSets.main {
+        java.exclude("dimensionalflux/compat/kubejs/**")
+        resources.exclude("kubejs.plugins.txt")
+    }
 }
 
 // The GameTests: their own source set and test mod (dimensionalflux_gametest), loaded only by the gameTestServer run,
@@ -105,11 +120,32 @@ tasks.named("createMinecraftArtifacts") {
 }
 
 tasks.processResources {
+    // versions/<minecraft>/src/main/resources holds the files whose format differs on that version (loot tables on
+    // 26.3, for example); each one replaces the shared file at the same path.
+    val versionResources = project.file("src/main/resources")
+    if (versionResources.isDirectory) {
+        val replaced = fileTree(versionResources).files
+            .map { it.relativeTo(versionResources).invariantSeparatorsPath }.toSet()
+        exclude { it.relativePath.pathString in replaced && !it.file.startsWith(versionResources) }
+    }
+    // World generation data moved in Minecraft 26.3: configured features (worldgen/configured_feature, with a
+    // "config" object) became features (worldgen/feature). Both forms are kept and each version ships its own.
+    // Shaders: from 26.3 the game links vertex and fragment shaders separately, so its shaders declare their inputs
+    // and outputs by location; those versions use the shaders in shaders/core/separate.
+    if (sc.current.parsed >= "26.3") {
+        exclude("data/*/worldgen/configured_feature/**")
+        exclude("assets/*/shaders/core/steelframe_*")
+    } else {
+        exclude("data/*/worldgen/feature/**")
+        exclude("assets/*/shaders/core/separate/**")
+    }
     val metadata = mapOf(
         "mod_id" to modId,
         "mod_version" to modVersion,
         "minecraft_version" to minecraftVersion,
-        "neo_version" to neoVersion
+        "neo_version" to neoVersion,
+        // the mod list reads the banner and icon from bannerFile and iconFile from 26.3; earlier versions from logoFile
+        "mod_images" to if (sc.current.parsed >= "26.3") "bannerFile=\"logo.png\"\niconFile=\"icon.png\"" else "logoFile=\"logo.png\""
     )
     inputs.properties(metadata)
     filesMatching("META-INF/neoforge.mods.toml") {

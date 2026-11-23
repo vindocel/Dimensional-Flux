@@ -264,6 +264,22 @@ public class DimensionalNetwork {
         return getSecurityLevel() == SecurityLevel.PUBLIC ? AccessLevel.USER : AccessLevel.BLOCKED;
     }
 
+    /**
+     * Whether the player belongs to this network: its owner, a listed member with access, or a member of the team
+     * the network is shared with. A public network or a password does not make a player a member.
+     */
+    public boolean hasMember(Player player) {
+        UUID uuid = player.getUUID();
+        if (getOwnerUUID().equals(uuid)) {
+            return true;
+        }
+        NetworkMember member = getMemberByUUID(uuid);
+        if (member != null && !member.isListedOnly()) {
+            return member.getAccessLevel().canUse();
+        }
+        return hasSharedTeamAccess(player);
+    }
+
     /** Whether a player may use this network without a password. */
     public final boolean canPlayerAccess(Player player) {
         return canPlayerAccess(player, "");

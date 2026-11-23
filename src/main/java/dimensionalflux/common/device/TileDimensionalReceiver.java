@@ -250,7 +250,9 @@ public class TileDimensionalReceiver extends TileDimensionalConnector {
     @Override
     protected void onServerTick() {
         super.onServerTick();
-        updateBridge();
+        if (!isDormant()) {
+            updateBridge();
+        }
     }
 
     /** Records the bridge this Receiver forms with an Emitter, and pauses it on the same network or in a loop. */

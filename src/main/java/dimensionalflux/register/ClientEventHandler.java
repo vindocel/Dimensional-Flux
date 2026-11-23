@@ -1,5 +1,6 @@
 package dimensionalflux.register;
 
+import dimensionalflux.client.ClientCompat;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
@@ -40,10 +41,26 @@ public final class ClientEventHandler {
         DarkModeCompat.afterScreen();
     }
 
+    /**
+     * Sneaking and turning the mouse wheel with the Dimensional Configurator in the main hand switches it between
+     * configure and wrench mode, instead of changing the hotbar slot.
+     */
+    @SubscribeEvent
+    public static void onScroll(net.neoforged.neoforge.client.event.InputEvent.MouseScrollingEvent event) {
+        var player = Minecraft.getInstance().player;
+        if (player == null || ClientCompat.screen() != null || !player.isShiftKeyDown() || event.getScrollDeltaY() == 0
+                || !(player.getMainHandItem().getItem() instanceof dimensionalflux.common.item.ItemDimensionalConfigurator)) {
+            return;
+        }
+        event.setCanceled(true);
+        net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(
+                dimensionalflux.network.c2s.ConfiguratorModeRequest.INSTANCE);
+    }
+
     /** A tooltip over a window of a device screen stays beside that window. */
     @SubscribeEvent
     public static void onTooltip(RenderTooltipEvent.Pre event) {
-        if (Minecraft.getInstance().screen instanceof GuiPopupHost host) {
+        if (ClientCompat.screen() instanceof GuiPopupHost host) {
             host.positionWindowTooltip(event);
         }
     }

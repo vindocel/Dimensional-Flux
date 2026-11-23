@@ -8,7 +8,7 @@ import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import dimensionalflux.api.DimensionalConstants;
 import dimensionalflux.api.DimensionalTranslate;
 import dimensionalflux.api.device.DimensionalDeviceType;
@@ -107,9 +107,9 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
     @Override
     public void onButtonClicked(GuiButtonCore button, float mouseX, float mouseY, int mouseButton) {
         super.onButtonClicked(button, mouseX, mouseY, mouseButton);
-        if (button == mSortButton && (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT || mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT)) {
-            if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT) DfStyle.playClick();
-            mOrder = mOrder.cycle(mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+        if (button == mSortButton && (mouseButton == InputConstants.MOUSE_BUTTON_LEFT || mouseButton == InputConstants.MOUSE_BUTTON_RIGHT)) {
+            if (mouseButton == InputConstants.MOUSE_BUTTON_RIGHT) DfStyle.playClick();
+            mOrder = mOrder.cycle(mouseButton == InputConstants.MOUSE_BUTTON_RIGHT);
             sortRows(mSort);
             showPage(0);
             updateSortButton();
@@ -374,7 +374,7 @@ public class GuiTabConnections extends GuiListTab<IDimensionalDevice> {
 
     @Override
     public boolean onMouseClicked(double mouseX, double mouseY, int mouseButton) {
-        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && getNetwork().isValid() && clickRowButton(mouseX, mouseY)) {
+        if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT && getNetwork().isValid() && clickRowButton(mouseX, mouseY)) {
             return true;
         }
         if (super.onMouseClicked(mouseX, mouseY, mouseButton)) {

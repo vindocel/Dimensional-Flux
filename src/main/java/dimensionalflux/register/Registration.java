@@ -35,8 +35,13 @@ public final class Registration {
         event.register(BuiltInRegistries.RECIPE_SERIALIZER.key(), RegistryRecipes::register);
         event.register(BuiltInRegistries.CREATIVE_MODE_TAB.key(), RegistryCreativeModeTabs::register);
         event.register(BuiltInRegistries.PARTICLE_TYPE.key(), RegistryParticles::register);
+        //? if >=26.3 {
+        /*event.register(BuiltInRegistries.FEATURE_TYPE.key(), helper -> helper.register(
+                DimensionalFlux.location("dimensional_flux_shard_vein"), FluxShardVeinFeature.CODEC));
+        *///?} else {
         event.register(BuiltInRegistries.FEATURE.key(), helper -> helper.register(
                 DimensionalFlux.location("dimensional_flux_shard_vein"), new FluxShardVeinFeature()));
+        //?}
     }
 
     @SubscribeEvent

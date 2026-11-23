@@ -6,7 +6,7 @@ license="CC BY 4.0, with an additional permission for modpacks. See LICENSE."
 modId="${mod_id}"
 version="${mod_version}"
 displayName="Dimensional Flux"
-logoFile="logo.png"
+${mod_images}
 displayURL="https://vindocel.github.io/Showcase-DFM/dimensional-flux.html"
 description='''Transfer and manage wireless energy across dimensions.'''
 

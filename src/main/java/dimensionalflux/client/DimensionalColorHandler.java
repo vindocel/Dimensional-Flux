@@ -95,9 +95,15 @@ public record DimensionalColorHandler() implements ItemTintSource {
      */
     public record ConfiguratorTint() implements ItemTintSource {
         public static final MapCodec<ConfiguratorTint> CODEC = MapCodec.unit(new ConfiguratorTint());
+        private static final long WRENCH_RAINBOW_MILLIS = 6000;
 
         @Override
         public int calculate(ItemStack stack, ClientLevel level, LivingEntity owner) {
+            if (stack.has(DimensionalDataComponents.WRENCH_MODE)) {
+                // wrench mode: the colored parts cycle through the rainbow, one turn every 6 seconds
+                float hue = (net.minecraft.util.Util.getMillis() % WRENCH_RAINBOW_MILLIS) / (float) WRENCH_RAINBOW_MILLIS;
+                return java.awt.Color.HSBtoRGB(hue, 0.85f, 1.0f) | 0xFF000000;
+            }
             DimensionalDeviceConfigComponent data = stack.get(DimensionalDataComponents.DIMENSIONAL_CONFIG);
             if (data == null || data.networkId() == DimensionalConstants.INVALID_NETWORK_ID) {
                 return NO_NETWORK_DEVICE_COLOR | 0xFF000000;
@@ -138,7 +144,7 @@ public record DimensionalColorHandler() implements ItemTintSource {
             return ClientCache.getNetwork(data.networkId()).getNetworkColor();
         }
         // 3. Try grabbing color from the current screen
-        Screen screen = Minecraft.getInstance().screen;
+        Screen screen = ClientCompat.screen();
         if (screen instanceof GuiDimensionalCore gui) {
             return gui.getNetwork().getNetworkColor();
         }

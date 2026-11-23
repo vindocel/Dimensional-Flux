@@ -39,25 +39,22 @@ public class NetworkStatistics {
     private final dimensionalflux.common.util.TransferHistory unmetHistory = new dimensionalflux.common.util.TransferHistory(CHANGE_COUNT);
     private long mUnmet;
 
-    /** Seconds the consumption must stay above the generation before members are warned. */
-    public static final int ALERT_DELAY_SECONDS = 30;
-    /** Shortest time between two warnings of one network, in seconds. */
-    public static final int ALERT_COOLDOWN_SECONDS = 300;
-    public static final int ALERT_RESERVE_SECONDS = 120;
+    // The alert timings come from the server settings (networks.alertShortfallSeconds, alertReserveSeconds and
+    // alertCooldownSeconds): 30 seconds of shortfall, a reserve of at most 2 minutes, one alert every 5 minutes.
     private int mOverSeconds;
     /** Whether the consumption of the last minute is above the generation, whether or not alerts are on. */
     public boolean deficit;
     public long reserveSeconds;
 
     public boolean isReserveLow() {
-        return deficit && reserveSeconds <= ALERT_RESERVE_SECONDS;
+        return deficit && reserveSeconds <= dimensionalflux.DimensionalConfig.alertReserveSeconds;
     }
 
     public String reserveTime() {
         long seconds = reserveSeconds % 60;
         return reserveSeconds / 60 + (seconds < 10 ? ":0" : ":") + seconds;
     }
-    private int mSecondsSinceAlert = ALERT_COOLDOWN_SECONDS;
+    private int mSecondsSinceAlert = dimensionalflux.DimensionalConfig.alertCooldownSeconds;
 
     /** Seconds over which the reserve estimate averages how fast the stored energy falls. */
     public static final int DRAIN_WINDOW_SECONDS = 20;
@@ -206,7 +203,7 @@ public class NetworkStatistics {
 
     /**
      * Warns the online members when the consumption of the last minute (energy delivered plus demand left unmet)
-     * stays above the generation for {@link #ALERT_DELAY_SECONDS}, at most once every {@link #ALERT_COOLDOWN_SECONDS}.
+     * stays above the generation for the configured shortfall time, at most once per the configured cooldown.
      */
     private void checkDeficit() {
         if (!(network instanceof ServerDimensionalNetwork)) return;
@@ -218,9 +215,9 @@ public class NetworkStatistics {
         if (!deficit) mStoredCount = 0;
         // alerts are a controller feature: they warn only while the network has a Dimensional Controller
         boolean over = network.isAlertsEnabled() && controllerCount > 0 && deficit;
-        mOverSeconds = over ? Math.min(mOverSeconds + 1, ALERT_DELAY_SECONDS) : 0;
-        if (mSecondsSinceAlert < ALERT_COOLDOWN_SECONDS) mSecondsSinceAlert++;
-        if (isReserveLow() && mOverSeconds >= ALERT_DELAY_SECONDS && mSecondsSinceAlert >= ALERT_COOLDOWN_SECONDS) {
+        mOverSeconds = over ? Math.min(mOverSeconds + 1, dimensionalflux.DimensionalConfig.alertShortfallSeconds) : 0;
+        if (mSecondsSinceAlert < dimensionalflux.DimensionalConfig.alertCooldownSeconds) mSecondsSinceAlert++;
+        if (isReserveLow() && mOverSeconds >= dimensionalflux.DimensionalConfig.alertShortfallSeconds && mSecondsSinceAlert >= dimensionalflux.DimensionalConfig.alertCooldownSeconds) {
             mSecondsSinceAlert = 0;
             alertMembers(consumption);
         }

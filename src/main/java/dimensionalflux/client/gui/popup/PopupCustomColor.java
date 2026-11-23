@@ -12,7 +12,7 @@ import dimensionalflux.client.gui.tab.GuiTabNetworkForm;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.util.Mth;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.awt.Color;
 import java.util.Locale;
@@ -147,7 +147,7 @@ public class PopupCustomColor extends GuiPopupCore<GuiTabCore> {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         int x = winLeft() + INSET;
-        if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT && event.x() >= x && event.x() < x + trackWidth()) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && event.x() >= x && event.x() < x + trackWidth()) {
             for (int slider = 0; slider < LABELS.length; slider++) {
                 int y = trackY(slider);
                 if (event.y() >= y - 2 && event.y() < y + TRACK_HEIGHT + 2) {
@@ -182,7 +182,7 @@ public class PopupCustomColor extends GuiPopupCore<GuiTabCore> {
     @Override
     public void onButtonClicked(GuiButtonCore button, int mouseX, int mouseY, int mouseButton) {
         super.onButtonClicked(button, mouseX, mouseY, mouseButton);
-        if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT) return;
+        if (mouseButton != InputConstants.MOUSE_BUTTON_LEFT) return;
         if (button == mCancel) {
             mHost.closePopup(this);
         } else if (button == mApply && mApply.isClickable()) {

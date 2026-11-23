@@ -24,11 +24,18 @@ import java.util.List;
 public class TileTeslaBroadcaster extends TileDimensionalDevice {
 
     public static final int MIN_AREA = 9;
-    public static final int MAX_AREA = 32;
     public static final int AREA_STEP = 1;
     private static final int RESCAN_TICKS = 20;
+
+    /** The largest area edge, set by the server ({@code energy.teslaMaxAreaSize}, 32 by default). */
+    public static int maxArea() {
+        return Math.max(MIN_AREA, dimensionalflux.DimensionalConfig.teslaMaxAreaSize);
+    }
+
     /** Farthest block the area can reach from the broadcaster along any axis, with the largest size and offset. */
-    public static final int MAX_REACH = centerExtent(MAX_AREA) - minOffset(MAX_AREA);
+    public static int maxReach() {
+        return centerExtent(maxArea()) - minOffset(maxArea());
+    }
     /** Most machines listed for the area preview. */
     public static final int MAX_PREVIEW_MACHINES = 2048;
 
@@ -77,9 +84,9 @@ public class TileTeslaBroadcaster extends TileDimensionalDevice {
 
     @Override
     public boolean renameMachine(BlockPos machine, String name) {
-        if (Math.abs(machine.getX() - worldPosition.getX()) > MAX_REACH ||
-                Math.abs(machine.getY() - worldPosition.getY()) > MAX_REACH ||
-                Math.abs(machine.getZ() - worldPosition.getZ()) > MAX_REACH) {
+        if (Math.abs(machine.getX() - worldPosition.getX()) > maxReach() ||
+                Math.abs(machine.getY() - worldPosition.getY()) > maxReach() ||
+                Math.abs(machine.getZ() - worldPosition.getZ()) > maxReach()) {
             return false;
         }
         String trimmed = name.length() > MAX_MACHINE_NAME_LENGTH ? name.substring(0, MAX_MACHINE_NAME_LENGTH) : name;
@@ -138,9 +145,9 @@ public class TileTeslaBroadcaster extends TileDimensionalDevice {
 
     @Override
     public boolean editMachine(BlockPos machine, CompoundTag tag) {
-        if (Math.abs(machine.getX() - worldPosition.getX()) > MAX_REACH ||
-                Math.abs(machine.getY() - worldPosition.getY()) > MAX_REACH ||
-                Math.abs(machine.getZ() - worldPosition.getZ()) > MAX_REACH) {
+        if (Math.abs(machine.getX() - worldPosition.getX()) > maxReach() ||
+                Math.abs(machine.getY() - worldPosition.getY()) > maxReach() ||
+                Math.abs(machine.getZ() - worldPosition.getZ()) > maxReach()) {
             return false;
         }
         if (tag.contains(MACHINE_NAME_KEY)) {
@@ -270,7 +277,7 @@ public class TileTeslaBroadcaster extends TileDimensionalDevice {
     }
 
     public static int clampArea(int size) {
-        return Mth.clamp(size, MIN_AREA, MAX_AREA);
+        return Mth.clamp(size, MIN_AREA, maxArea());
     }
 
     @Override
@@ -280,6 +287,11 @@ public class TileTeslaBroadcaster extends TileDimensionalDevice {
 
     @Override
     protected void onServerTick() {
+        if (isDormant()) {
+            // without a network the broadcaster powers nothing: no machine history and no area scan
+            super.onServerTick();
+            return;
+        }
         mHandler.recordMachineHistory(getNetwork().isValid());
         if (--mRescanTimer <= 0) {
             mRescanTimer = RESCAN_TICKS;
@@ -381,8 +393,8 @@ public class TileTeslaBroadcaster extends TileDimensionalDevice {
      */
     public List<BlockEntity> findMachinesInReach() {
         assert level != null && !level.isClientSide();
-        BlockPos min = worldPosition.offset(-MAX_REACH, -MAX_REACH, -MAX_REACH);
-        BlockPos max = worldPosition.offset(MAX_REACH, MAX_REACH, MAX_REACH);
+        BlockPos min = worldPosition.offset(-maxReach(), -maxReach(), -maxReach());
+        BlockPos max = worldPosition.offset(maxReach(), maxReach(), maxReach());
         List<BlockEntity> machines = new ArrayList<>();
         for (int cx = min.getX() >> 4; cx <= max.getX() >> 4; cx++) {
             for (int cz = min.getZ() >> 4; cz <= max.getZ() >> 4; cz++) {
@@ -578,9 +590,9 @@ public class TileTeslaBroadcaster extends TileDimensionalDevice {
         if (tag.contains(TOGGLE_TARGET)) {
             BlockPos pos = BlockPos.of(tag.getLongOr(TOGGLE_TARGET, 0L));
             // only machines within the reach of the broadcaster
-            if (Math.abs(pos.getX() - worldPosition.getX()) <= MAX_REACH &&
-                    Math.abs(pos.getY() - worldPosition.getY()) <= MAX_REACH &&
-                    Math.abs(pos.getZ() - worldPosition.getZ()) <= MAX_REACH && !mDisabled.remove(pos)) {
+            if (Math.abs(pos.getX() - worldPosition.getX()) <= maxReach() &&
+                    Math.abs(pos.getY() - worldPosition.getY()) <= maxReach() &&
+                    Math.abs(pos.getZ() - worldPosition.getZ()) <= maxReach() && !mDisabled.remove(pos)) {
                 mDisabled.add(pos.immutable());
             }
             mRescanTimer = 0;

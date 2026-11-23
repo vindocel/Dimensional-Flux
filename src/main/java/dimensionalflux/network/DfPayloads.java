@@ -37,6 +37,7 @@ public final class DfPayloads {
         registrar.playToServer(NetworkAlertsRequest.TYPE, NetworkAlertsRequest.STREAM_CODEC, ServerPayloads::onNetworkAlerts);
         registrar.playToServer(HudStatisticsRequest.TYPE, HudStatisticsRequest.STREAM_CODEC, ServerPayloads::onHudStatistics);
         registrar.playToServer(TeamSharingRequest.TYPE, TeamSharingRequest.STREAM_CODEC, ServerPayloads::onTeamSharing);
+        registrar.playToServer(ConfiguratorModeRequest.TYPE, ConfiguratorModeRequest.STREAM_CODEC, ServerPayloads::onConfiguratorMode);
 
         registrar.playToClient(DeviceGuiSync.TYPE, DeviceGuiSync.STREAM_CODEC);
         registrar.playToClient(DeviceEnergySync.TYPE, DeviceEnergySync.STREAM_CODEC);

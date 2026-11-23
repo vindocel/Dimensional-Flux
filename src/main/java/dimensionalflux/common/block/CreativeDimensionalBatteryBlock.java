@@ -20,7 +20,9 @@ import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 public final class CreativeDimensionalBatteryBlock extends Block {
     public static final net.minecraft.world.level.block.state.properties.EnumProperty<Direction> FACING =
             net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING;
+    //? if <26.3 {
     private static final MapCodec<CreativeDimensionalBatteryBlock> CODEC = simpleCodec(CreativeDimensionalBatteryBlock::new);
+    //?}
 
     public static final EnergyHandler ENERGY = new EnergyHandler() {
         @Override
@@ -70,10 +72,12 @@ public final class CreativeDimensionalBatteryBlock extends Block {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
+    //? if <26.3 {
     @Override
     protected MapCodec<CreativeDimensionalBatteryBlock> codec() {
         return CODEC;
     }
+    //?}
 
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {

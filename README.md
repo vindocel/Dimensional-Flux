@@ -5,8 +5,8 @@
 **Wireless energy. Connected dimensions. Control over every machine.**
 Put an Emitter on a generator, a Receiver on a machine, link both to the same network, and the energy arrives: in the same base or in another dimension.
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2-62B47A?style=for-the-badge)](https://www.minecraft.net/)
-[![NeoForge](https://img.shields.io/badge/NeoForge-26.1.2.126-E07A2F?style=for-the-badge)](https://neoforged.net/)
+[![Minecraft](https://img.shields.io/badge/Minecraft-26.1.2%20%7C%2026.3-62B47A?style=for-the-badge)](https://www.minecraft.net/)
+[![NeoForge](https://img.shields.io/badge/NeoForge-26.1.2.126%20%7C%2026.3.0.115-E07A2F?style=for-the-badge)](https://neoforged.net/)
 [![Java](https://img.shields.io/badge/Java-25-5382A1?style=for-the-badge)](https://adoptium.net/)
 [![License](https://img.shields.io/badge/License-CC%20BY%204.0-9366DE?style=for-the-badge)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/vindocel/Dimensional-Flux/ci.yml?branch=production&style=for-the-badge&label=CI)](https://github.com/vindocel/Dimensional-Flux/actions/workflows/ci.yml)
@@ -53,8 +53,8 @@ Put an Emitter on a generator, a Receiver on a machine, link both to the same ne
 
 | | |
 |---|---|
-| Minecraft | **26.1.2** |
-| NeoForge | **26.1.2.126** |
+| Minecraft | **26.1.2** and **26.3** |
+| NeoForge | **26.1.2.126** (Minecraft 26.1.2), **26.3.0.115** (Minecraft 26.3) |
 | Java | **25** |
 | Mod ID | `dimensionalflux` |
 | Version | `0.1.0` (development) |
@@ -234,21 +234,26 @@ The server configuration sets network ownership limits, administrative access, c
 The repository uses **Stonecutter** with **ModDevGradle**: every Minecraft version lives on the same branch. Shared code and resources are under `src/main`, the GameTests under `src/gametest`, and the version-specific properties under `versions/<minecraft>`.
 
 ```bash
+./gradlew build                       # every configured target
 ./gradlew :26.1.2:build               # jar in versions/26.1.2/build/libs/dimensional-flux-<version>+26.1.2.jar
+./gradlew :26.3:build                 # jar in versions/26.3/build/libs/dimensional-flux-<version>+26.3.jar
 ./gradlew :26.1.2:runGameTestServer   # in-world GameTests (a separate test mod, never in the released jar)
 ./gradlew :26.1.2:runClient           # development client (uses run/26.1.2)
 ./gradlew :26.1.2:runServer           # development server
 ```
 
+Code that differs between Minecraft versions uses Stonecutter conditional comments (`//? if >=26.3 {`), mostly gathered in `ClientCompat`. Resources whose format differs on a version live in `versions/<minecraft>/src/main/resources` and replace the shared file at the same path.
+
 On Windows use `gradlew.bat`. Gradle runs on JDK 25; the wrapper provisions Gradle itself and the Foojay resolver provisions each target's Java toolchain.
 
-Each client uses `run/<minecraft>`, with its own `mods/`, `config/`, `saves/`, `resourcepacks/` and `shaderpacks/`. For the current target:
+Each client uses `run/<minecraft>`, with its own `mods/`, `config/`, `saves/`, `resourcepacks/` and `shaderpacks/`:
 
 ```powershell
 .\gradlew.bat :26.1.2:runClient
+.\gradlew.bat :26.3:runClient
 ```
 
-Put compatible test mods in `run/26.1.2/mods`; the development mod is loaded from source. New approved targets use the same command with their Minecraft version. `gradlew.bat build` builds all configured targets; qualify tasks as `:<minecraft>:build` to select one. Isolated runs can use `-Ptest_run_root=<directory>`; each run then uses `<directory>/<minecraft>/<run-name>`.
+Put compatible test mods in `run/<minecraft>/mods`; the development mod is loaded from source. `gradlew.bat build` builds all configured targets; qualify tasks as `:<minecraft>:build` to select one. Isolated runs can use `-Ptest_run_root=<directory>`; each run then uses `<directory>/<minecraft>/<run-name>`.
 
 | Component | Version |
 |---|---|

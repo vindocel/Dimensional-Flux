@@ -25,7 +25,7 @@ import net.minecraft.client.gui.components.PlayerFaceExtractor;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -332,13 +332,13 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
     @Override
     public void onButtonClicked(GuiButtonCore button, float mouseX, float mouseY, int mouseButton) {
         super.onButtonClicked(button, mouseX, mouseY, mouseButton);
-        if (button == mSortButton && mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+        if (button == mSortButton && mouseButton == InputConstants.MOUSE_BUTTON_RIGHT) {
             DfStyle.playClick();
             cycleSort(true);
             updateSortButton();
             return;
         }
-        if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT) return;
+        if (mouseButton != InputConstants.MOUSE_BUTTON_LEFT) return;
         if (button == mTeamSelector && getNetwork().isValid()) {
             chooseTeam(cellAt(mouseX));
         } else if (button == mTeamSharing && getNetwork().isValid()) {
@@ -355,7 +355,7 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
 
     @Override
     protected void onRowClicked(NetworkMember element, int mouseButton) {
-        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && canOpenMember(element)) {
+        if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT && canOpenMember(element)) {
             var host = windowHost();
             host.closePopup(host.findPopup(popup -> popup instanceof PopupMemberEdit));
             host.openPopup(new PopupMemberEdit(host, this, element));
@@ -379,7 +379,11 @@ public class GuiTabMembers extends GuiListTab<NetworkMember> {
         var playerInfo = connection == null ? null : connection.getPlayerInfo(playerId);
         var team = minecraft.level == null ? null
                 : minecraft.level.getScoreboard().getPlayersTeam(element.getCachedName());
+        //? if >=26.3 {
+        /*Integer color = team == null ? null : team.getColor().map(net.minecraft.world.scores.TeamColor::rgb).orElse(null);
+        *///?} else {
         Integer color = team == null ? null : team.getColor().getColor();
+        //?}
         DfStyle.listRow(gr, x, y, CONTENT_WIDTH, mGrid.height(), color == null ? 0x798488 : color);
         if (hovered) {
             SteelframePaint.fill(gr, x + 1, y + 1, x + CONTENT_WIDTH - 1, y + mGrid.height() - 1, 0x20FFFFFF);

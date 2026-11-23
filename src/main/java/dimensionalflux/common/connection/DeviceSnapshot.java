@@ -43,9 +43,11 @@ public record DeviceSnapshot(GlobalPos pos, DimensionalDeviceType type, int netw
             UUIDUtil.CODEC.fieldOf("owner").forGetter(DeviceSnapshot::owner),
             TransferSettings.CODEC.fieldOf("settings").forGetter(DeviceSnapshot::settings),
             Codec.LONG.optionalFieldOf("buffer", 0L).forGetter(DeviceSnapshot::buffer),
+            // kept for unloaded devices, so the online rule of chunk loading can load them again after a restart
+            Codec.BOOL.optionalFieldOf("forced_loading", false).forGetter(DeviceSnapshot::forcedLoading),
             Identifier.CODEC.fieldOf("item").forGetter(DeviceSnapshot::item)
-    ).apply(instance, (pos, type, network, name, owner, settings, buffer, item) ->
-            new DeviceSnapshot(pos, type, network, name, owner, settings, buffer, 0, false, false, item, List.of())));
+    ).apply(instance, (pos, type, network, name, owner, settings, buffer, forced, item) ->
+            new DeviceSnapshot(pos, type, network, name, owner, settings, buffer, 0, false, forced, item, List.of())));
 
     public static final StreamCodec<ByteBuf, DeviceSnapshot> STREAM_CODEC = StreamCodec.composite(
             GlobalPos.STREAM_CODEC, DeviceSnapshot::pos,
@@ -64,6 +66,6 @@ public record DeviceSnapshot(GlobalPos pos, DimensionalDeviceType type, int netw
 
     /** The same device as the network keeps it once its chunk unloads: settings and buffer, no live figures. */
     public DeviceSnapshot unloaded() {
-        return new DeviceSnapshot(pos, type, networkId, customName, owner, settings, buffer, 0, false, false, item, List.of());
+        return new DeviceSnapshot(pos, type, networkId, customName, owner, settings, buffer, 0, false, forcedLoading, item, List.of());
     }
 }

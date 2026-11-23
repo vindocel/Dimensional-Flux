@@ -6,7 +6,6 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.world.entity.player.Player;
-import org.lwjgl.glfw.GLFW;
 import dimensionalflux.client.gui.EnumNavigationTab;
 import dimensionalflux.client.gui.button.DimensionalEditBox;
 import dimensionalflux.common.connection.DimensionalMenu;
@@ -49,7 +48,7 @@ public abstract class GuiFocusable extends AbstractContainerScreen<DimensionalMe
     }
 
     private static boolean isLeaveKey(int key) {
-        return key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER;
+        return key == InputConstants.KEY_ESCAPE || key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER;
     }
 
     @Override
@@ -66,7 +65,7 @@ public abstract class GuiFocusable extends AbstractContainerScreen<DimensionalMe
                 // typing the inventory key into a field must not close the screen
                 return true;
             }
-        } else if (keyCode == GLFW.GLFW_KEY_ESCAPE || inventoryKey) {
+        } else if (keyCode == InputConstants.KEY_ESCAPE || inventoryKey) {
             if (this instanceof GuiPopupCore<?> window) {
                 window.mHost.closePopup(window);
             } else if (this instanceof GuiTabCore tab) {

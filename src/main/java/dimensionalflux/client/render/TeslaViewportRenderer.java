@@ -1,5 +1,6 @@
 package dimensionalflux.client.render;
 
+import dimensionalflux.client.ClientCompat;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -7,12 +8,13 @@ import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.render.pip.PictureInPictureRenderer;
+//? if <26.3 {
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
+//?}
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
-import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.gui.pip.PictureInPictureRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -69,9 +71,14 @@ public class TeslaViewportRenderer extends PictureInPictureRenderer<TeslaViewpor
     private final RandomSource mRandom = RandomSource.create();
     private final List<BlockStateModelPart> mParts = new ArrayList<>();
 
+    //? if >=26.3 {
+    /*public TeslaViewportRenderer() {
+    }
+    *///?} else {
     public TeslaViewportRenderer(MultiBufferSource.BufferSource bufferSource) {
         super(bufferSource);
     }
+    //?}
 
     @Override
     public Class<State> getRenderStateClass() {
@@ -88,20 +95,40 @@ public class TeslaViewportRenderer extends PictureInPictureRenderer<TeslaViewpor
         return "tesla_viewport";
     }
 
+    //? if >=26.3 {
+    /*@Override
+    protected void renderToTexture(State state, PoseStack poseStack, SubmitNodeCollector collector) {
+        Minecraft.getInstance().gameRenderer.lighting().setupFor(Lighting.Entry.ITEMS_3D);
+        // the frame draws solid blocks before the translucent area fill, so the machines inside show through it
+        submitScene(state, poseStack, collector);
+        submitArea(state, poseStack, collector);
+    }
+    *///?} else {
     @Override
     protected void renderToTexture(State state, PoseStack poseStack) {
         Minecraft mc = Minecraft.getInstance();
         mc.gameRenderer.getLighting().setupFor(Lighting.Entry.ITEMS_3D);
+        FeatureRenderDispatcher dispatcher = mc.gameRenderer.getFeatureRenderDispatcher();
+        SubmitNodeCollector collector = dispatcher.getSubmitNodeStorage();
+        submitScene(state, poseStack, collector);
+        // blocks first, so the light area fill drawn next lets the machines inside show through it
+        dispatcher.renderAllFeatures();
+        submitArea(state, poseStack, collector);
+        dispatcher.renderAllFeatures();
+    }
+    //?}
+
+    /** The camera, the broadcaster and the machines in the area. */
+    private void submitScene(State state, PoseStack poseStack, SubmitNodeCollector collector) {
+        Minecraft mc = Minecraft.getInstance();
         // same axes as a block item in the inventory: Y up, the camera looking at the scene from the front
         poseStack.scale(1.0F, -1.0F, -1.0F);
         // the right mouse button moves the whole scene across the preview, before it is turned
         poseStack.translate(state.panX() / state.scale(), -state.panY() / state.scale(), 0);
-        poseStack.mulPose(Axis.XP.rotationDegrees(state.pitch()));
-        poseStack.mulPose(Axis.YP.rotationDegrees(state.yaw()));
+        ClientCompat.rotate(poseStack, Axis.XP.rotationDegrees(state.pitch()));
+        ClientCompat.rotate(poseStack, Axis.YP.rotationDegrees(state.yaw()));
         poseStack.translate(-PIVOT_X, -PIVOT_Y, -PIVOT_Z);
 
-        FeatureRenderDispatcher dispatcher = mc.gameRenderer.getFeatureRenderDispatcher();
-        SubmitNodeCollector collector = dispatcher.getSubmitNodeStorage();
         int[] tesla = {state.color() | 0xFF000000};
 
         submitBlock(collector, poseStack, state.lower(), BlockPos.ZERO, tesla);
@@ -110,7 +137,7 @@ public class TeslaViewportRenderer extends PictureInPictureRenderer<TeslaViewpor
         }
         BlockStateModelPart crystal = mc.getModelManager().getStandaloneModel(TeslaBroadcasterRenderer.CRYSTAL_IDLE);
         if (crystal != null) {
-            collector.submitBlockModel(poseStack, Sheets.cutoutBlockSheet(), List.of(crystal), new int[0],
+            collector.submitBlockModel(poseStack, ClientCompat.cutoutBlockSheet(), List.of(crystal), new int[0],
                     LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 0);
         }
         for (TeslaViewportCache.Machine machine : state.machines()) {
@@ -124,10 +151,10 @@ public class TeslaViewportRenderer extends PictureInPictureRenderer<TeslaViewpor
                 }
             }
         }
+    }
 
-        // blocks first, so the light area fill drawn next lets the machines inside show through it
-        dispatcher.renderAllFeatures();
-
+    /** The outline of the area and its light fill, in the pose the scene left. */
+    private static void submitArea(State state, PoseStack poseStack, SubmitNodeCollector collector) {
         // one GUI pixel wide, whatever the zoom
         final float thickness = 1.0f / state.scale();
         final BlockPos min = state.areaMin();
@@ -138,7 +165,6 @@ public class TeslaViewportRenderer extends PictureInPictureRenderer<TeslaViewpor
                     min.getX() + size, min.getY() + size, min.getZ() + size, AREA_FILL);
             outline(pose, buffer, min.getX(), min.getY(), min.getZ(), size, thickness, argb);
         });
-        dispatcher.renderAllFeatures();
     }
 
     /**
@@ -211,11 +237,11 @@ public class TeslaViewportRenderer extends PictureInPictureRenderer<TeslaViewpor
         poseStack.pushPose();
         poseStack.translate(offset.getX(), offset.getY(), offset.getZ());
         if (!solid.isEmpty()) {
-            collector.submitBlockModel(poseStack, Sheets.cutoutBlockSheet(), solid, tints,
+            collector.submitBlockModel(poseStack, ClientCompat.cutoutBlockSheet(), solid, tints,
                     LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 0);
         }
         if (!translucent.isEmpty()) {
-            collector.submitBlockModel(poseStack, Sheets.translucentBlockSheet(), translucent, tints,
+            collector.submitBlockModel(poseStack, ClientCompat.translucentBlockSheet(), translucent, tints,
                     LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 0);
         }
         poseStack.popPose();

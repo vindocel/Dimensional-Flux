@@ -1,13 +1,18 @@
 package dimensionalflux.client.gui;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+//? if >=26.3 {
+/*import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.textures.FilterMode;
+*///?} else {
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
+//?}
 import dimensionalflux.DimensionalFlux;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -38,6 +43,23 @@ import org.jspecify.annotations.Nullable;
  */
 public final class SteelframePaint {
 
+    //? if >=26.3 {
+    /*// The game's own GUI pipelines with the Steelframe shaders, which declare their inputs and outputs by location
+    // as the game's 26.3 shaders do.
+    /^* Plain colored rectangles. ^/
+    public static final RenderPipeline FILL = RenderPipeline.builder(RenderPipelines.GUI_SNIPPET)
+            .withLocation(DimensionalFlux.location("pipeline/steelframe_fill"))
+            .withVertexShader(DimensionalFlux.location("core/separate/steelframe_fill"))
+            .withFragmentShader(DimensionalFlux.location("core/separate/steelframe_fill"))
+            .build();
+
+    /^* Text glyphs from the font atlas. ^/
+    public static final RenderPipeline TEXT = RenderPipeline.builder(RenderPipelines.GUI_TEXT_SNIPPET)
+            .withLocation(DimensionalFlux.location("pipeline/steelframe_text"))
+            .withVertexShader(DimensionalFlux.location("core/separate/steelframe_text"))
+            .withFragmentShader(DimensionalFlux.location("core/separate/steelframe_text"))
+            .build();
+    *///?} else {
     /** Plain colored rectangles. */
     public static final RenderPipeline FILL = RenderPipeline.builder(RenderPipelines.MATRICES_PROJECTION_SNIPPET)
             .withLocation(DimensionalFlux.location("pipeline/steelframe_fill"))
@@ -56,6 +78,7 @@ public final class SteelframePaint {
             .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
             .withVertexFormat(DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, VertexFormat.Mode.QUADS)
             .build();
+    //?}
 
     private static boolean sLookedUp;
     @Nullable

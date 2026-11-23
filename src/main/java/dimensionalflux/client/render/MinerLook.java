@@ -1,5 +1,6 @@
 package dimensionalflux.client.render;
 
+import dimensionalflux.client.ClientCompat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -70,7 +71,7 @@ final class MinerLook {
             pose.pushPose();
             pose.translate((minX + maxX) / 2.0, minY, (minZ + maxZ) / 2.0);
             pose.translate(0.5, 0, 0.5);
-            pose.mulPose(Axis.YP.rotationDegrees(-turn));
+            ClientCompat.rotate(pose, Axis.YP.rotationDegrees(-turn));
             pose.translate(-0.5, 0, -0.5);
             sRender.invoke(null, pose, collector, model, LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
             pose.popPose();

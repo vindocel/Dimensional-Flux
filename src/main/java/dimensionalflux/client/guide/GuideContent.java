@@ -140,6 +140,7 @@ final class GuideContent {
         Builder b = new Builder("configurator");
         b.item(RegistryItems.DIMENSIONAL_CONFIGURATOR.get(), "about").crafting("dimensional_configurator");
         b.heading("copy").text("copy");
+        b.heading("wrench").text("wrench");
         b.heading("hud").text("hud");
         b.heading("hidden").text("hidden");
         return b.chapter(RegistryItems.DIMENSIONAL_CONFIGURATOR.get());

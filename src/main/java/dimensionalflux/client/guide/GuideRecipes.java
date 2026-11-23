@@ -39,8 +39,13 @@ public final class GuideRecipes {
 
     /** The result of one craft, as the recipe's display shows it, or EMPTY. */
     static ItemStack result(RegistryAccess registries, Recipe<?> recipe) {
+        //? if >=26.3 {
+        /*ContextMap context = ContextMap.builder().set(SlotDisplayContext.REGISTRIES, registries)
+                .buildAndValidate(SlotDisplayContext.CONTEXT);
+        *///?} else {
         ContextMap context = new ContextMap.Builder().withParameter(SlotDisplayContext.REGISTRIES, registries)
                 .create(SlotDisplayContext.CONTEXT);
+        //?}
         for (RecipeDisplay display : recipe.display()) {
             ItemStack result = display.result().resolveForFirstStack(context);
             if (!result.isEmpty()) {

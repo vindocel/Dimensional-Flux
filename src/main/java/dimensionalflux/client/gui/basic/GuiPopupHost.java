@@ -7,7 +7,7 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.world.entity.player.Player;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import dimensionalflux.common.connection.DimensionalMenu;
 
 import javax.annotation.Nonnull;
@@ -179,7 +179,7 @@ public abstract class GuiPopupHost extends GuiFocusable {
         for (GuiEventListener child : children()) {
             if (child.mouseClicked(event, doubleClick)) {
                 setFocused(child);
-                if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+                if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT) {
                     setDragging(true);
                 }
                 return true;
@@ -257,15 +257,24 @@ public abstract class GuiPopupHost extends GuiFocusable {
 
     @Override
     public final boolean keyPressed(KeyEvent event) {
-        if (event.key() == GLFW.GLFW_KEY_ESCAPE && !isEmbedded()) {
+        if (event.key() == InputConstants.KEY_ESCAPE && !isEmbedded()) {
             onClose();
             return true;
         }
         if (popupTakesKeys()) {
             return getCurrentPopup().keyPressed(event);
         }
-        return onKeyPressed(event.key(), event.scancode(), event.modifiers()) ||
+        return onKeyPressed(event.key(), scanCode(event), event.modifiers()) ||
                 super.keyPressed(event);
+    }
+
+    /** The platform key code of the event, beside its {@link com.mojang.blaze3d.platform.InputConstants} key. */
+    private static int scanCode(KeyEvent event) {
+        //? if >=26.3 {
+        /*return event.keycode();
+        *///?} else {
+        return event.scancode();
+        //?}
     }
 
     /** Keys go to the popup, unless a text field of the screen below has the focus. */
@@ -284,7 +293,7 @@ public abstract class GuiPopupHost extends GuiFocusable {
         if (popupTakesKeys()) {
             return getCurrentPopup().keyReleased(event);
         }
-        return onKeyReleased(event.key(), event.scancode(), event.modifiers()) ||
+        return onKeyReleased(event.key(), scanCode(event), event.modifiers()) ||
                 super.keyReleased(event);
     }
 

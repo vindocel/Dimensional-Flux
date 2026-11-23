@@ -77,6 +77,9 @@ public class TileDimensionalBattery extends TileDimensionalDevice {
     @Override
     protected void onServerTick() {
         super.onServerTick();
+        if (isDormant()) {
+            return;
+        }
         updateBlock();
         //noinspection ConstantConditions
         if (mEnergyChanged && (level.getGameTime() & SYNC_MASK) == 0) {

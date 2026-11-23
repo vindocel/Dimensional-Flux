@@ -1,5 +1,6 @@
 package dimensionalflux.client.render;
 
+import dimensionalflux.client.ClientCompat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dimensionalflux.DimensionalFlux;
@@ -93,16 +94,16 @@ public class DimensionalReceiverRenderer
             case WEST -> 270;
             default -> state.facing.getAxis().isVertical() ? state.rotation * 90 : 0;
         };
-        poseStack.mulPose(new Quaternionf().rotateYXZ(-ry * Mth.DEG_TO_RAD, -rx * Mth.DEG_TO_RAD, 0f));
+        ClientCompat.rotate(poseStack, new Quaternionf().rotateYXZ(-ry * Mth.DEG_TO_RAD, -rx * Mth.DEG_TO_RAD, 0f));
         poseStack.translate(-0.5, -0.5, -0.5);
         // 2) turn the antenna around the joint: yaw on Y, pitch on X, roll on Z
         poseStack.translate(PX, PY, PZ);
-        poseStack.mulPose(Axis.YP.rotationDegrees(state.head[0]));
-        poseStack.mulPose(Axis.XP.rotationDegrees(state.head[1]));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(state.head[2]));
+        ClientCompat.rotate(poseStack, Axis.YP.rotationDegrees(state.head[0]));
+        ClientCompat.rotate(poseStack, Axis.XP.rotationDegrees(state.head[1]));
+        ClientCompat.rotate(poseStack, Axis.ZP.rotationDegrees(state.head[2]));
         poseStack.translate(-PX, -PY, -PZ);
         // tint index 0 colors the four antenna corners with the network color
-        collector.submitBlockModel(poseStack, Sheets.cutoutBlockSheet(), List.of(head),
+        collector.submitBlockModel(poseStack, ClientCompat.cutoutBlockSheet(), List.of(head),
                 new int[]{state.color | 0xFF000000}, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
         poseStack.popPose();
     }

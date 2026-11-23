@@ -6,12 +6,12 @@ This guide is for modpack creators, server administrators and modders. The serve
 
 | Target | Value |
 | --- | --- |
-| Minecraft | 26.1.2 |
-| NeoForge | 26.1.2.126 |
+| Minecraft | 26.1.2 and 26.3 |
+| NeoForge | 26.1.2.126 (Minecraft 26.1.2), 26.3.0.115 (Minecraft 26.3) |
 | Java | 25 |
 | Mod ID | `dimensionalflux` |
-| Data pack version | 101.1 |
-| Optional scripting | KubeJS `26.1.2-8.0.8`, Rhino `2101.2.8-build.91`, and their required runtime dependencies |
+| Data pack version | 101.1 (Minecraft 26.1.2), 121.0 (Minecraft 26.3) |
+| Optional scripting | Minecraft 26.1.2: KubeJS `26.1.2-8.0.8`, Rhino `2101.2.8-build.91`, and their required runtime dependencies. Minecraft 26.3: not available yet (no KubeJS build for 26.3) |
 
 For gameplay instructions, see the [README](../README.md) and the craftable in-game guide.
 
@@ -52,7 +52,9 @@ On this NeoForge target, the main server file applies to worlds without a world-
 | --- | --- | --- |
 | Singleplayer | `<instance>/config/dimensionalflux-server.toml` | `<instance>/saves/<world>/serverconfig/dimensionalflux-server.toml` |
 | Dedicated server | `<server>/config/dimensionalflux-server.toml` | `<server>/<level-name>/serverconfig/dimensionalflux-server.toml` |
-| Development client | `run/26.1.2/config/dimensionalflux-server.toml` | `run/26.1.2/saves/<world>/serverconfig/dimensionalflux-server.toml` |
+| Development client | `run/<minecraft>/config/dimensionalflux-server.toml` | `run/<minecraft>/saves/<world>/serverconfig/dimensionalflux-server.toml` |
+
+On Minecraft 26.3 the file keeps the same name, but the per-world override folder is `syncedconfig` instead of `serverconfig` (for example `<instance>/saves/<world>/syncedconfig/dimensionalflux-server.toml`).
 
 The client TOML is `<instance>/config/dimensionalflux-client.toml`. Appearance preferences are stored separately in `<instance>/config/dimensionalflux-settings.json`.
 
@@ -80,10 +82,16 @@ Keys are case-sensitive. In particular, `blacklist.itemBlackListStrings` uses a 
 | `networks.maximumPerPlayer` | Integer | `10` | -1 to 2147483647 |
 | `networks.enableSuperAdmin` | Boolean | `true` | `true` / `false` |
 | `networks.superAdminRequiredPermission` | Integer | `1` | 0 to 3 |
+| `networks.backupSwitchSeconds` | Integer, seconds | `5` | 1 to 600 |
+| `networks.alertShortfallSeconds` | Integer, seconds | `30` | 5 to 3600 |
+| `networks.alertReserveSeconds` | Integer, seconds | `120` | 0 to 86400 |
+| `networks.alertCooldownSeconds` | Integer, seconds | `300` | 0 to 86400 |
 | `general.enableChunkLoading` | Boolean | `true` | `true` / `false` |
+| `general.chunkLoadingOnlyOnline` | Boolean | `false` | `true` / `false` |
 | `energy.defaultLimit` | Integer, FE/t | `800000` | 0 to 9223372036854775807 |
 | `energy.batteryCapacity` | Integer, FE | `256000000` | 0 to 9223372036854775807 |
 | `energy.batteryTransfer` | Integer, FE/t | `720000` | 0 to 9223372036854775807 |
+| `energy.teslaMaxAreaSize` | Integer, blocks | `32` | 9 to 64 |
 | `worldgen.enableOreGeneration` | Boolean | `true` | `true` / `false` |
 | `blacklist.blockBlacklistStrings` | List of strings | `["actuallyadditions:block_phantom_energyface"]` | Block IDs or `#block_tags` |
 | `blacklist.itemBlackListStrings` | List of strings | `[""]` | Item IDs or `#item_tags`; the blank default has no effect |
@@ -104,9 +112,17 @@ It grants access to every network and permits deletion independently of ordinary
 
 `enableChunkLoading` controls whether devices may keep their chunk loaded through the device's chunk-loading option. When disabled, the chunk-loading switch and its label disappear from device Home screens and connection editors. Panels shrink only where their side tabs permit: Tesla keeps its original full height in both states, so navigation remains inside the frame without adding space when the control is shown. Open windows follow synchronized policy changes without discarding other edits. Re-enabling the rule restores eligible controls. It does not change ownership or grant network access.
 
+`chunkLoadingOnlyOnline` makes chunk loading depend on players: a device with Load Chunk keeps its chunk loaded only while its owner or a member of its network (a listed member with access, or a member of the team the network is shared with) is online. Anyone a public network or a password lets in does not count. The device's switch keeps its value, so the chunks load again as soon as someone of the network joins; the rule is checked when players join and leave and twice a minute for membership changes. In a singleplayer or LAN world the host chooses it in the in-game editor; on a dedicated server the server owner sets it and players see it read-only.
+
+`backupSwitchSeconds` is how long a network must stay without energy before a Receiver or Tesla Broadcaster with a backup network moves to it, and how long the own network must have energy again before the device returns.
+
+`alertShortfallSeconds`, `alertReserveSeconds` and `alertCooldownSeconds` time the deficit alerts of networks that turned them on: the shortfall must last that long, the stored energy must be projected to last at most the reserve time, and a network waits the cooldown between two alerts.
+
 ### Energy
 
 `defaultLimit` is the initial transfer limit of new Emitters, Receivers and Controllers; the Tesla Broadcaster also initializes its transfer handler from this value. `batteryTransfer` is the initial transfer limit of new Dimensional Batteries. Existing devices keep their saved limits. Their own Ignore Limit setting remains a separate device control.
+
+`teslaMaxAreaSize` is the largest edge of the cube a Tesla Broadcaster can cover. Broadcasters set to a larger area are reduced to it; the area screen and its preview follow it.
 
 `batteryCapacity` is the live maximum of each battery, not a shared network limit. Reducing it does not delete existing charge: a battery can remain above its displayed maximum until that charge is consumed, accepting no additional energy while above capacity. A capacity of `0` provides no room for new stored energy. FE is an amount; FE/t is a transfer rate per game tick.
 
@@ -124,13 +140,20 @@ maximumPerPlayer = 10
 enableSuperAdmin = true
 superAdminRequiredPermission = 1
 
+backupSwitchSeconds = 5
+alertShortfallSeconds = 30
+alertReserveSeconds = 120
+alertCooldownSeconds = 300
+
 [general]
 enableChunkLoading = true
+chunkLoadingOnlyOnline = false
 
 [energy]
 defaultLimit = 800000
 batteryCapacity = 256000000
 batteryTransfer = 720000
+teslaMaxAreaSize = 32
 
 [worldgen]
 enableOreGeneration = true
@@ -267,7 +290,7 @@ FluxPackTweaks/
             └── dimensional_flux_shard.json
 ```
 
-`pack.mcmeta` for Minecraft 26.1.2:
+`pack.mcmeta` for Minecraft 26.1.2 (on Minecraft 26.3 use `[121, 0]` for both formats):
 
 ```json
 {
@@ -301,12 +324,12 @@ Paths below are beneath `data/dimensionalflux/`. Use the same namespace/path to 
 | Crafting recipes | `recipe/<recipe_id>.json` |
 | Shallow ore placement | `worldgen/placed_feature/dimensional_flux_shard_shallow.json` |
 | Deep ore placements | `worldgen/placed_feature/dimensional_flux_shard_deep.json`, `dimensional_flux_shard_deep_peak.json` |
-| Custom vein configuration | `worldgen/configured_feature/dimensional_flux_shard_vein.json` |
+| Custom vein configuration | `worldgen/configured_feature/dimensional_flux_shard_vein.json` (Minecraft 26.3: `worldgen/feature/dimensional_flux_shard_vein.json`) |
 | Overworld insertion | `neoforge/biome_modifier/dimensional_flux_shard_ore.json` |
 | Ore drops | `loot_table/blocks/dimensional_flux_shard_ore.json`, `deepslate_dimensional_flux_shard_ore.json` |
 | Optional mining-resource definition | `dimensional_miner_resources/dimensional_flux_shard.json` |
 
-The shipped placements use one attempt at Y -16..16, three attempts at Y -64..0, and two additional attempts at Y -58..-50. Counts and height providers are data-driven. The custom feature still restricts stone hosts to Y -16..16, deepslate hosts to Y -64..0, and connected veins to 2–8 blocks. Moving a placement outside those hardcoded host ranges cannot make it place ore there. Its configured feature has an empty `config` object; adding a `size` property does not expose a vein-size option.
+The shipped placements use one attempt at Y -16..16, three attempts at Y -64..0, and two additional attempts at Y -58..-50. Counts and height providers are data-driven. The custom feature still restricts stone hosts to Y -16..16, deepslate hosts to Y -64..0, and connected veins to 2–8 blocks. Moving a placement outside those hardcoded host ranges cannot make it place ore there. Its configured feature has an empty `config` object (on Minecraft 26.3 the feature file holds only its `type`); adding a `size` property does not expose a vein-size option. Loot tables follow the format of each Minecraft version: from 26.3 a table uses `condition` and `modifier` (with `type`) where 26.1.2 uses `conditions` and `functions` (with `function`).
 
 The biome modifier inserts all three features in Overworld biomes. The server ore toggle gates the custom feature even when a datapack changes placement. Existing chunks are not regenerated. Restart after changing worldgen data and test in newly generated terrain.
 

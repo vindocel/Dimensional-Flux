@@ -312,7 +312,7 @@ public class GuiTabStatistics extends GuiTabCore {
     public boolean onMouseClicked(double mouseX, double mouseY, int mouseButton) {
         if (super.onMouseClicked(mouseX, mouseY, mouseButton)) return true;
         if (!getNetwork().isValid()) return redirectNavigationPrompt(mouseX, mouseY, mouseButton, EnumNavigationTab.TAB_SELECTION);
-        if (device() == null && tesla() == null && mouseButton == org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (device() == null && tesla() == null && mouseButton == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) {
             int y = topPos + rankingY(), half = contentW() / 2 - 1;
             for (int i = 0; i < 2; i++) {
                 if (mouseX >= switchX(i) && mouseX < switchX(i) + half && mouseY >= y && mouseY < y + SWITCH_H) {

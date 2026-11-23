@@ -1,5 +1,6 @@
 package dimensionalflux.client.render;
 
+import dimensionalflux.client.ClientCompat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dimensionalflux.DimensionalFlux;
@@ -107,10 +108,10 @@ public class TeslaBroadcasterRenderer
                 float spin = (state.seconds % TURN_SECONDS) / TURN_SECONDS * 360f;
                 float bob = FLOAT_PIXELS * (float) Math.sin(2 * Math.PI * state.seconds / FLOAT_SECONDS) / 16f;
                 poseStack.translate(PX, PY + bob, PZ);
-                poseStack.mulPose(Axis.YP.rotationDegrees(spin));
+                ClientCompat.rotate(poseStack, Axis.YP.rotationDegrees(spin));
                 poseStack.translate(-PX, -PY, -PZ);
             }
-            collector.submitBlockModel(poseStack, Sheets.cutoutBlockSheet(), List.of(crystal), new int[0],
+            collector.submitBlockModel(poseStack, ClientCompat.cutoutBlockSheet(), List.of(crystal), new int[0],
                     LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 0);
             poseStack.popPose();
         }

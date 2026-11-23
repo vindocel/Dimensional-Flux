@@ -238,6 +238,8 @@ public final class DimensionalTranslate {
     public static final DimensionalTranslate ACCESS = gui("label.playeraccess");
     public static final DimensionalTranslate CANCEL_MEMBERSHIP = gui("label.cancelmembership");
     public static final DimensionalTranslate CONFIGURATOR_HELP = gui("label.configurator_help");
+    public static final DimensionalTranslate CONFIGURATOR_WRENCH_MODE = gui("label.configurator_wrench_mode");
+    public static final DimensionalTranslate CONFIGURATOR_CONFIGURE_MODE = gui("label.configurator_configure_mode");
     public static final DimensionalTranslate CONFIGURATOR_EMPTY = gui("label.configurator_empty");
     public static final DimensionalTranslate PLAYERS_NETWORK = gui("label.playersnetwork");
 

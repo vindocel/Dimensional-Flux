@@ -2,7 +2,7 @@ package dimensionalflux.client.gui;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.entity.player.Player;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import dimensionalflux.api.DimensionalDataComponents;
 import dimensionalflux.api.DimensionalTranslate;
 import dimensionalflux.client.gui.basic.GuiTabCore;
@@ -70,7 +70,7 @@ public class GuiDimensionalConfiguratorHome extends GuiTabCore {
         if (super.onMouseClicked(mouseX, mouseY, mouseButton)) {
             return true;
         }
-        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT) {
             if (mouseX >= leftPos + HOME_DISPLAY_X && mouseX < leftPos + HOME_DISPLAY_X + HOME_DISPLAY_WIDTH && mouseY >= topPos + 8 && mouseY < topPos + 20) {
                 switchTab(EnumNavigationTab.TAB_SELECTION, false);
                 return true;

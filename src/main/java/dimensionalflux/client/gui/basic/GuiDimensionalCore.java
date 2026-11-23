@@ -1,5 +1,6 @@
 package dimensionalflux.client.gui.basic;
 
+import dimensionalflux.client.ClientCompat;
 import dimensionalflux.client.gui.SteelframePaint;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -7,7 +8,7 @@ import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import dimensionalflux.DimensionalFlux;
 import dimensionalflux.api.DimensionalTranslate;
 import dimensionalflux.api.device.IDimensionalDevice;
@@ -82,9 +83,8 @@ public abstract class GuiDimensionalCore extends GuiPopupHost {
     private void onResponse(DimensionalMenu menu, int key, int code) {
         DimensionalTranslate message = DimensionalTranslate.fromResponseCode(code);
         if (message != null) {
-            getMinecraft().getToastManager().addToast(SystemToast.multiline(getMinecraft(),
-                    SystemToast.SystemToastId.WORLD_ACCESS_FAILURE, Component.literal(DimensionalFlux.NAME),
-                    message.getComponent()));
+            ClientCompat.toast(SystemToast.SystemToastId.WORLD_ACCESS_FAILURE, Component.literal(DimensionalFlux.NAME),
+                    message.getComponent());
         }
         dispatchResponseAction(key, code);
     }
@@ -149,7 +149,7 @@ public abstract class GuiDimensionalCore extends GuiPopupHost {
     public boolean onMouseClicked(double mouseX, double mouseY, int mouseButton) {
         for (GuiButtonCore button : mButtons) {
             if (button.mClickable && button.isMouseHovered(mouseX, mouseY)) {
-                if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+                if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT) {
                     DfStyle.playClick();
                 }
                 onButtonClicked(button, (float) mouseX, (float) mouseY, mouseButton);

@@ -1,12 +1,12 @@
 package dimensionalflux.client.gui.tab;
 
+import dimensionalflux.client.ClientCompat;
 import dimensionalflux.client.gui.SteelframePaint;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import org.lwjgl.glfw.GLFW;
 import dimensionalflux.api.DimensionalConstants;
 import dimensionalflux.api.DimensionalDataComponents;
 import dimensionalflux.api.DimensionalTranslate;
@@ -276,7 +276,7 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
     @Override
     protected void onRowClicked(DimensionalNetwork network, int mouseButton) {
         var device = backupDevice();
-        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT && device != null) {
+        if (mouseButton == InputConstants.MOUSE_BUTTON_RIGHT && device != null) {
             // a right click makes the network the backup, or clears it when it already is
             int backup = device.getBackupNetworkID() == network.getNetworkID() ? DimensionalConstants.INVALID_NETWORK_ID
                     : network.getNetworkID();
@@ -285,7 +285,7 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
             dimensionalflux.register.ClientMessages.editTile(getToken(), device, tag);
             return;
         }
-        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT) {
             mSelectedNetwork = network;
             setConnectedNetwork(network, ClientCache.getRecentPassword(network.getNetworkID()));
         }
@@ -295,7 +295,7 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
     public boolean onMouseClicked(double mouseX, double mouseY, int mouseButton) {
         DimensionalNetwork row = rowAt(mouseX, mouseY);
         if (row != null && canEditRow(row) && overEdit(row, mouseX, mouseY)) {
-            if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && shiftHeld()) {
+            if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT && shiftHeld()) {
                 DfStyle.playClick();
                 windowHost().openNetworkEditor(row);
             }
@@ -303,7 +303,7 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
         }
         if (row != null && row.getPlayerAccess(mPlayer).canDelete()
                 && overDelete(deleteX(), rowY(row) + deleteInsetY(row), mouseX, mouseY)) {
-            if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && shiftHeld()
+            if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT && shiftHeld()
                     && mDeletingNetwork == DimensionalConstants.INVALID_NETWORK_ID) {
                 DfStyle.playClick();
                 mDeletingNetwork = row.getNetworkID();
@@ -315,7 +315,7 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
         if (super.onMouseClicked(mouseX, mouseY, mouseButton)) {
             return true;
         }
-        if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (mouseButton != InputConstants.MOUSE_BUTTON_LEFT) {
             return false;
         }
         return mRows.isEmpty() && redirectNavigationPrompt(mouseX, mouseY, mouseButton, EnumNavigationTab.TAB_CREATE);
@@ -324,11 +324,11 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
     @Override
     public void onButtonClicked(GuiButtonCore button, float mouseX, float mouseY, int mouseButton) {
         super.onButtonClicked(button, mouseX, mouseY, mouseButton);
-        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && button == mDisconnect) {
+        if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT && button == mDisconnect) {
             setConnectedNetwork(DimensionalNetwork.INVALID, "");
-        } else if (button == mSortButton && (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT || mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT)) {
-            if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT) DfStyle.playClick();
-            cycleSort(mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+        } else if (button == mSortButton && (mouseButton == InputConstants.MOUSE_BUTTON_LEFT || mouseButton == InputConstants.MOUSE_BUTTON_RIGHT)) {
+            if (mouseButton == InputConstants.MOUSE_BUTTON_RIGHT) DfStyle.playClick();
+            cycleSort(mouseButton == InputConstants.MOUSE_BUTTON_RIGHT);
             updateSortButton();
         }
     }
@@ -384,9 +384,7 @@ public class GuiTabSelection extends GuiListTab<DimensionalNetwork> {
     }
 
     protected boolean shiftHeld() {
-        var window = getMinecraft().getWindow();
-        return InputConstants.isKeyDown(window, GLFW.GLFW_KEY_LEFT_SHIFT)
-                || InputConstants.isKeyDown(window, GLFW.GLFW_KEY_RIGHT_SHIFT);
+        return ClientCompat.shiftDown();
     }
 
     /** The link was accepted: remember the password and, for the configurator, show the stored network at once. */

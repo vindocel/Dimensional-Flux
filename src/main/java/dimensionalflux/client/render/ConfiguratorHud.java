@@ -1,5 +1,6 @@
 package dimensionalflux.client.render;
 
+import dimensionalflux.client.ClientCompat;
 import dimensionalflux.DimensionalConfig;
 import dimensionalflux.DimensionalFlux;
 import dimensionalflux.api.DimensionalConstants;
@@ -96,7 +97,7 @@ public final class ConfiguratorHud {
     @SubscribeEvent
     static void draw(RenderGuiEvent.Post event) {
         var mc = Minecraft.getInstance();
-        if (mc.options.hideGui || mc.screen != null || sTarget == null) return;
+        if (ClientCompat.hudHidden() || ClientCompat.screen() != null || sTarget == null) return;
         TileDimensionalDevice device = aimedDevice();
         if (device == null || !device.getBlockPos().equals(sTarget)) return;
         drawPanel(event.getGuiGraphics(), mc.font, device);
@@ -137,7 +138,8 @@ public final class ConfiguratorHud {
 
         // metal band, then the glass
         DfStyle.panel(g, x, y, w, h);
-        DfStyle.glass(g, x, y, w, h);
+        // the glass fills the whole panel, so its inset edge takes shades of the glass instead of the panel greys
+        DfStyle.glassInOwnHue(g, x, y, w, h);
         g.item(device.getDisplayStack(), cx, cy + 1);
         DfStyle.scrollingText(g, font, name, cx + 20, cy, inner - 20, 0xFFFFFFFF);
         DfStyle.scrollingText(g, font, sub, cx + 20, cy + ROW, inner - 20,

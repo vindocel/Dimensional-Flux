@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 import dimensionalflux.client.gui.DfStyle;
 
+import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 
 /**
@@ -33,6 +34,8 @@ public class DimensionalEditBox extends EditBox {
     private long mMax = Integer.MAX_VALUE;
     /** The value a number field had when it took the focus. */
     private String mBeforeEdit = "";
+    /** The values the field accepts; an edit that would leave any other value is undone. */
+    private Predicate<String> mFilter = value -> true;
 
     private DimensionalEditBox(String label, Font font, int x, int y, int width, int height, int labelWidth) {
         super(font, x + labelWidth, y, width - labelWidth, height, CommonComponents.EMPTY);
@@ -68,6 +71,21 @@ public class DimensionalEditBox extends EditBox {
         mKind = Kind.HEX;
         setFilter(value -> value.matches("[0-9a-fA-F]{0,6}"));
         return this;
+    }
+
+    /**
+     * Limits the values the field accepts. The field checks them itself, since not every game version filters text
+     * fields.
+     */
+    public void setFilter(@Nonnull Predicate<String> filter) {
+        mFilter = filter;
+    }
+
+    @Override
+    public void setValue(@Nonnull String value) {
+        if (mFilter.test(value)) {
+            super.setValue(value);
+        }
     }
 
     public DimensionalEditBox setTextInvisible() {
@@ -141,7 +159,14 @@ public class DimensionalEditBox extends EditBox {
             case TEXT -> {
             }
         }
+        String before = getValue();
+        int cursor = getCursorPosition();
         super.insertText(text);
+        if (!mFilter.test(getValue())) {
+            super.setValue(before);
+            setCursorPosition(cursor);
+            setHighlightPos(cursor);
+        }
     }
 
     @Override

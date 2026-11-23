@@ -1,7 +1,7 @@
 package dimensionalflux.client.gui.popup;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import dimensionalflux.api.DimensionalTranslate;
 import dimensionalflux.client.gui.DfStyle;
 import dimensionalflux.client.gui.TextColors;
@@ -57,7 +57,7 @@ public class PopupNetworkPassword extends GuiPopupCore<GuiTabSelection> {
     @Override
     public void onButtonClicked(GuiButtonCore button, int mouseX, int mouseY, int mouseButton) {
         super.onButtonClicked(button, mouseX, mouseY, mouseButton);
-        if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (mouseButton != InputConstants.MOUSE_BUTTON_LEFT) {
             return;
         }
         if (button == mCancel) {

@@ -1,5 +1,6 @@
 package dimensionalflux.client.config;
 
+import dimensionalflux.client.ClientCompat;
 import dimensionalflux.DimensionalConfig;
 import dimensionalflux.client.gui.SteelframePaint;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -77,5 +78,5 @@ final class ConfigListScreen extends Screen {
     }
 
     @Override
-    public void onClose() { minecraft.setScreen(parent); }
+    public void onClose() { ClientCompat.setScreen(parent); }
 }

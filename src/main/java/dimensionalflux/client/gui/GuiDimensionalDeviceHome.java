@@ -5,7 +5,7 @@ import net.minecraft.locale.Language;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import dimensionalflux.DimensionalConfig;
 import dimensionalflux.api.DimensionalConstants;
 import dimensionalflux.api.DimensionalTranslate;
@@ -292,15 +292,15 @@ public class GuiDimensionalDeviceHome extends GuiTabCore {
     @Override
     public void onButtonClicked(GuiButtonCore button, float mouseX, float mouseY, int mouseButton) {
         super.onButtonClicked(button, mouseX, mouseY, mouseButton);
-        if (button == mRedstone && (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT || mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT)) {
-            if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT) DfStyle.playClick();
+        if (button == mRedstone && (mouseButton == InputConstants.MOUSE_BUTTON_LEFT || mouseButton == InputConstants.MOUSE_BUTTON_RIGHT)) {
+            if (mouseButton == InputConstants.MOUSE_BUTTON_RIGHT) DfStyle.playClick();
             // left click: the next mode; right click: back to the previous one
             var current = getDevice().getRedstoneMode();
-            var next = mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT ? current.next() : current.previous();
+            var next = mouseButton == InputConstants.MOUSE_BUTTON_LEFT ? current.next() : current.previous();
             send(tag -> tag.putInt(DimensionalConstants.REDSTONE, next.ordinal()));
             return;
         }
-        if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (mouseButton != InputConstants.MOUSE_BUTTON_LEFT) {
             return;
         }
         if (button == mTargetsTab && getDevice() instanceof TileTeslaBroadcaster tesla) {
@@ -332,7 +332,7 @@ public class GuiDimensionalDeviceHome extends GuiTabCore {
         if (super.onMouseClicked(mouseX, mouseY, mouseButton)) {
             return true;
         }
-        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && mouseX >= leftPos + HOME_DISPLAY_X && mouseX < leftPos + HOME_DISPLAY_X + HOME_DISPLAY_WIDTH
+        if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT && mouseX >= leftPos + HOME_DISPLAY_X && mouseX < leftPos + HOME_DISPLAY_X + HOME_DISPLAY_WIDTH
                 && mouseY >= topPos + 8 && mouseY < topPos + 20) {
             switchTab(EnumNavigationTab.TAB_SELECTION, false);
             return true;

@@ -460,6 +460,15 @@ public final class ServerPayloads {
         }
     }
 
+    /** Sneak and scroll with the Dimensional Configurator in the main hand: configure mode or wrench mode. */
+    static void onConfiguratorMode(dimensionalflux.network.c2s.ConfiguratorModeRequest msg, IPayloadContext context) {
+        ServerPlayer player = player(context);
+        var stack = player.getMainHandItem();
+        if (player.isShiftKeyDown() && stack.getItem() instanceof dimensionalflux.common.item.ItemDimensionalConfigurator) {
+            dimensionalflux.common.item.ItemDimensionalConfigurator.toggleMode(player, stack);
+        }
+    }
+
     static void onNetworkAlerts(NetworkAlertsRequest msg, IPayloadContext context) {
         ServerPlayer player = player(context);
         DimensionalNetwork network = DimensionalNetworkData.getNetwork(msg.networkId());

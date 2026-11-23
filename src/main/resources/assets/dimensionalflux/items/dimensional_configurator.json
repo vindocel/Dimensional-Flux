@@ -2,7 +2,7 @@
   "model": {
     "type": "minecraft:condition",
     "property": "minecraft:has_component",
-    "component": "dimensionalflux:device_config",
+    "component": "dimensionalflux:wrench_mode",
     "on_true": {
       "type": "minecraft:composite",
       "models": [
@@ -18,7 +18,11 @@
         {
           "type": "dimensionalflux:floating_crystal",
           "model": "dimensionalflux:item/dimensional_configurator_crystal",
-          "pivot": [8, 13.25, 8],
+          "pivot": [
+            8,
+            13.25,
+            8
+          ],
           "turn_seconds": 6.0,
           "bob_pixels": 0.25,
           "bob_seconds": 3.0
@@ -26,22 +30,53 @@
       ]
     },
     "on_false": {
-      "type": "minecraft:composite",
-      "models": [
-        {
-          "type": "minecraft:model",
-          "model": "dimensionalflux:item/dimensional_configurator_body",
-          "tints": [
-            {
-              "type": "dimensionalflux:configurator_color"
-            }
-          ]
-        },
-        {
-          "type": "minecraft:model",
-          "model": "dimensionalflux:item/dimensional_configurator_crystal_still"
-        }
-      ]
+      "type": "minecraft:condition",
+      "property": "minecraft:has_component",
+      "component": "dimensionalflux:device_config",
+      "on_true": {
+        "type": "minecraft:composite",
+        "models": [
+          {
+            "type": "minecraft:model",
+            "model": "dimensionalflux:item/dimensional_configurator_body_configured",
+            "tints": [
+              {
+                "type": "dimensionalflux:configurator_color"
+              }
+            ]
+          },
+          {
+            "type": "dimensionalflux:floating_crystal",
+            "model": "dimensionalflux:item/dimensional_configurator_crystal",
+            "pivot": [
+              8,
+              13.25,
+              8
+            ],
+            "turn_seconds": 6.0,
+            "bob_pixels": 0.25,
+            "bob_seconds": 3.0
+          }
+        ]
+      },
+      "on_false": {
+        "type": "minecraft:composite",
+        "models": [
+          {
+            "type": "minecraft:model",
+            "model": "dimensionalflux:item/dimensional_configurator_body",
+            "tints": [
+              {
+                "type": "dimensionalflux:configurator_color"
+              }
+            ]
+          },
+          {
+            "type": "minecraft:model",
+            "model": "dimensionalflux:item/dimensional_configurator_crystal_still"
+          }
+        ]
+      }
     }
   }
 }

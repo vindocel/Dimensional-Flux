@@ -3,7 +3,7 @@ package dimensionalflux.client.gui.tab;
 import dimensionalflux.client.gui.SteelframePaint;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.entity.player.Player;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import dimensionalflux.api.DimensionalConstants;
 import dimensionalflux.api.DimensionalTranslate;
 import dimensionalflux.api.gui.EnumNetworkColor;
@@ -305,8 +305,8 @@ public class GuiTabNetworkForm extends GuiTabCore {
     @Override
     public void onButtonClicked(GuiButtonCore button, float mouseX, float mouseY, int mouseButton) {
         super.onButtonClicked(button, mouseX, mouseY, mouseButton);
-        if (button == mDistribution && (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT || mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT)) {
-            if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT) DfStyle.playClick();
+        if (button == mDistribution && (mouseButton == InputConstants.MOUSE_BUTTON_LEFT || mouseButton == InputConstants.MOUSE_BUTTON_RIGHT)) {
+            if (mouseButton == InputConstants.MOUSE_BUTTON_RIGHT) DfStyle.playClick();
             // two values: both clicks switch to the other one
             mShareByDemand = !mShareByDemand;
             updateSubmit();
@@ -315,13 +315,13 @@ public class GuiTabNetworkForm extends GuiTabCore {
         if (button instanceof ColorButton swatch) {
             // a right click also opens the picker, starting from that swatch
             applyCustomColor(swatch.mColor);
-            if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+            if (mouseButton == InputConstants.MOUSE_BUTTON_RIGHT) {
                 DfStyle.playClick();
                 openColorPicker();
             }
             return;
         }
-        if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (mouseButton != InputConstants.MOUSE_BUTTON_LEFT) {
             return;
         }
         if (button == mCustomColor) {
@@ -364,7 +364,7 @@ public class GuiTabNetworkForm extends GuiTabCore {
         if (mDelete != null) {
             // count the Shift key itself: its modifier bit is not reported on every platform, and a focused name
             // field must not block deleting
-            boolean shift = keyCode == GLFW.GLFW_KEY_LEFT_SHIFT || keyCode == GLFW.GLFW_KEY_RIGHT_SHIFT;
+            boolean shift = keyCode == InputConstants.KEY_LSHIFT || keyCode == InputConstants.KEY_RSHIFT;
             mShiftPresses = shift ? mShiftPresses + 1 : 0;
             mDelete.setClickable(mShiftPresses >= SHIFTS_TO_DELETE);
         }

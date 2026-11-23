@@ -204,6 +204,9 @@ public abstract class TileDimensionalDevice extends BlockEntity implements IDime
             onFirstTick();
             mTicking = true;
         }
+        if (isDormant()) {
+            return;
+        }
         recordHistory();
         updateTransferringState();
         updateConnectedState();
@@ -217,6 +220,15 @@ public abstract class TileDimensionalDevice extends BlockEntity implements IDime
         } else if (mPlayerUsing instanceof ServerPlayer viewer) {
             NetworkSync.sendDeviceGui(viewer, this);
         }
+    }
+
+    /**
+     * A device without a network that has settled sleeps: nothing it shows can change and it moves no energy, so its
+     * tick does nothing until it is linked, its settings change or a player opens it.
+     */
+    protected final boolean isDormant() {
+        return mTicking && !mNetwork.isValid() && !mSettingsChanged && mPlayerUsing == null && mActiveTicks == 0
+                && !mTransferring && !mBufferUnsaved && Boolean.FALSE.equals(mConnectedShown);
     }
 
     protected void onFirstTick() {
@@ -337,7 +349,10 @@ public abstract class TileDimensionalDevice extends BlockEntity implements IDime
     // ---- backup network ----
 
     /** How long a network must be without energy, or with it again, before a device switches, in ticks. */
-    public static final int FAILOVER_TICKS = 100;
+    /** Ticks without (or with) energy before a device moves to its backup network (or back), from the server setting. */
+    public static int failoverTicks() {
+        return dimensionalflux.DimensionalConfig.backupSwitchSeconds * 20;
+    }
     private static final String BACKUP = "backup_network";
     private static final String PRIMARY = "primary_network";
 
@@ -380,7 +395,7 @@ public abstract class TileDimensionalDevice extends BlockEntity implements IDime
             return;
         }
         if (!isOnBackup()) {
-            if (mNetwork instanceof ServerDimensionalNetwork own && own.ticksWithoutEnergy() >= FAILOVER_TICKS
+            if (mNetwork instanceof ServerDimensionalNetwork own && own.ticksWithoutEnergy() >= failoverTicks()
                     && DimensionalNetworkData.getNetwork(mBackupNetworkID) instanceof ServerDimensionalNetwork backup
                     && backup != own && backup.hasEnergyNow()) {
                 int ownID = mNetworkID;
@@ -389,7 +404,7 @@ public abstract class TileDimensionalDevice extends BlockEntity implements IDime
                 }
             }
         } else if (DimensionalNetworkData.getNetwork(mPrimaryNetworkID) instanceof ServerDimensionalNetwork own) {
-            if (own.ticksWithEnergy() >= FAILOVER_TICKS && connect(own)) {
+            if (own.ticksWithEnergy() >= failoverTicks() && connect(own)) {
                 mPrimaryNetworkID = DimensionalConstants.INVALID_NETWORK_ID;
             }
         } else {
@@ -411,6 +426,8 @@ public abstract class TileDimensionalDevice extends BlockEntity implements IDime
         output.putInt(NETWORK, mNetworkID);
         output.putString(NAME, mCustomName);
         output.store(OWNER, UUIDUtil.CODEC, mOwnerUUID);
+        // the Load Chunk switch survives an unloaded chunk: the online rule of chunk loading releases chunks
+        output.putBoolean(FORCED, mForcedLoading);
         getTransferHandler().save(output.child(TRANSFER));
         saveDevice(output);
     }
@@ -424,6 +441,7 @@ public abstract class TileDimensionalDevice extends BlockEntity implements IDime
         mRedstone = RedstoneMode.byId(input.getIntOr(DimensionalConstants.REDSTONE, 0));
         mBackupNetworkID = input.getIntOr(BACKUP, DimensionalConstants.INVALID_NETWORK_ID);
         mPrimaryNetworkID = input.getIntOr(PRIMARY, DimensionalConstants.INVALID_NETWORK_ID);
+        mForcedLoading = input.getBooleanOr(FORCED, false);
         input.child(TRANSFER).ifPresent(getTransferHandler()::load);
         loadDevice(input);
     }
@@ -585,7 +603,9 @@ public abstract class TileDimensionalDevice extends BlockEntity implements IDime
         if (tag.contains(DimensionalConstants.FORCED_LOADING)) {
             boolean load = tag.getBooleanOr(DimensionalConstants.FORCED_LOADING, false) &&
                     DimensionalConfig.enableChunkLoading && !getDeviceType().isStorage();
-            DimensionalChunkLoading.setLoaded((ServerLevel) level, worldPosition, load);
+            // the switch keeps its value; the ticket follows the server's online rule
+            DimensionalChunkLoading.setLoaded((ServerLevel) level, worldPosition,
+                    load && DimensionalChunkLoading.mayLoad(level.getServer(), mNetwork));
             setForcedLoading(load);
         }
         applyDeviceSettings(tag);

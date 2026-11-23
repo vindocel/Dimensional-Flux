@@ -31,6 +31,14 @@ public final class DimensionalConfig {
     public static int superAdminRequiredPermission = 1;
     // server: general
     public static boolean enableChunkLoading = true;
+    public static boolean chunkLoadingOnlyOnline = false;
+    // server: networks, backup and alerts
+    public static int backupSwitchSeconds = 5;
+    public static int alertShortfallSeconds = 30;
+    public static int alertReserveSeconds = 120;
+    public static int alertCooldownSeconds = 300;
+    // server: Tesla Broadcaster
+    public static int teslaMaxAreaSize = 32;
     public static volatile boolean enableOreGeneration = true;
     // server: energy
     public static long defaultLimit = 800_000;
@@ -68,10 +76,22 @@ public final class DimensionalConfig {
                 "0 removes the self-activation check; the command still requires moderator permissions.",
                 "Activation uses /dimensionalflux superadmin <targets> <enable>.",
                 "Players with level 3 or 4 can make others super admin with a command, whatever their level.");
+        var backupSwitch = server.range("backupSwitchSeconds", 5, 1, 600,
+                "Seconds a network must stay without energy before a device moves to its backup network,",
+                "and seconds it must have energy again before the device returns.");
+        var alertShortfall = server.range("alertShortfallSeconds", 30, 5, 3600,
+                "Seconds a network must consume more than it generates before a deficit alert is sent.");
+        var alertReserve = server.range("alertReserveSeconds", 120, 0, 86400,
+                "A deficit alert is sent only if the stored energy is projected to last at most this many seconds.");
+        var alertCooldown = server.range("alertCooldownSeconds", 300, 0, 86400,
+                "Seconds a network waits after a deficit alert before it can send another.");
         server.pop();
 
         server.push("general");
         var chunkLoading = server.flag("enableChunkLoading", true, "Lets devices keep their chunk loaded.");
+        var onlyOnline = server.flag("chunkLoadingOnlyOnline", false,
+                "When on, a device with Load Chunk keeps its chunk loaded only while its owner or a member of its",
+                "network is online. When off, the chunk stays loaded whether or not anyone is online.");
         server.pop();
 
         server.push("worldgen");
@@ -93,6 +113,8 @@ public final class DimensionalConfig {
                 "How much energy a Dimensional Battery holds, in FE.");
         var transfer = server.range("batteryTransfer", 720_000L, 0L, Long.MAX_VALUE,
                 "The transfer limit a Dimensional Battery starts with, in FE/t.");
+        var teslaArea = server.range("teslaMaxAreaSize", 32, 9, 64,
+                "The largest area edge a Tesla Broadcaster can cover, in blocks. Larger areas are reduced to it.");
         server.pop();
 
         SERVER_SPEC = server.builder.build();
@@ -102,6 +124,12 @@ public final class DimensionalConfig {
             enableSuperAdmin = value(superAdmin);
             superAdminRequiredPermission = value(adminPermission);
             enableChunkLoading = value(chunkLoading);
+            chunkLoadingOnlyOnline = value(onlyOnline);
+            backupSwitchSeconds = value(backupSwitch);
+            alertShortfallSeconds = value(alertShortfall);
+            alertReserveSeconds = value(alertReserve);
+            alertCooldownSeconds = value(alertCooldown);
+            teslaMaxAreaSize = value(teslaArea);
             enableOreGeneration = value(oreGeneration);
             MachineEnergy.reloadBlacklist(value(blockBlacklist), value(itemBlacklist));
             defaultLimit = value(limit);
@@ -118,7 +146,12 @@ public final class DimensionalConfig {
         if (FMLEnvironment.getDist().isClient()) {
             container.registerConfig(ModConfig.Type.CLIENT, CLIENT_SPEC);
         }
+        // The server options keep the same file name on every version: dimensionalflux-server.toml.
+        //? if >=26.3 {
+        /*container.registerConfig(ModConfig.Type.SYNCED, SERVER_SPEC, DimensionalFlux.MODID + "-server.toml");
+        *///?} else {
         container.registerConfig(ModConfig.Type.SERVER, SERVER_SPEC);
+        //?}
         container.getEventBus().addListener(ModConfigEvent.Loading.class, event -> apply(event.getConfig()));
         container.getEventBus().addListener(ModConfigEvent.Reloading.class, event -> apply(event.getConfig()));
         container.getEventBus().addListener(ModConfigEvent.Unloading.class, event -> {

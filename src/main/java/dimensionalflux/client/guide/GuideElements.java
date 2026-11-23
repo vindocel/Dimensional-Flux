@@ -191,7 +191,7 @@ final class GuideElements {
         public boolean click(GuideScreen screen, double mx, double my, int x, int y, int width, int button) {
             if (url == null || button != 0 || mx < x || mx >= x + width || my < y || my >= y + 15) return false;
             screen.playClick();
-            net.minecraft.client.gui.screens.ConfirmLinkScreen.confirmLinkNow(screen, url);
+            net.minecraft.client.gui.screens.ConfirmLinkScreen.confirmLinkNow(screen, java.net.URI.create(url));
             return true;
         }
     }

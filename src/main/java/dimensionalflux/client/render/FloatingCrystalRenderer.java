@@ -1,5 +1,6 @@
 package dimensionalflux.client.render;
 
+import dimensionalflux.client.ClientCompat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dimensionalflux.DimensionalFlux;
@@ -112,10 +113,10 @@ public abstract class FloatingCrystalRenderer<T extends TileDimensionalDevice>
             float period = state.flowing ? mActivePeriod : mIdlePeriod;
             float bob = amp * (float) Math.sin(2 * Math.PI * state.seconds / period) / 16f;
             poseStack.translate(mPivotX, mPivotY + bob, mPivotZ);
-            poseStack.mulPose(Axis.YP.rotationDegrees((state.seconds % turn) / turn * 360f));
+            ClientCompat.rotate(poseStack, Axis.YP.rotationDegrees((state.seconds % turn) / turn * 360f));
             poseStack.translate(-mPivotX, -mPivotY, -mPivotZ);
         }
-        collector.submitBlockModel(poseStack, Sheets.cutoutBlockSheet(), List.of(crystal),
+        collector.submitBlockModel(poseStack, ClientCompat.cutoutBlockSheet(), List.of(crystal),
                 new int[]{0xFF000000 | state.color},
                 state.connected ? LightCoordsUtil.FULL_BRIGHT : state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
         poseStack.popPose();

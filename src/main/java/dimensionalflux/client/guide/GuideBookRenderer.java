@@ -1,5 +1,6 @@
 package dimensionalflux.client.guide;
 
+import dimensionalflux.client.ClientCompat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.mojang.serialization.MapCodec;
@@ -71,7 +72,7 @@ public class GuideBookRenderer implements SpecialModelRenderer<GuideBookAnimatio
         pose.pushPose();
         // the parts are modeled lying with the cover up; stand the book up with the cover to the front
         pose.translate(0.5, 0.5, 0.5);
-        pose.mulPose(Axis.XP.rotationDegrees(90));
+        ClientCompat.rotate(pose, Axis.XP.rotationDegrees(90));
         pose.translate(-CLOSED_HALF_WIDTH / 16.0 * (1.0F - p.openness()), 0, 0);
         pose.translate(-0.5, -0.5, -0.5);
         part(pose, collector, BACK_COVER, 0, 0, light, overlay);
@@ -94,7 +95,7 @@ public class GuideBookRenderer implements SpecialModelRenderer<GuideBookAnimatio
                              int light, int overlay) {
         pose.pushPose();
         pose.translate(0.5, 0.5 + drop / 16.0, 0.5);
-        pose.mulPose(Axis.ZP.rotationDegrees(angle));
+        ClientCompat.rotate(pose, Axis.ZP.rotationDegrees(angle));
         pose.translate(-0.5, -0.5, -0.5);
         BlockStateModelPart part = Minecraft.getInstance().getModelManager().getStandaloneModel(key(model));
         collector.submitMultiLayerBlockModel(pose, List.of(part), false, BlockModelRenderState.EMPTY_TINTS, light, overlay, 0);

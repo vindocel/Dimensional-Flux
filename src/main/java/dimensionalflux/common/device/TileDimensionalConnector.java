@@ -53,7 +53,7 @@ public abstract class TileDimensionalConnector extends TileDimensionalDevice {
     protected void onServerTick() {
         super.onServerTick();
         //noinspection ConstantConditions
-        if (Math.floorMod(level.getGameTime() + worldPosition.hashCode(), 20) == 10) {
+        if (!isDormant() && Math.floorMod(level.getGameTime() + worldPosition.hashCode(), 20) == 10) {
             refreshWrapped();
         }
     }

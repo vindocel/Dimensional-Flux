@@ -38,8 +38,12 @@ import java.util.function.Consumer;
  *     <li>Use on a device: pastes the stored settings.</li>
  *     <li>Use on another block: opens the configurator screen to choose the stored network.</li>
  *     <li>Sneak and use in the air: clears the stored settings.</li>
+ *     <li>Sneak and turn the mouse wheel: switches between configure mode and wrench mode.</li>
  * </ul>
- * While it holds settings, its crystal turns and its colored parts take the color of the stored network.
+ * In wrench mode, sneak and use on a device picks it up ({@link WrenchPickup}), a plain use opens the device as
+ * usual, and copying and pasting are off; the stored settings stay on the wand. While it holds settings, its
+ * crystal turns and its colored parts take the color of the stored network; in wrench mode the crystal turns and
+ * the colored parts cycle through the rainbow.
  */
 @ParametersAreNonnullByDefault
 public class ItemDimensionalConfigurator extends Item {
@@ -50,6 +54,22 @@ public class ItemDimensionalConfigurator extends Item {
 
     public static boolean hasConfig(ItemStack stack) {
         return stack.has(DimensionalDataComponents.DIMENSIONAL_CONFIG);
+    }
+
+    public static boolean isWrench(ItemStack stack) {
+        return stack.has(DimensionalDataComponents.WRENCH_MODE);
+    }
+
+    /** Switches the wand between configure and wrench mode, with a click and the new mode above the hotbar. */
+    public static void toggleMode(ServerPlayer player, ItemStack stack) {
+        if (isWrench(stack)) {
+            stack.remove(DimensionalDataComponents.WRENCH_MODE);
+        } else {
+            stack.set(DimensionalDataComponents.WRENCH_MODE, true);
+        }
+        player.sendOverlayMessage((isWrench(stack) ? DimensionalTranslate.CONFIGURATOR_WRENCH_MODE
+                : DimensionalTranslate.CONFIGURATOR_CONFIGURE_MODE).getComponent());
+        play(player, SoundEvents.UI_BUTTON_CLICK.value(), 0.4f, isWrench(stack) ? 1.2f : 1.0f);
     }
 
     /**
@@ -95,6 +115,14 @@ public class ItemDimensionalConfigurator extends Item {
             return InteractionResult.SUCCESS;
         }
         if (!(context.getPlayer() instanceof ServerPlayer player)) {
+            return InteractionResult.PASS;
+        }
+        if (isWrench(stack)) {
+            // wrench mode: sneak picks a device up; a plain use reaches the block, which opens a device as usual
+            if (player.isShiftKeyDown() && context.getLevel() instanceof net.minecraft.server.level.ServerLevel level
+                    && WrenchPickup.pickUp(player, level, context.getClickedPos())) {
+                return InteractionResult.SUCCESS;
+            }
             return InteractionResult.PASS;
         }
         if (!(context.getLevel().getBlockEntity(context.getClickedPos()) instanceof TileDimensionalDevice device)) {
@@ -163,6 +191,9 @@ public class ItemDimensionalConfigurator extends Item {
             DimensionalDeviceItem.appendSettings(config, tooltip);
         } else {
             tooltip.accept(Component.literal(ChatFormatting.GRAY + DimensionalTranslate.CONFIGURATOR_EMPTY.get()));
+        }
+        if (isWrench(stack)) {
+            tooltip.accept(Component.literal(ChatFormatting.GOLD + DimensionalTranslate.CONFIGURATOR_WRENCH_MODE.get()));
         }
         tooltip.accept(Component.literal(ChatFormatting.DARK_GRAY + DimensionalTranslate.CONFIGURATOR_HELP.get()));
     }

@@ -5,7 +5,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.input.MouseButtonEvent;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -267,7 +267,7 @@ public abstract class GuiPopupCore<T extends GuiDimensionalCore> extends GuiFocu
         double mouseX = event.x();
         double mouseY = event.y();
         int mouseButton = event.button();
-        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT) {
             if (isOverClose(mouseX, mouseY)) {
                 dimensionalflux.client.gui.DfStyle.playClick();
                 mHost.closePopup(this);
@@ -283,7 +283,7 @@ public abstract class GuiPopupCore<T extends GuiDimensionalCore> extends GuiFocu
         boolean result = false;
         for (GuiButtonCore button : mButtons) {
             if (button.mClickable && button.isMouseHovered(mouseX, mouseY)) {
-                if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+                if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT) {
                     dimensionalflux.client.gui.DfStyle.playClick();
                 }
                 onButtonClicked(button, (int) mouseX, (int) mouseY, mouseButton);
@@ -294,7 +294,7 @@ public abstract class GuiPopupCore<T extends GuiDimensionalCore> extends GuiFocu
         for (GuiEventListener child : this.children()) {
             if (child.mouseClicked(event, doubleClick)) {
                 setFocused(child);
-                if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+                if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT) {
                     setDragging(true);
                 }
                 return true;

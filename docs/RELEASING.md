@@ -65,13 +65,15 @@ between versions uses Stonecutter conditions.
 
 - After approval of a port, add its version to `versions(...)` in `settings.gradle.kts` and create
   `versions/<minecraft>/gradle.properties` with `neo_version`, `java_version` and the exact
-  `minecraft_version_range=[<minecraft>]`, plus compatible `kubejs_version` and `rhino_version` pins for the optional
-  compile-only scripting integration. Adapt APIs and dependencies for that target. CI and suffix-free releases
+  `minecraft_version_range=[<minecraft>]`, plus the pins of the optional compile-only integrations that have a build
+  for that version (`kubejs_version` and `rhino_version`, `jade_version`, `jei_version`, `rei_version`,
+  `architectury_version`, `curios_version`). An integration left out is not compiled for that target. Adapt APIs
+  with Stonecutter conditionals and put resources whose format changed in `versions/<minecraft>/src/main/resources`. CI and suffix-free releases
   pick it up automatically; the client uses `run/<minecraft>` without another path change.
 - To release one Minecraft version, publish a release whose tag carries its suffix, e.g. `v0.1.0-beta.1+26.3`.
 - To release every configured target at once, use `v0.1.0-beta.1`.
 - To release a group, use `v0.1.0-beta.1+26.1.2-26.3` after those versions are configured.
-- Only Minecraft 26.1.2 is currently configured; other versions here illustrate future selection.
+- Minecraft 26.1.2 and 26.3 are configured; other versions here illustrate future selection.
 - No automation can decide which code is compatible with which Minecraft version; CI on every configured version is
   what proves it.
 
@@ -89,6 +91,8 @@ python3 -B scripts/test-published.py
 ./gradlew build                       # all configured targets
 ./gradlew :26.1.2:build               # one target
 ./gradlew :26.1.2:runGameTestServer
+./gradlew :26.3:build
+./gradlew :26.3:runGameTestServer
 bash scripts/validate-release.sh versions
 TAG=v0.1.0-beta.1+26.1.2 PRERELEASE=true bash scripts/validate-release.sh tag
 ```
@@ -97,7 +101,7 @@ On Windows use `gradlew.bat` and run the script from Git Bash.
 
 ## Local client instances
 
-Run `gradlew.bat :26.1.2:runClient` on Windows. Each target uses `run/<minecraft>` with independent mods,
+Run `gradlew.bat :26.1.2:runClient` or `gradlew.bat :26.3:runClient` on Windows. Each target uses `run/<minecraft>` with independent mods,
 settings, shader packs and worlds. The existing 26.1.2 instance was moved intact from `run/` to `run/26.1.2`.
 The development mod is loaded from the source build; do not put a second copy in `mods/`.
 `-Ptest_run_root=<directory>` overrides all run directories to `<directory>/<minecraft>/<run-name>` for isolated checks.

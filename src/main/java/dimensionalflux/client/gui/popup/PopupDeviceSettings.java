@@ -14,7 +14,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -209,7 +209,7 @@ public class PopupDeviceSettings extends GuiPopupCore<GuiTabCore> {
 
     @Override
     public boolean mouseClicked(@Nonnull MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             for (int i = 0; i < 2; i++) {
                 if (isOverTheme(i, event.x(), event.y())) {
                     DfStyle.playClick();
@@ -224,7 +224,7 @@ public class PopupDeviceSettings extends GuiPopupCore<GuiTabCore> {
     @Override
     public void onButtonClicked(GuiButtonCore button, int mouseX, int mouseY, int mouseButton) {
         super.onButtonClicked(button, mouseX, mouseY, mouseButton);
-        if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (mouseButton != InputConstants.MOUSE_BUTTON_LEFT) {
             return;
         }
         var pos = mDevice.getBlockPos();

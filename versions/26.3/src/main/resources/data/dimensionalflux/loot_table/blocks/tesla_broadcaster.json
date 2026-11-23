@@ -1,0 +1,38 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "condition": {
+        "type": "minecraft:all_of",
+        "terms": [
+          {
+            "type": "minecraft:survives_explosion"
+          },
+          {
+            "type": "minecraft:match_block",
+            "blocks": "dimensionalflux:tesla_broadcaster",
+            "state": {
+              "half": "lower"
+            }
+          }
+        ]
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "modifier": {
+            "type": "minecraft:copy_components",
+            "include": [
+              "dimensionalflux:device_config",
+              "dimensionalflux:stored_energy"
+            ],
+            "source": "block_entity"
+          },
+          "name": "dimensionalflux:tesla_broadcaster"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "dimensionalflux:blocks/tesla_broadcaster"
+}

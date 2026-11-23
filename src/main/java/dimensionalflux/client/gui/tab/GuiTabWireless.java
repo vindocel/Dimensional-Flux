@@ -16,7 +16,7 @@ import dimensionalflux.register.ClientMessages;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -170,7 +170,7 @@ public class GuiTabWireless extends GuiTabCore {
 
     @Override
     public void onButtonClicked(GuiButtonCore button, float mouseX, float mouseY, int mouseButton) {
-        if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT || !button.isClickable()) return;
+        if (mouseButton != InputConstants.MOUSE_BUTTON_LEFT || !button.isClickable()) return;
         if (button instanceof InventoryButton slot) {
             int mask = slot.isHand() ? 1 << WirelessType.MAIN_HAND.ordinal() | 1 << WirelessType.OFF_HAND.ordinal()
                     : 1 << slot.mType.ordinal();

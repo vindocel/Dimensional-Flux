@@ -12,12 +12,38 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
+//? if >=26.3 {
+/*import com.mojang.serialization.MapCodec;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+*///?} else {
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
+//?}
 
 /**
  * Places a small Dimensional Flux Shard vein of 2 to 8 blocks. The host rock selects the stone or deepslate variant.
  */
+//? if >=26.3 {
+/*public final class FluxShardVeinFeature implements Feature {
+    // The feature takes no settings, so one instance serves every placement.
+    public static final FluxShardVeinFeature INSTANCE = new FluxShardVeinFeature();
+    public static final MapCodec<FluxShardVeinFeature> CODEC = MapCodec.unit(INSTANCE);
+
+    private FluxShardVeinFeature() {
+    }
+
+    @Override
+    public MapCodec<FluxShardVeinFeature> codec() {
+        return CODEC;
+    }
+
+    @Override
+    public boolean place(WorldGenLevel level, ChunkGenerator generator, RandomSource random, BlockPos origin) {
+        // the setting is read before anything else, so a disabled vein never touches the world
+        if (!dimensionalflux.DimensionalConfig.enableOreGeneration) return false;
+        return placeVein(level, random, origin.immutable());
+    }
+*///?} else {
 public final class FluxShardVeinFeature extends Feature<NoneFeatureConfiguration> {
     public FluxShardVeinFeature() {
         super(NoneFeatureConfiguration.CODEC);
@@ -25,15 +51,18 @@ public final class FluxShardVeinFeature extends Feature<NoneFeatureConfiguration
 
     @Override
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
+        // the setting is read before anything else, so a disabled vein never touches the world
         if (!dimensionalflux.DimensionalConfig.enableOreGeneration) return false;
-        WorldGenLevel level = context.level();
-        BlockPos origin = context.origin().immutable();
+        return placeVein(context.level(), context.random(), context.origin().immutable());
+    }
+//?}
+
+    private boolean placeVein(WorldGenLevel level, RandomSource random, BlockPos origin) {
         BlockState ore = oreAt(level, origin);
         if (ore == null) {
             return false;
         }
 
-        RandomSource random = context.random();
         int size = 2 + random.nextInt(7);
         List<BlockPos> vein = new ArrayList<>(size);
         List<BlockPos> candidates = new ArrayList<>();

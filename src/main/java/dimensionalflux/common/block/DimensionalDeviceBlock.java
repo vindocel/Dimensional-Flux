@@ -125,7 +125,10 @@ public abstract class DimensionalDeviceBlock extends Block implements EntityBloc
             return InteractionResult.SUCCESS;
         }
 
-        if (player.getItemInHand(hand).is(RegistryItems.DIMENSIONAL_CONFIGURATOR.get())) {
+        // the Configurator handles the click itself, except in wrench mode, where a plain use opens the device
+        ItemStack held = player.getItemInHand(hand);
+        if (held.is(RegistryItems.DIMENSIONAL_CONFIGURATOR.get())
+                && !dimensionalflux.common.item.ItemDimensionalConfigurator.isWrench(held)) {
             return InteractionResult.PASS;
         }
 

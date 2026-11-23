@@ -304,15 +304,35 @@ public final class DfStyle {
      * lighter toward the bottom with a faint diagonal reflection.
      */
     public static void glass(GuiGraphicsExtractor g, int x, int y, int w, int h) {
-        cfill(g, x + 1, y, x + w - 1, y + 1, EDGE_SHADE);
-        cfill(g, x, y + 1, x + 1, y + h - 1, EDGE_SHADE);
-        cfill(g, x + 1, y + h - 1, x + w - 1, y + h, EDGE_LIGHT);
-        cfill(g, x + w - 1, y + 1, x + w, y + h - 1, EDGE_LIGHT);
-        cpixel(g, x + w - 1, y, EDGE_CORNER);
-        cpixel(g, x, y + h - 1, EDGE_CORNER);
+        glassEdge(g, x, y, w, h, chrome(EDGE_SHADE), chrome(EDGE_LIGHT), chrome(EDGE_CORNER));
+        glassBody(g, x, y, w, h);
+    }
+
+    /**
+     * A glass display whose inset edge is drawn in shades of the glass itself, a darker one on the top and left and a
+     * lighter one on the bottom and right, for glass that does not sit in the light or dark panel (the configurator
+     * HUD fills its whole panel with glass, so a grey edge would look detached).
+     */
+    public static void glassInOwnHue(GuiGraphicsExtractor g, int x, int y, int w, int h) {
+        int shade = 0xFF000000 | mix(sGlassRim, 0x000000, 0.35f);
+        int light = 0xFF000000 | mix(sGlassBottom, 0xFFFFFF, 0.3f);
+        glassEdge(g, x, y, w, h, shade, light, 0xFF000000 | mix(shade, light, 0.5f));
+        glassBody(g, x, y, w, h);
+    }
+
+    private static void glassEdge(GuiGraphicsExtractor g, int x, int y, int w, int h, int shade, int light, int corner) {
+        SteelframePaint.fill(g, x + 1, y, x + w - 1, y + 1, shade);
+        SteelframePaint.fill(g, x, y + 1, x + 1, y + h - 1, shade);
+        SteelframePaint.fill(g, x + 1, y + h - 1, x + w - 1, y + h, light);
+        SteelframePaint.fill(g, x + w - 1, y + 1, x + w, y + h - 1, light);
+        pixel(g, x + w - 1, y, corner);
+        pixel(g, x, y + h - 1, corner);
         // close the frame: the shaded corner at the top left, the lit one at the bottom right
-        cpixel(g, x, y, EDGE_SHADE);
-        cpixel(g, x + w - 1, y + h - 1, EDGE_LIGHT);
+        pixel(g, x, y, shade);
+        pixel(g, x + w - 1, y + h - 1, light);
+    }
+
+    private static void glassBody(GuiGraphicsExtractor g, int x, int y, int w, int h) {
         SteelframePaint.fill(g, x + 1, y + 1, x + w - 1, y + h - 1, 0xFF000000 | sGlassRim);
         int gx = x + 2, gy = y + 2, gw = w - 4, gh = h - 4;
         if (gw <= 0 || gh <= 0) {

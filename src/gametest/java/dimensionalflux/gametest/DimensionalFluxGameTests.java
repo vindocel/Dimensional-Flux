@@ -91,6 +91,9 @@ final class DimensionalFluxGameTests {
     private static final Identifier GREEDY_PULL = DimensionalFlux.location("port_greedy_pull");
     private static final Identifier BATTERY_POOL = DimensionalFlux.location("port_battery_pool");
     private static final Identifier RESERVE_ESTIMATE = DimensionalFlux.location("port_reserve_estimate");
+    private static final Identifier CROSS_DIMENSION_PRIORITY = DimensionalFlux.location("port_cross_dimension_priority");
+    private static final Identifier CHUNK_ONLINE_RULE = DimensionalFlux.location("port_chunk_online_rule");
+    private static final Identifier WRENCH_PICKUP = DimensionalFlux.location("port_wrench_pickup");
     private static final Identifier CONFIGURATION = DimensionalFlux.location("configuration");
     /** The energy store of the stick used as a charged curio. */
     private static final SimpleEnergyHandler CURIO_BATTERY = new SimpleEnergyHandler(1_000_000);
@@ -153,6 +156,9 @@ final class DimensionalFluxGameTests {
             registry.register(GREEDY_PULL, DimensionalFluxGameTests::greedyPull);
             registry.register(BATTERY_POOL, DimensionalFluxGameTests::batteryPool);
             registry.register(RESERVE_ESTIMATE, DimensionalFluxGameTests::reserveEstimate);
+            registry.register(CROSS_DIMENSION_PRIORITY, DimensionalFluxGameTests::crossDimensionPriority);
+            registry.register(CHUNK_ONLINE_RULE, DimensionalFluxGameTests::chunkOnlineRule);
+            registry.register(WRENCH_PICKUP, DimensionalFluxGameTests::wrenchPickup);
             registry.register(CONFIGURATION, DimensionalFluxGameTests::configuration);
         });
     }
@@ -162,7 +168,7 @@ final class DimensionalFluxGameTests {
         var environment = event.registerEnvironment(STRUCTURE, new TestEnvironmentDefinition.AllOf(List.of()));
         var data = new TestData<>(environment, STRUCTURE, 200, 0, true, Rotation.NONE);
         event.registerTest(CONFIGURATION, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, CONFIGURATION), data));
-        for (Identifier id : List.of(TELEMETRY, TRANSFER, STORAGE, SECURITY, CELL, MATERIALS, PLUG_PRIORITY, POINT_PRIORITY, PLACEMENT_ACCESS, CONFIGURATOR_PASTE, CONFIGURATOR_WAND, DEVICE_RECIPES, MONITORING, ORE_GENERATION, MAP_COLORS, SATURATION, SHARD_RECIPES, MOUNTING_FACE, CONNECTOR_ORIENTATION, ACTIVE_STATE, TESLA_AREA, TESLA_OFFSET, TESLA_PREVIEW, HIDE_BLOCK, TESLA_TARGETS, TESLA_INPUTS, MACHINE_EDIT, STAGING_CEILING, REDSTONE_MODE, SHARE_BY_DEMAND, SCOREBOARD_TEAM, RECEIVER_PULL, NETWORK_BRIDGE, BRIDGE_LOOP, STEADY_PULL, GREEDY_PULL, BATTERY_POOL)) {
+        for (Identifier id : List.of(TELEMETRY, TRANSFER, STORAGE, SECURITY, CELL, MATERIALS, PLUG_PRIORITY, POINT_PRIORITY, PLACEMENT_ACCESS, CONFIGURATOR_PASTE, CONFIGURATOR_WAND, DEVICE_RECIPES, MONITORING, ORE_GENERATION, MAP_COLORS, SATURATION, SHARD_RECIPES, MOUNTING_FACE, CONNECTOR_ORIENTATION, ACTIVE_STATE, TESLA_AREA, TESLA_OFFSET, TESLA_PREVIEW, HIDE_BLOCK, TESLA_TARGETS, TESLA_INPUTS, MACHINE_EDIT, STAGING_CEILING, REDSTONE_MODE, SHARE_BY_DEMAND, SCOREBOARD_TEAM, RECEIVER_PULL, NETWORK_BRIDGE, BRIDGE_LOOP, STEADY_PULL, GREEDY_PULL, BATTERY_POOL, CHUNK_ONLINE_RULE, WRENCH_PICKUP)) {
             event.registerTest(id, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, id), data));
         }
         // the deficit alert waits 30 seconds, so its test runs longer
@@ -170,6 +176,7 @@ final class DimensionalFluxGameTests {
         event.registerTest(DEFICIT_ALERT, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, DEFICIT_ALERT), slow));
         event.registerTest(FAILOVER, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, FAILOVER), slow));
         event.registerTest(RESERVE_ESTIMATE, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, RESERVE_ESTIMATE), slow));
+        event.registerTest(CROSS_DIMENSION_PRIORITY, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, CROSS_DIMENSION_PRIORITY), slow));
         if (net.neoforged.fml.ModList.get().isLoaded("logisticsnetworks")) {
             event.registerTest(LOGISTICS_NODE, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, LOGISTICS_NODE), data));
         }
@@ -203,7 +210,12 @@ final class DimensionalFluxGameTests {
                     "Block tag blacklist did not block the furnace capability");
             receiver.onCycleStart();
             helper.assertTrue(receiver.getRequest() == 0, "A cached receiver ignored the updated blacklist");
+            //? if >=26.3 {
+            /*helper.assertTrue(!dimensionalflux.common.level.FluxShardVeinFeature.INSTANCE.place(null, null, null, null),
+                    "Disabled worldgen accessed the world");
+            *///?} else {
             helper.assertTrue(!new dimensionalflux.common.level.FluxShardVeinFeature().place(null), "Disabled worldgen accessed the world");
+            //?}
             var active = dimensionalflux.DimensionalConfig.overrides();
             for (var bad : List.of(Map.of("energy.batteryCapacity", "9223372036854775808"),
                     Map.of("energy.batteryCapacity", "1.5"), Map.of("worldgen.enableOreGeneration", "false"), Map.of("unknown.option", 1))) {
@@ -747,6 +759,187 @@ final class DimensionalFluxGameTests {
     }
 
     /**
+     * The wrench picks a device up with its network and settings: refused for a player who may not edit the network,
+     * both halves of a Tesla Broadcaster from its upper half, and the Configurator switches into wrench mode.
+     */
+    private static void wrenchPickup(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var owner = tester(helper, "PortWrenchOwner");
+        var stranger = tester(helper, "PortWrenchStranger");
+        var network = DimensionalNetworkData.getInstance().createNetwork(owner, "Wrench", 0xAA8833, SecurityLevel.PRIVATE, "");
+        var receiver = connector(helper, new BlockPos(2, 2, 2), RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST,
+                TileDimensionalReceiver.class, owner, network);
+        receiver.applySettings(setting(DimensionalConstants.PRIORITY, 42));
+        BlockPos at = helper.absolutePos(new BlockPos(2, 2, 2));
+        helper.assertTrue(!dimensionalflux.common.item.WrenchPickup.pickUp((net.minecraft.server.level.ServerPlayer) stranger, level, at),
+                "A player outside the network picked the Receiver up");
+        helper.assertTrue(level.getBlockEntity(at) instanceof TileDimensionalReceiver, "A refused pickup removed the Receiver");
+        helper.assertTrue(dimensionalflux.common.item.WrenchPickup.pickUp((net.minecraft.server.level.ServerPlayer) owner, level, at),
+                "The owner could not pick the Receiver up");
+        helper.assertTrue(level.getBlockState(at).isAir(), "The picked-up Receiver is still in the world");
+        ItemStack item = ItemStack.EMPTY;
+        for (int i = 0; i < owner.getInventory().getContainerSize(); i++) {
+            if (owner.getInventory().getItem(i).is(RegistryBlocks.DIMENSIONAL_RECEIVER.get().asItem())) item = owner.getInventory().getItem(i);
+        }
+        var config = item.get(dimensionalflux.api.DimensionalDataComponents.DIMENSIONAL_CONFIG);
+        helper.assertTrue(config != null && config.networkId() == network.getNetworkID() && config.priority().orElse(0) == 42,
+                "The picked-up Receiver lost its network or priority: " + config);
+        // a Tesla Broadcaster, taken by its upper half
+        BlockPos tesla = new BlockPos(4, 2, 4);
+        var lower = RegistryBlocks.TESLA_BROADCASTER.get().defaultBlockState();
+        helper.setBlock(tesla, lower);
+        helper.setBlock(tesla.above(), lower.setValue(dimensionalflux.common.block.TeslaBroadcasterBlock.HALF,
+                net.minecraft.world.level.block.state.properties.DoubleBlockHalf.UPPER));
+        helper.getBlockEntity(tesla, dimensionalflux.common.device.TileTeslaBroadcaster.class).setOwnerUUID(owner.getUUID());
+        helper.assertTrue(dimensionalflux.common.item.WrenchPickup.pickUp((net.minecraft.server.level.ServerPlayer) owner, level,
+                helper.absolutePos(tesla.above())), "The Tesla Broadcaster could not be picked up by its upper half");
+        helper.assertTrue(level.getBlockState(helper.absolutePos(tesla)).isAir() && level.getBlockState(helper.absolutePos(tesla.above())).isAir(),
+                "A half of the Tesla Broadcaster stayed in the world");
+        helper.assertTrue(owner.getInventory().countItem(RegistryBlocks.TESLA_BROADCASTER.get().asItem()) == 1,
+                "The Tesla Broadcaster did not reach the inventory once");
+        // the Configurator switches to wrench mode and back
+        var wand = new ItemStack(dimensionalflux.register.RegistryItems.DIMENSIONAL_CONFIGURATOR.get());
+        dimensionalflux.common.item.ItemDimensionalConfigurator.toggleMode((net.minecraft.server.level.ServerPlayer) owner, wand);
+        helper.assertTrue(dimensionalflux.common.item.ItemDimensionalConfigurator.isWrench(wand), "The Configurator did not enter wrench mode");
+        dimensionalflux.common.item.ItemDimensionalConfigurator.toggleMode((net.minecraft.server.level.ServerPlayer) owner, wand);
+        helper.assertTrue(!dimensionalflux.common.item.ItemDimensionalConfigurator.isWrench(wand), "The Configurator did not leave wrench mode");
+        helper.succeed();
+    }
+
+    /**
+     * With the online rule of chunk loading, a network whose owner and members are all offline may not hold chunks,
+     * while the Load Chunk switch of its device keeps its value; without the rule it may. Network membership counts
+     * the owner and listed members, not anyone a public network lets in.
+     */
+    private static void chunkOnlineRule(GameTestHelper helper) {
+        var player = tester(helper, "PortChunkRule");
+        var network = DimensionalNetworkData.getInstance().createNetwork(player, "ChunkRule", 0x55AA55, SecurityLevel.PUBLIC, "");
+        var device = connector(helper, new BlockPos(2, 2, 2), RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST,
+                TileDimensionalReceiver.class, player, network);
+        var server = helper.getLevel().getServer();
+        var before = dimensionalflux.DimensionalConfig.overrides();
+        try {
+            helper.assertTrue(network.hasMember(player), "The owner is not a member of the network");
+            helper.assertTrue(!network.hasMember(tester(helper, "PortStranger")), "A stranger counts as a member of a public network");
+            helper.assertTrue(dimensionalflux.common.level.DimensionalChunkLoading.mayLoad(server, network),
+                    "Without the online rule a network may not hold its chunks");
+            var rule = new java.util.HashMap<String, Object>(before);
+            rule.put("general.chunkLoadingOnlyOnline", true);
+            dimensionalflux.DimensionalConfig.setOverrides(rule);
+            device.applySettings(setting(DimensionalConstants.FORCED_LOADING, true));
+            helper.assertTrue(device.isForcedLoading(), "The Load Chunk switch lost its value under the online rule");
+            // the switch is saved with the block and with the network's copy of an unloaded device, so released
+            // chunks load again after a restart
+            helper.assertTrue(device.saveWithoutMetadata(helper.getLevel().registryAccess()).getBooleanOr("forced_loading", false),
+                    "The Load Chunk switch is not saved with the device");
+            var saved = dimensionalflux.common.connection.DeviceSnapshot.CODEC.encodeStart(
+                    net.minecraft.nbt.NbtOps.INSTANCE, device.snapshot().unloaded()).getOrThrow();
+            helper.assertTrue(dimensionalflux.common.connection.DeviceSnapshot.CODEC.parse(net.minecraft.nbt.NbtOps.INSTANCE, saved)
+                    .getOrThrow().forcedLoading(), "The network forgets the Load Chunk switch of an unloaded device");
+            helper.assertTrue(!dimensionalflux.common.level.DimensionalChunkLoading.mayLoad(server, network),
+                    "A network with nobody online may hold its chunks under the online rule");
+            dimensionalflux.common.level.DimensionalChunkLoading.refresh(server);
+            device.applySettings(setting(DimensionalConstants.FORCED_LOADING, false));
+        } finally {
+            dimensionalflux.DimensionalConfig.setOverrides(before);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Priority holds across dimensions and with a battery on the network: an Emitter in the Nether limited to
+     * 500 FE/t feeds a priority 700 Receiver in the Overworld, while a priority 0 Receiver in the Nether and a
+     * priority -10 battery in the Overworld get nothing; raising the Nether Receiver to 900 moves the supply to it.
+     */
+    private static void crossDimensionPriority(GameTestHelper helper) {
+        var player = tester(helper, "PortDimensions");
+        var network = DimensionalNetworkData.getInstance().createNetwork(player, "Dimensions", 0x3377AA, SecurityLevel.PUBLIC, "");
+        var nether = helper.getLevel().getServer().getLevel(net.minecraft.world.level.Level.NETHER);
+        helper.assertTrue(nether != null, "The test server has no Nether");
+        // a spot of the Nether near its center, held loaded the way a device with Load Chunk holds its chunk
+        BlockPos base = new BlockPos(2_000, 64, 2_000);
+        BlockPos farMachine = base.offset(4, 0, 0);
+        dimensionalflux.common.level.DimensionalChunkLoading.setLoaded(nether, base, true);
+        var farSink = new SimpleEnergyHandler(Integer.MAX_VALUE, 500, 0);
+        TileDimensionalReceiver[] far = new TileDimensionalReceiver[1];
+        // the high-priority Receiver and a low-priority battery in the Overworld
+        var nearSink = machine(helper, new BlockPos(5, 2, 2), 0, 500, 0);
+        var near = connector(helper, new BlockPos(4, 2, 2), RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST,
+                TileDimensionalReceiver.class, player, network);
+        near.applySettings(setting(DimensionalConstants.PRIORITY, 700));
+        var battery = pooledBattery(helper, new BlockPos(1, 2, 1), player, network);
+        battery.applySettings(setting(DimensionalConstants.PRIORITY, -10));
+        Runnable cleanup = () -> {
+            EMITTERS.remove(farMachine);
+            EMITTERS.remove(base);
+            for (BlockPos p : BlockPos.betweenClosed(base.offset(-1, -1, -1), base.offset(4, 2, 1))) {
+                nether.setBlockAndUpdate(p, Blocks.AIR.defaultBlockState());
+            }
+            dimensionalflux.common.level.DimensionalChunkLoading.setLoaded(nether, base, false);
+            releaseMachines(helper);
+        };
+        // the test server does not load the entities of a Nether chunk in time for its block entities to tick, so
+        // the Nether devices bind to their machines here as their first tick would; the network cycle runs for
+        // every dimension from the server tick
+        long[] mark = new long[3];
+        long[] start = {-1};
+        helper.onEachTick(() -> {
+            long now = helper.getTick();
+            if (start[0] < 0) {
+                if (now < 10) return;
+                start[0] = now;
+                for (BlockPos p : BlockPos.betweenClosed(base.offset(-1, -1, -1), base.offset(4, 2, 1))) {
+                    nether.setBlockAndUpdate(p, Blocks.AIR.defaultBlockState());
+                }
+                // source in the Nether: a generator with plenty of energy under an Emitter limited to 500 FE/t
+                EMITTERS.put(base, new SimpleEnergyHandler(Integer.MAX_VALUE, 0, 100_000, 1_000_000_000));
+                nether.setBlockAndUpdate(base, Blocks.FURNACE.defaultBlockState());
+                nether.setBlockAndUpdate(base.east(), mounted(RegistryBlocks.DIMENSIONAL_EMITTER.get(), Direction.WEST));
+                var emitter = (TileDimensionalEmitter) nether.getBlockEntity(base.east());
+                emitter.setOwnerUUID(player.getUUID());
+                emitter.getTransferHandler().setLimit(500);
+                helper.assertTrue(emitter.connect(network), "The Nether Emitter did not link");
+                emitter.refreshMountingSide();
+                // the low-priority Receiver in the Nether, on a machine that accepts 500 FE/t
+                EMITTERS.put(farMachine, farSink);
+                nether.setBlockAndUpdate(farMachine, Blocks.FURNACE.defaultBlockState());
+                nether.setBlockAndUpdate(farMachine.west(), mounted(RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST));
+                far[0] = (TileDimensionalReceiver) nether.getBlockEntity(farMachine.west());
+                far[0].setOwnerUUID(player.getUUID());
+                helper.assertTrue(far[0].connect(network), "The Nether Receiver did not link");
+                far[0].refreshMountingSide();
+                return;
+            }
+            long t = now - start[0];
+            if (t == 40 || t == 180) {
+                mark[0] = nearSink.getAmountAsLong();
+                mark[1] = farSink.getAmountAsLong();
+                mark[2] = battery.getTransferBuffer();
+            } else if (t == 140) {
+                long nearGot = nearSink.getAmountAsLong() - mark[0];
+                long farGot = farSink.getAmountAsLong() - mark[1];
+                long stored = battery.getTransferBuffer() - mark[2];
+                DimensionalFlux.LOGGER.info("VALIDATION cross-dimension priority: overworld={} nether={} battery={}", nearGot, farGot, stored);
+                if (nearGot < 500L * 95 || farGot * 20 > nearGot + farGot || stored * 20 > nearGot + farGot) {
+                    cleanup.run();
+                    helper.fail("Priority across dimensions: Overworld 700 got " + nearGot + ", Nether 0 got " + farGot
+                            + ", battery -10 stored " + stored);
+                }
+                // as from the screen: the setting also reorders the network
+                far[0].applySettings(setting(DimensionalConstants.PRIORITY, 900));
+            } else if (t == 280) {
+                long nearGot = nearSink.getAmountAsLong() - mark[0];
+                long farGot = farSink.getAmountAsLong() - mark[1];
+                DimensionalFlux.LOGGER.info("VALIDATION cross-dimension priority swapped: overworld={} nether={}", nearGot, farGot);
+                cleanup.run();
+                helper.assertTrue(farGot >= 500L * 95, "The priority 900 Receiver in the Nether got only " + farGot + " FE in 100 ticks");
+                helper.assertTrue(nearGot * 20 <= nearGot + farGot, "The priority 700 Receiver still got " + nearGot + " FE");
+                helper.succeed();
+            }
+        });
+    }
+
+    /**
      * A battery draining at a steady 500 FE/t: the time left matches the stored energy over that drain and counts
      * down one second per second.
      */
@@ -925,8 +1118,12 @@ final class DimensionalFluxGameTests {
         // a real player gets its slots when it joins; a test player builds them here
         curios.get().reset();
         var ring = curios.get().getStacksHandler("ring");
+        //? if >=26.3 {
+        /*helper.assertTrue(ring.isPresent(), "The player has no ring slot; slots: " + curios.get().getCurios().keySet());
+        *///?} else {
         helper.assertTrue(ring.isPresent(), "The player has no ring slot; slots: " + curios.get().getCurios().keySet()
                 + ", player slots: " + top.theillusivec4.curios.api.CuriosApi.getPlayerSlots(player).keySet());
+        //?}
         ring.get().getStacks().setStackInSlot(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.STICK));
         long before = CURIO_BATTERY.getAmountAsLong();
         long simulated = dimensionalflux.common.integration.CuriosIntegration.charge(player, 5000, true);
@@ -1292,8 +1489,13 @@ final class DimensionalFluxGameTests {
                 helper.assertTrue(has, "Biome " + biomeKey.identifier() + " does not generate " + id);
             }
         }
+        //? if >=26.3 {
+        /*var vein = level.registryAccess().lookupOrThrow(Registries.FEATURE)
+                .getOrThrow(ResourceKey.create(Registries.FEATURE, DimensionalFlux.location("dimensional_flux_shard_vein")));
+        *///?} else {
         var vein = level.registryAccess().lookupOrThrow(Registries.CONFIGURED_FEATURE)
                 .getOrThrow(ResourceKey.create(Registries.CONFIGURED_FEATURE, DimensionalFlux.location("dimensional_flux_shard_vein")));
+        //?}
         int[] counts = new int[2];
         var hosts = new net.minecraft.world.level.block.Block[]{Blocks.STONE, Blocks.DEEPSLATE};
         // stone ore forms from Y -16 to 16 and deepslate ore from Y -64 to 0, as in the world: test each at its height
@@ -1702,7 +1904,7 @@ final class DimensionalFluxGameTests {
     }
 
     private static int TileTeslaBroadcaster_MAX_REACH() {
-        return dimensionalflux.common.device.TileTeslaBroadcaster.MAX_REACH;
+        return dimensionalflux.common.device.TileTeslaBroadcaster.maxReach();
     }
 
     /**

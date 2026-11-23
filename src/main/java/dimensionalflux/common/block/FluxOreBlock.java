@@ -28,7 +28,9 @@ import net.minecraft.world.phys.BlockHitResult;
  */
 public class FluxOreBlock extends Block {
 
+    //? if <26.3 {
     public static final MapCodec<FluxOreBlock> CODEC = simpleCodec(FluxOreBlock::new);
+    //?}
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
     /** Light of a lit ore, as much as a lit redstone ore. */
     public static final int LIGHT = 9;
@@ -38,10 +40,12 @@ public class FluxOreBlock extends Block {
         registerDefaultState(defaultBlockState().setValue(LIT, false));
     }
 
+    //? if <26.3 {
     @Override
     protected MapCodec<? extends Block> codec() {
         return CODEC;
     }
+    //?}
 
     @Override
     protected void attack(BlockState state, Level level, BlockPos pos, Player player) {

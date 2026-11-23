@@ -14,7 +14,7 @@ import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.List;
 
@@ -80,7 +80,7 @@ public final class PopupNetworkRanking extends GuiPopupCore<GuiTabCore> {
     @Override
     public void onButtonClicked(GuiButtonCore button, int mouseX, int mouseY, int mouseButton) {
         // left click: the next period; right click: back to the previous one
-        int step = mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT ? 1 : mouseButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT ? -1 : 0;
+        int step = mouseButton == InputConstants.MOUSE_BUTTON_LEFT ? 1 : mouseButton == InputConstants.MOUSE_BUTTON_RIGHT ? -1 : 0;
         if (step == 0) return;
         if (step < 0) dimensionalflux.client.gui.DfStyle.playClick();
         selected = Math.floorMod(selected + step, NetworkStatistics.RANKING_MINUTES.length + 1);

@@ -20,7 +20,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -187,7 +187,7 @@ public class PopupTeslaArea extends GuiPopupCore<GuiDimensionalDeviceHome> {
     }
 
     private int max(int row) {
-        return row == SIZE ? TileTeslaBroadcaster.MAX_AREA : TileTeslaBroadcaster.maxOffset(mValues[SIZE]);
+        return row == SIZE ? TileTeslaBroadcaster.maxArea() : TileTeslaBroadcaster.maxOffset(mValues[SIZE]);
     }
 
     private int rowY(int row) {
@@ -355,7 +355,7 @@ public class PopupTeslaArea extends GuiPopupCore<GuiDimensionalDeviceHome> {
 
     @Override
     public boolean mouseClicked(@Nonnull MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             for (int row = 0; row < 4; row++) {
                 if (isOverTrack(row, event.x(), event.y())) {
                     mDragging = row;
@@ -378,7 +378,7 @@ public class PopupTeslaArea extends GuiPopupCore<GuiDimensionalDeviceHome> {
                 return true;
             }
         }
-        if (event.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT && isOverView(event.x(), event.y())) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_RIGHT && isOverView(event.x(), event.y())) {
             mPanning = true;
             return true;
         }
@@ -434,7 +434,7 @@ public class PopupTeslaArea extends GuiPopupCore<GuiDimensionalDeviceHome> {
     @Override
     public void onButtonClicked(GuiButtonCore button, int mouseX, int mouseY, int mouseButton) {
         super.onButtonClicked(button, mouseX, mouseY, mouseButton);
-        if (mouseButton != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        if (mouseButton != InputConstants.MOUSE_BUTTON_LEFT) {
             return;
         }
         if (button == mShowArea) {

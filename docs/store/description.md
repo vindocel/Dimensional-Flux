@@ -170,11 +170,11 @@ Craft the guide with a **Book** and a **Dimensional Flux Shard**. The book opens
 
 | | |
 |---|---|
-| Minecraft | 26.1.2 |
-| Loader | NeoForge 26.1.2.126+ |
+| Minecraft | 26.1.2 or 26.3 |
+| Loader | NeoForge 26.1.2.126+ (Minecraft 26.1.2), NeoForge 26.3.0.115+ (Minecraft 26.3) |
 | Java | 25 |
 | Required mods | none |
-| Optional | Jade, Curios, FTB Teams, FTB Chunks, JEI, REI, KubeJS |
+| Optional | Jade, Curios, FTB Teams, FTB Chunks, JEI, REI, KubeJS (KubeJS on Minecraft 26.1.2 only) |
 
 ---
 

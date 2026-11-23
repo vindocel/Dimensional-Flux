@@ -10,6 +10,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import dimensionalflux.DimensionalFlux;
 import dimensionalflux.common.connection.DimensionalNetwork;
 import dimensionalflux.common.connection.DimensionalNetworkData;
+import dimensionalflux.common.level.DimensionalChunkLoading;
 import dimensionalflux.common.util.DimensionalCommands;
 import dimensionalflux.network.NetworkSync;
 
@@ -26,6 +27,18 @@ public final class EventHandler {
         for (DimensionalNetwork network : DimensionalNetworkData.getAllNetworks()) {
             network.onEndServerTick();
         }
+        // the online rule of chunk loading: soon after the world starts, then twice a minute for membership changes
+        if (event.getServer().getTickCount() % 600 == 100) {
+            DimensionalChunkLoading.refresh(event.getServer());
+        }
+    }
+
+    /** The leaving player no longer counts as online, although the player list still holds the player here. */
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            DimensionalChunkLoading.refresh(player.level().getServer(), player);
+        }
     }
 
     /** Clients get the crafting recipes too: the guide shows them. */
@@ -38,14 +51,19 @@ public final class EventHandler {
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         DimensionalNetworkData.release();
+        DimensionalChunkLoading.reset();
         dimensionalflux.common.device.NetworkBridges.clear();
         dimensionalflux.DimensionalConfig.clearOverrides();
     }
 
-    /** A joining player gets the list of networks and their super admin status. */
+    /**
+     * A joining player gets the list of networks and their super admin status, and the chunks of the player's
+     * networks load again under the online rule of chunk loading.
+     */
     @SubscribeEvent
     public static void onPlayerJoined(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof ServerPlayer player) {
+            DimensionalChunkLoading.refresh(player.level().getServer());
             NetworkSync.sendSummaries(player, DimensionalNetworkData.getAllNetworks());
             NetworkSync.syncPlayerData(player);
             net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, dimensionalflux.network.s2c.ConfigStatePayload.current());

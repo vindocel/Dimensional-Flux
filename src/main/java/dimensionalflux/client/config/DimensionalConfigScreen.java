@@ -1,5 +1,6 @@
 package dimensionalflux.client.config;
 
+import dimensionalflux.client.ClientCompat;
 import dimensionalflux.DimensionalConfig;
 import dimensionalflux.DimensionalFlux;
 import dimensionalflux.client.ConfigServerState;
@@ -110,7 +111,7 @@ public final class DimensionalConfigScreen extends Screen {
                         () -> draft.put(option.key, !Boolean.TRUE.equals(draft.get(option.key))));
             } else if (option.fallback instanceof List<?>) {
                 control = ConfigStyle.button(text("edit_list", ((List<?>) draft.get(option.key)).size()), barRight - controlWidth - 6,
-                        y + 1, controlWidth, 20, button -> minecraft.setScreen(new ConfigListScreen(this, name(option),
+                        y + 1, controlWidth, 20, button -> ClientCompat.setScreen(new ConfigListScreen(this, name(option),
                                 option.key, (List<?>) draft.get(option.key), values -> {
                                     draft.put(option.key, values); rebuild = true;
                                 })));
@@ -292,5 +293,5 @@ public final class DimensionalConfigScreen extends Screen {
     }
 
     @Override
-    public void onClose() { if (!saving) minecraft.setScreen(parent); }
+    public void onClose() { if (!saving) ClientCompat.setScreen(parent); }
 }

@@ -1,8 +1,9 @@
 package dimensionalflux.client.gui.basic;
 
+import dimensionalflux.client.ClientCompat;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.entity.player.Player;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 import dimensionalflux.api.DimensionalTranslate;
 import dimensionalflux.client.gui.*;
 import dimensionalflux.client.gui.button.NavigationButton;
@@ -199,7 +200,7 @@ public abstract class GuiTabCore extends GuiDimensionalCore {
     @Override
     public void onButtonClicked(GuiButtonCore button, float mouseX, float mouseY, int mouseButton) {
         super.onButtonClicked(button, mouseX, mouseY, mouseButton);
-        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && button == mSettingsTab &&
+        if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT && button == mSettingsTab &&
                 menu.mProvider instanceof TileDimensionalDevice device) {
             GuiPopupCore<?> existing = findPopup(popup -> popup instanceof dimensionalflux.client.gui.popup.PopupDeviceSettings);
             if (existing != null) {
@@ -209,7 +210,7 @@ public abstract class GuiTabCore extends GuiDimensionalCore {
             }
             return;
         }
-        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && button instanceof NavigationButton nav) {
+        if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT && button instanceof NavigationButton nav) {
             GuiPopupCore<?> existing = findPopup(popup -> popup instanceof GuiTabPopup tab && tab.isNavigationTab(nav.getTab()));
             if (existing != null) {
                 // clicking the selected tab again closes its window
@@ -329,7 +330,7 @@ public abstract class GuiTabCore extends GuiDimensionalCore {
     protected boolean redirectNavigationPrompt(double mouseX, double mouseY, int mouseButton,
                                                @Nonnull EnumNavigationTab wanted) {
         EnumNavigationTab tab = promptTab(wanted);
-        if (mouseButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && overPromptButton(tab, mouseX, mouseY)) {
+        if (mouseButton == InputConstants.MOUSE_BUTTON_LEFT && overPromptButton(tab, mouseX, mouseY)) {
             dimensionalflux.client.gui.DfStyle.playClick();
             switchTab(tab, false);
             return true;
@@ -359,7 +360,7 @@ public abstract class GuiTabCore extends GuiDimensionalCore {
         if (getNavigationTab() != EnumNavigationTab.TAB_HOME) {
             // a tab screen opened on its own (not in a window) goes back to Home first
             openHome();
-            if (getMinecraft().screen instanceof GuiTabCore home && home != this) {
+            if (ClientCompat.screen() instanceof GuiTabCore home && home != this) {
                 home.switchTab(tab, playSound);
             }
             return;
@@ -377,9 +378,9 @@ public abstract class GuiTabCore extends GuiDimensionalCore {
 
     private void openHome() {
         if (menu.mProvider instanceof TileDimensionalDevice) {
-            getMinecraft().setScreen(new GuiDimensionalDeviceHome(menu, mPlayer));
+            ClientCompat.setScreen(new GuiDimensionalDeviceHome(menu, mPlayer));
         } else if (menu.mProvider instanceof ItemDimensionalConfigurator.Provider) {
-            getMinecraft().setScreen(new GuiDimensionalConfiguratorHome(menu, mPlayer));
+            ClientCompat.setScreen(new GuiDimensionalConfiguratorHome(menu, mPlayer));
         } else {
             onClose();
         }
