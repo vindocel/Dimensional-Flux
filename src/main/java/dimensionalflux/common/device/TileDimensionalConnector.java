@@ -156,7 +156,7 @@ public abstract class TileDimensionalConnector extends TileDimensionalDevice {
                 || level.getCapability(Capabilities.Energy.BLOCK, machine, getMountingSide().getOpposite()) == null) {
             return List.of();
         }
-        return List.of(AttachedMachine.of(state, machine, getTransferChange(), mMachineName));
+        return List.of(AttachedMachine.of(state, machine, getTransferHandler().getDisplayChange(), mMachineName));
     }
 
     /** @return the face attached to the machine, the only side that exchanges energy */

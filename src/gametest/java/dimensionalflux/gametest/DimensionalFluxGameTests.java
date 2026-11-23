@@ -94,6 +94,7 @@ final class DimensionalFluxGameTests {
     private static final Identifier CROSS_DIMENSION_PRIORITY = DimensionalFlux.location("port_cross_dimension_priority");
     private static final Identifier CHUNK_ONLINE_RULE = DimensionalFlux.location("port_chunk_online_rule");
     private static final Identifier WRENCH_PICKUP = DimensionalFlux.location("port_wrench_pickup");
+    private static final Identifier SPACED_PULL = DimensionalFlux.location("port_spaced_pull");
     private static final Identifier CONFIGURATION = DimensionalFlux.location("configuration");
     /** The energy store of the stick used as a charged curio. */
     private static final SimpleEnergyHandler CURIO_BATTERY = new SimpleEnergyHandler(1_000_000);
@@ -159,6 +160,7 @@ final class DimensionalFluxGameTests {
             registry.register(CROSS_DIMENSION_PRIORITY, DimensionalFluxGameTests::crossDimensionPriority);
             registry.register(CHUNK_ONLINE_RULE, DimensionalFluxGameTests::chunkOnlineRule);
             registry.register(WRENCH_PICKUP, DimensionalFluxGameTests::wrenchPickup);
+            registry.register(SPACED_PULL, DimensionalFluxGameTests::spacedPull);
             registry.register(CONFIGURATION, DimensionalFluxGameTests::configuration);
         });
     }
@@ -168,7 +170,7 @@ final class DimensionalFluxGameTests {
         var environment = event.registerEnvironment(STRUCTURE, new TestEnvironmentDefinition.AllOf(List.of()));
         var data = new TestData<>(environment, STRUCTURE, 200, 0, true, Rotation.NONE);
         event.registerTest(CONFIGURATION, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, CONFIGURATION), data));
-        for (Identifier id : List.of(TELEMETRY, TRANSFER, STORAGE, SECURITY, CELL, MATERIALS, PLUG_PRIORITY, POINT_PRIORITY, PLACEMENT_ACCESS, CONFIGURATOR_PASTE, CONFIGURATOR_WAND, DEVICE_RECIPES, MONITORING, ORE_GENERATION, MAP_COLORS, SATURATION, SHARD_RECIPES, MOUNTING_FACE, CONNECTOR_ORIENTATION, ACTIVE_STATE, TESLA_AREA, TESLA_OFFSET, TESLA_PREVIEW, HIDE_BLOCK, TESLA_TARGETS, TESLA_INPUTS, MACHINE_EDIT, STAGING_CEILING, REDSTONE_MODE, SHARE_BY_DEMAND, SCOREBOARD_TEAM, RECEIVER_PULL, NETWORK_BRIDGE, BRIDGE_LOOP, STEADY_PULL, GREEDY_PULL, BATTERY_POOL, CHUNK_ONLINE_RULE, WRENCH_PICKUP)) {
+        for (Identifier id : List.of(TELEMETRY, TRANSFER, STORAGE, SECURITY, CELL, MATERIALS, PLUG_PRIORITY, POINT_PRIORITY, PLACEMENT_ACCESS, CONFIGURATOR_PASTE, CONFIGURATOR_WAND, DEVICE_RECIPES, MONITORING, ORE_GENERATION, MAP_COLORS, SATURATION, SHARD_RECIPES, MOUNTING_FACE, CONNECTOR_ORIENTATION, ACTIVE_STATE, TESLA_AREA, TESLA_OFFSET, TESLA_PREVIEW, HIDE_BLOCK, TESLA_TARGETS, TESLA_INPUTS, MACHINE_EDIT, STAGING_CEILING, REDSTONE_MODE, SHARE_BY_DEMAND, SCOREBOARD_TEAM, RECEIVER_PULL, NETWORK_BRIDGE, BRIDGE_LOOP, STEADY_PULL, GREEDY_PULL, BATTERY_POOL, CHUNK_ONLINE_RULE, WRENCH_PICKUP, SPACED_PULL)) {
             event.registerTest(id, new FunctionGameTestInstance(ResourceKey.create(Registries.TEST_FUNCTION, id), data));
         }
         // the deficit alert waits 30 seconds, so its test runs longer
@@ -754,6 +756,49 @@ final class DimensionalFluxGameTests {
             long fed = sink.getAmountAsLong() - start[0];
             helper.assertTrue(fed == 2_100_000, "The pool fed " + fed + " FE in 10 ticks instead of 2,100,000");
             releaseMachines(helper);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A puller that takes energy only every third tick, as a Logistics Network node backing off does, asking for
+     * 10,000 FE each time: the pull demand reaches it within a few pulls (growing up to four times what was taken),
+     * and the transfer the screens show is the one-second average, about -3,333 FE/t, instead of 0 or -10,000.
+     */
+    private static void spacedPull(GameTestHelper helper) {
+        var player = tester(helper, "PortSpaced");
+        var network = DimensionalNetworkData.getInstance().createNetwork(player, "Spaced", 0x3388AA, SecurityLevel.PUBLIC, "");
+        machine(helper, new BlockPos(1, 2, 2), 100_000_000, 0, 100_000);
+        connector(helper, new BlockPos(2, 2, 2), RegistryBlocks.DIMENSIONAL_EMITTER.get(), Direction.WEST, TileDimensionalEmitter.class, player, network);
+        helper.setBlock(new BlockPos(6, 2, 2), Blocks.STONE);
+        var receiver = connector(helper, new BlockPos(5, 2, 2), RegistryBlocks.DIMENSIONAL_RECEIVER.get(), Direction.EAST,
+                TileDimensionalReceiver.class, player, network);
+        var level = helper.getLevel();
+        BlockPos at = helper.absolutePos(new BlockPos(5, 2, 2));
+        long start = helper.getTick();
+        long[] firstFull = {-1};
+        long[] firstPull = {-1};
+        long[] shown = {Long.MAX_VALUE, Long.MIN_VALUE};
+        helper.onEachTick(() -> {
+            long t = helper.getTick() - start;
+            if (t % 3 == 0) {
+                long got = MachineEnergy.extract(level.getCapability(Capabilities.Energy.BLOCK, at, Direction.EAST), 10_000, false);
+                if (got > 0 && firstPull[0] < 0) firstPull[0] = t;
+                if (got >= 10_000 && firstFull[0] < 0) firstFull[0] = t;
+            }
+            if (t >= 50 && t < 80) {
+                long display = receiver.getTransferHandler().getDisplayChange();
+                shown[0] = Math.min(shown[0], display);
+                shown[1] = Math.max(shown[1], display);
+            }
+        });
+        helper.runAfterDelay(82, () -> {
+            releaseMachines(helper);
+            DimensionalFlux.LOGGER.info("VALIDATION spaced pull: first pull {} full {} shown {}..{}", firstPull[0], firstFull[0], shown[0], shown[1]);
+            helper.assertTrue(firstPull[0] >= 0 && firstFull[0] >= 0 && firstFull[0] - firstPull[0] <= 9,
+                    "Full rate came " + (firstFull[0] - firstPull[0]) + " ticks after the first pull, expected at most 9");
+            helper.assertTrue(shown[0] >= -3_700 && shown[1] <= -3_000,
+                    "The shown transfer moved between " + shown[0] + " and " + shown[1] + " instead of about -3,333 FE/t");
             helper.succeed();
         });
     }

@@ -27,6 +27,14 @@ public class DimensionalReceiverHandler extends DimensionalConnectorHandler {
     static final int PULL_HOLD_TICKS = 20;
     /** The first pull demand when a puller finds the buffer empty, in FE. */
     static final long PULL_START = 1000;
+    /**
+     * How much the pull demand may grow on top of what pullers took when they emptied the buffer: up to 4x in all
+     * while it climbs, then up to 2x once pullers have left energy unused, so a puller that asks for far more than
+     * its destination takes is not staged four times over again and again.
+     */
+    static final long PULL_GROWTH = 3, PULL_GROWTH_SETTLED = 1;
+    /** Whether pullers left part of the pull demand unused since they started; reset when they stop pulling. */
+    private boolean mPullSettled;
     /** Set by the device while a bridge to another network may not carry energy: same network, or a loop. */
     private boolean mBridgeBlocked;
     /** Between the first simulation of a cycle and its end. */
@@ -94,13 +102,21 @@ public class DimensionalReceiverHandler extends DimensionalConnectorHandler {
 
     /**
      * The pull demand follows what pullers really took. A puller asks for as much as it could ever move, so the
-     * unmet part of a pull is no demand by itself: only when pullers emptied the buffer does the target grow, by at
-     * most what they took (doubling), so it climbs within a few ticks to what the destination accepts and no further.
+     * unmet part of a pull is no demand by itself: only when pullers emptied the buffer does the target grow, to at
+     * most four times what they took (from 1,000 FE), so it climbs within a few pulls to what the destination accepts
+     * and no further, also for pullers that skip ticks.
      */
     private void updatePullTarget(boolean starved) {
         long pull = mPulledLast;
+        if (mPulledLast == 0 && mPullTargetAge >= PULL_HOLD_TICKS) {
+            mPullSettled = false;
+        } else if (!starved && mPulledLast > 0 && mPulledLast < mPullTarget) {
+            mPullSettled = true;
+        }
         if (starved) {
-            pull = satAdd(mPulledLast, Math.min(mUnmetLast, Math.max(mPulledLast, PULL_START)));
+            long factor = mPullSettled ? PULL_GROWTH_SETTLED : PULL_GROWTH;
+            long growth = mPulledLast > Long.MAX_VALUE / factor ? Long.MAX_VALUE : mPulledLast * factor;
+            pull = satAdd(mPulledLast, Math.min(mUnmetLast, Math.max(growth, PULL_START)));
         }
         if (pull >= mPullTarget || ++mPullTargetAge > PULL_HOLD_TICKS) {
             mPullTarget = pull;
@@ -171,6 +187,7 @@ public class DimensionalReceiverHandler extends DimensionalConnectorHandler {
         super.onNetworkChanged();
         mPulled = mPulledLast = mUnmet = mUnmetLast = mPullTarget = 0;
         mPullTargetAge = 0;
+        mPullSettled = false;
     }
 
     private static long satAdd(long a, long b) {

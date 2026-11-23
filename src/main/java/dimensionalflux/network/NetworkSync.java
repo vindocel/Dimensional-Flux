@@ -83,7 +83,7 @@ public final class NetworkSync {
     public static void sendDeviceGui(ServerPlayer player, TileDimensionalDevice device) {
         var handler = device.getTransferHandler();
         var history = device.getTransferHistory();
-        PacketDistributor.sendToPlayer(player, new DeviceGuiSync(device.getBlockPos(), handler.getChange(),
+        PacketDistributor.sendToPlayer(player, new DeviceGuiSync(device.getBlockPos(), handler.getDisplayChange(),
                 handler.getBuffer(), history.input(), history.output()));
     }
 

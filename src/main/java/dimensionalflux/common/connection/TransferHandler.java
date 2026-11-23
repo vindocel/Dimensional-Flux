@@ -33,6 +33,12 @@ public abstract class TransferHandler {
      */
     protected long mChange;
 
+    /** Ticks the shown transfer averages over: one second, so a machine that pulls every few ticks reads steady. */
+    public static final int DISPLAY_TICKS = 20;
+    private final long[] mRecent = new long[DISPLAY_TICKS];
+    private int mRecentIndex;
+    private long mRecentSum;
+
     private TransferSettings mSettings;
     /** Set by the device while its redstone mode does not let it work: it moves no energy. */
     private boolean mHalted;
@@ -105,6 +111,23 @@ public abstract class TransferHandler {
      */
     public final long getChange() {
         return mChange;
+    }
+
+    /** Server: records the change of the last cycle in the one-second window the screens show. Once a tick. */
+    public final void recordDisplayChange() {
+        // bounded so twenty entries cannot overflow the sum
+        long change = Math.clamp(mChange, Long.MIN_VALUE / (2 * DISPLAY_TICKS), Long.MAX_VALUE / (2 * DISPLAY_TICKS));
+        mRecentSum += change - mRecent[mRecentIndex];
+        mRecent[mRecentIndex] = change;
+        mRecentIndex = (mRecentIndex + 1) % DISPLAY_TICKS;
+    }
+
+    /**
+     * The transfer the screens show: the average change per tick over the last second. Transfers themselves use
+     * {@link #getChange()}.
+     */
+    public final long getDisplayChange() {
+        return mRecentSum / DISPLAY_TICKS;
     }
 
     // settings
@@ -204,7 +227,8 @@ public abstract class TransferHandler {
     /** Writes what clients draw: the buffer, the last change and the settings. */
     public void writeClientState(@Nonnull ValueOutput output) {
         save(output);
-        output.putLong(CHANGE, mChange);
+        // clients only show the transfer, so they get the one-second average
+        output.putLong(CHANGE, getDisplayChange());
     }
 
     public void readClientState(@Nonnull ValueInput input) {

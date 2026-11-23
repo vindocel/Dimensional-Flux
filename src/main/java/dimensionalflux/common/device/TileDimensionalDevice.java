@@ -207,6 +207,7 @@ public abstract class TileDimensionalDevice extends BlockEntity implements IDime
         if (isDormant()) {
             return;
         }
+        getTransferHandler().recordDisplayChange();
         recordHistory();
         updateTransferringState();
         updateConnectedState();
@@ -622,7 +623,7 @@ public abstract class TileDimensionalDevice extends BlockEntity implements IDime
     public DeviceSnapshot snapshot() {
         TransferHandler handler = getTransferHandler();
         return new DeviceSnapshot(getGlobalPos(), getDeviceType(), mNetworkID, mCustomName, mOwnerUUID,
-                handler.settings(), handler.getBuffer(), handler.getChange(), isChunkLoaded(), isForcedLoading(),
+                handler.settings(), handler.getBuffer(), handler.getDisplayChange(), isChunkLoaded(), isForcedLoading(),
                 BuiltInRegistries.ITEM.getKey(getDisplayStack().getItem()), attachedMachines());
     }
 
